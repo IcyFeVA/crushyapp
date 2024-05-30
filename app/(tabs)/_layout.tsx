@@ -1,5 +1,5 @@
 import React from 'react';
-import { Tabs } from 'expo-router';
+import { Tabs, Link } from 'expo-router';
 import { Image } from 'react-native';
 
 import { TabBarIcon } from '@/components/navigation/TabBarIcon';
@@ -40,7 +40,9 @@ export default function TabLayout() {
         options={{
           title: 'Explore',
           tabBarIcon: ({ color, focused }) => (
-            focused ? <Image source={require('@/assets/images/icons/tab-home-active.png')} /> : <Image source={require('@/assets/images/icons/tab-home.png')} />
+            <Link href="/modal">
+              <Image source={require('@/assets/images/icons/tab-home-active.png')} />
+            </Link>
           ),
         }}
       />
