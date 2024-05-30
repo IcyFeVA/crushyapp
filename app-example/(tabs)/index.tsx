@@ -19,7 +19,7 @@ export default function HomeScreen() {
         <ThemedText type="title">Welcome!</ThemedText>
         <HelloWave />
         <Image
-          source={require('@/assets/images/icons/tab-home.png')}
+          source={require('../../assets/images/tab-home.png')}
         />
       </ThemedView>
       <ThemedView style={styles.stepContainer}>
