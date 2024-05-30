@@ -1,5 +1,6 @@
-import { Tabs } from 'expo-router';
 import React from 'react';
+import { Tabs } from 'expo-router';
+import { Image } from 'react-native';
 
 import { TabBarIcon } from '@/components/navigation/TabBarIcon';
 import { Colors } from '@/constants/Colors';
@@ -13,13 +14,24 @@ export default function TabLayout() {
       screenOptions={{
         tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
         headerShown: false,
+        tabBarShowLabel: false,
+        tabBarStyle: { height: 64 },
       }}>
       <Tabs.Screen
         name="index"
         options={{
           title: 'Home',
           tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon name={focused ? 'home' : 'home-outline'} color={color} />
+            focused ? <Image source={require('@/assets/images/icons/tab-home-active.png')} /> : <Image source={require('@/assets/images/icons/tab-home.png')} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="history"
+        options={{
+          title: 'History',
+          tabBarIcon: ({ color, focused }) => (
+            focused ? <Image source={require('@/assets/images/icons/tab-history-active.png')} /> : <Image source={require('@/assets/images/icons/tab-history.png')} />
           ),
         }}
       />
@@ -28,7 +40,25 @@ export default function TabLayout() {
         options={{
           title: 'Explore',
           tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon name={focused ? 'code-slash' : 'code-slash-outline'} color={color} />
+            focused ? <Image source={require('@/assets/images/icons/tab-home-active.png')} /> : <Image source={require('@/assets/images/icons/tab-home.png')} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="inbox"
+        options={{
+          title: 'Inbox',
+          tabBarIcon: ({ color, focused }) => (
+            focused ? <Image source={require('@/assets/images/icons/tab-inbox-active.png')} /> : <Image source={require('@/assets/images/icons/tab-inbox.png')} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="me"
+        options={{
+          title: 'My Crushy',
+          tabBarIcon: ({ color, focused }) => (
+            focused ? <Image source={require('@/assets/images/icons/tab-me-active.png')} /> : <Image source={require('@/assets/images/icons/tab-me.png')} />
           ),
         }}
       />
