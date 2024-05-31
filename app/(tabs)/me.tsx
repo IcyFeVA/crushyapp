@@ -1,12 +1,15 @@
 import { Image, StyleSheet, Platform } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function Me() {
     return (
-        <ThemedView>
-            <ThemedText type="title">Me</ThemedText>
-        </ThemedView>
+        <SafeAreaView>
+            <ThemedView>
+                <ThemedText type="title">My Crushy</ThemedText>
+            </ThemedView>
+        </SafeAreaView>
     );
 }
 

@@ -1,12 +1,15 @@
 import { Image, StyleSheet, Platform } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function Inbox() {
     return (
-        <ThemedView>
-            <ThemedText type="title">Inbox</ThemedText>
-        </ThemedView>
+        <SafeAreaView>
+            <ThemedView>
+                <ThemedText type="title">Inbox</ThemedText>
+            </ThemedView>
+        </SafeAreaView>
     );
 }
 
