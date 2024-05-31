@@ -1,6 +1,6 @@
 import React from 'react';
 import { Tabs, Link } from 'expo-router';
-import { Image } from 'react-native';
+import { Image, Pressable } from 'react-native';
 
 import { TabBarIcon } from '@/components/navigation/TabBarIcon';
 import { Colors } from '@/constants/Colors';
@@ -40,8 +40,10 @@ export default function TabLayout() {
         options={{
           title: 'Explore',
           tabBarIcon: ({ color, focused }) => (
-            <Link href="/modal">
-              <Image source={require('@/assets/images/icons/tab-home-active.png')} />
+            <Link href="/modal" asChild>
+              <Pressable style={{ marginTop: 8 }}>
+                <Image source={require('@/assets/images/icons/tab-explore.png')} />
+              </Pressable>
             </Link>
           ),
         }}
