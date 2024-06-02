@@ -20,7 +20,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
+          title: 'REACT TABS',
           tabBarIcon: ({ color, focused }) => (
             focused ? <Image source={require('@/assets/images/icons/tab-home-active.png')} /> : <Image source={require('@/assets/images/icons/tab-home.png')} />
           ),
@@ -40,7 +40,7 @@ export default function TabLayout() {
         options={{
           title: 'Explore',
           tabBarIcon: ({ color, focused }) => (
-            <Link href="/modal" asChild>
+            <Link href="/surf" asChild>
               <Pressable style={{ marginTop: 8 }}>
                 <Image source={require('@/assets/images/icons/tab-explore.png')} />
               </Pressable>

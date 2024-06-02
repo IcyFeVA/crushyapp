@@ -2,13 +2,23 @@ import { Image, StyleSheet, Platform } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { SignedIn, SignedOut } from '@clerk/clerk-expo';
 
-export default function History() {
+
+export default function Inbox() {
     return (
         <SafeAreaView>
-            <ThemedView>
-                <ThemedText type="title">History</ThemedText>
-            </ThemedView>
+            <SignedOut>
+                <ThemedView>
+                    <ThemedText type="title">Please Log in</ThemedText>
+                </ThemedView>
+            </SignedOut>
+
+            <SignedIn>
+                <ThemedView>
+                    <ThemedText type="title">History</ThemedText>
+                </ThemedView>
+            </SignedIn>
         </SafeAreaView>
     );
 }
