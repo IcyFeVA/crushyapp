@@ -13,18 +13,10 @@ export default function Me() {
 
     return (
         <SafeAreaView>
-            <SignedOut>
-                <ThemedView>
-                    {!isSignedIn && <Link href="/login">Login</Link>}
-                </ThemedView>
-            </SignedOut>
-
-            <SignedIn>
-                <ThemedView>
-                    <ThemedText type="title">My Crushy</ThemedText>
-                    {isSignedIn && <Button title="Logout" onPress={() => signOut()} />}
-                </ThemedView>
-            </SignedIn>
+            <ThemedView>
+                <ThemedText type="title">My Crushy</ThemedText>
+                {isSignedIn && <Button title="Logout" onPress={() => signOut()} />}
+            </ThemedView>
         </SafeAreaView>
     );
 }

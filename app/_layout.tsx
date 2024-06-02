@@ -10,6 +10,9 @@ import * as SecureStore from 'expo-secure-store';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { SignedIn, SignedOut } from '@clerk/clerk-expo';
+import { ThemedView } from '@/components/ThemedView';
+import { ThemedText } from '@/components/ThemedText';
 
 const CLERK_PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
 // Cache the Clerk JWT
@@ -38,7 +41,6 @@ SplashScreen.preventAutoHideAsync();
 
 
 export default function RootLayout() {
-
   const colorScheme = useColorScheme();
 
   const [loaded, error] = useFonts({
@@ -64,7 +66,15 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
         <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY!} tokenCache={tokenCache}>
-          <RootLayoutNav />
+
+          <SignedOut>
+            <RootLayoutNav />
+          </SignedOut>
+
+          <SignedIn>
+            <RootLayoutNav />
+          </SignedIn>
+
         </ClerkProvider>
       </ThemeProvider >
     </SafeAreaProvider>
@@ -96,9 +106,7 @@ function RootLayoutNav() {
           },
           headerLeft: () => (
             <Link href="../" asChild>
-              {/* <TouchableOpacity onPress={() => router.back()}> */}
               <Ionicons name="close-outline" size={28} />
-              {/* </TouchableOpacity> */}
             </Link>
           ),
         }}
@@ -111,6 +119,6 @@ function RootLayoutNav() {
         }}
       />
       <Stack.Screen name="+not-found" />
-    </Stack>
+    </Stack >
   )
 }

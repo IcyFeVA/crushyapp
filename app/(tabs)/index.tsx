@@ -8,17 +8,9 @@ import { SignedIn, SignedOut } from '@clerk/clerk-expo';
 export default function Inbox() {
     return (
         <SafeAreaView>
-            <SignedOut>
-                <ThemedView>
-                    <ThemedText type="title">Please Log in</ThemedText>
-                </ThemedView>
-            </SignedOut>
-
-            <SignedIn>
-                <ThemedView>
-                    <ThemedText type="title">Home</ThemedText>
-                </ThemedView>
-            </SignedIn>
+            <ThemedView>
+                <ThemedText type="title">Home</ThemedText>
+            </ThemedView>
         </SafeAreaView>
     );
 }
