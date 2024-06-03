@@ -2,7 +2,7 @@ import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native
 import { useFonts } from 'expo-font';
 import { Stack, useRouter, Link } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import 'react-native-reanimated';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import * as SecureStore from 'expo-secure-store';
@@ -12,6 +12,14 @@ import { Ionicons } from '@expo/vector-icons';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 
+import 'react-native-url-polyfill/auto'
+import { supabase } from '@/lib/supabase'
+import Auth from '@/components/Auth'
+import Account from '@/components/Account'
+import { View } from 'react-native'
+import { Session } from '@supabase/supabase-js'
+
+
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -20,6 +28,7 @@ SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
+  const [session, setSession] = useState<Session | null>(null)
 
   const [loaded, error] = useFonts({
     SpaceMono: require('@/assets/fonts/SpaceMono-Regular.ttf'),
@@ -31,6 +40,16 @@ export default function RootLayout() {
   }, [error]);
 
   useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session)
+    })
+
+    supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session)
+    })
+  }, [])
+
+  useEffect(() => {
     if (loaded) {
       SplashScreen.hideAsync();
     }
@@ -40,10 +59,17 @@ export default function RootLayout() {
     return null;
   }
 
+
+
+
+
   return (
     <SafeAreaProvider>
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <RootLayoutNav />
+        {/* <RootLayoutNav /> */}
+        <View>
+          {session && session.user ? <Account key={session.user.id} session={session} /> : <Auth />}
+        </View>
       </ThemeProvider >
     </SafeAreaProvider>
   );
