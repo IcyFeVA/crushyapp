@@ -68,7 +68,7 @@ export default function Auth() {
     const [showPassword, setShowPassword] = useState(false)
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const passwordRegex = /^(?=.*[A-Z])(?=.*[a-zA-Z])(?=.*\d)[A-Za-z\d]{6,}$/;
+    const passwordRegex = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d).{6,}$/;
 
     async function signInWithEmail() {
         if (!emailRegex.test(email)) {
@@ -107,8 +107,11 @@ export default function Auth() {
             password: password,
         })
 
-        if (error) Alert.alert(error.message)
-        if (!session) Alert.alert('Please check your inbox for email verification!')
+        if (error) {
+            Alert.alert(error.message)
+            console.log(error.message)
+        }
+        //if (!session) Alert.alert('Please check your inbox for email verification!')
         setLoading(false)
     }
 
@@ -144,6 +147,9 @@ export default function Auth() {
                             <Ionicons name={showPassword ? 'eye-off' : 'eye'} size={24} color="gray" />
                         </TouchableOpacity>
                     </View>
+                    <View>
+                        <Text style={styles.requirementText}>Minimum 6 characters, and at least one of the following: uppercase/lowercase letter, number, special character.</Text>
+                    </View>
                     {/* </Card> */}
 
 
@@ -165,11 +171,18 @@ export default function Auth() {
                         labelStyle={{ color: '#CD385C' }}
                     />
                     <Text style={{ marginTop: 16, textAlign: 'right' }}>Forgot password?</Text>
+                    <Spacer height={16} />
+                    <View>
+                        <Text style={styles.termsText}>By signing up, you agree to our <Text style={{ color: '#CD385C' }}>Terms of Service</Text> and <Text style={{ color: '#CD385C' }}>Privacy Policy</Text>.</Text>
+                    </View>
                 </View>
             </ThemedView>
         </SafeAreaView>
     )
 }
+
+
+
 
 const styles = StyleSheet.create({
     container: {
@@ -189,5 +202,12 @@ const styles = StyleSheet.create({
     },
     card: {
         padding: 16,
+    },
+    termsText: {
+
+    },
+    requirementText: {
+        fontSize: 14,
+        color: 'gray',
     },
 })
