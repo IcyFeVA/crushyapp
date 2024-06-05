@@ -32,6 +32,8 @@ ThemeManager.setComponentTheme('TextField', {
     },
     style: {
         fontSize: 18,
+        borderBottomColor: 'gray',
+        borderBottomWidth: 1,
     }
 });
 
