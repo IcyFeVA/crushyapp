@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Alert, StyleSheet, View, AppState, TouchableOpacity } from 'react-native'
+import { Alert, StyleSheet, View, AppState, TouchableOpacity, Pressable } from 'react-native'
 import { supabase } from '@/lib/supabase'
 import { TextField, Text, Button, ThemeManager, Card } from 'react-native-ui-lib';
 import { Ionicons } from '@expo/vector-icons';
@@ -8,6 +8,15 @@ import { Typography, Colors, Spacings, ActionBar } from 'react-native-ui-lib';
 import { ThemedView } from '@/components/ThemedView';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Spacer from './Spacer';
+
+import { useColorScheme } from "nativewind";
+import { styled } from 'nativewind';
+
+const StyledView = styled(View, 'flex-1 items-center justify-center');
+const PrimaryButton = styled(Button, 'w-full h-12 rounded-4 justify-center bg-pink-500');
+const PrimaryButtonText = styled(Text, 'text-center text-white font-bold active:text-pink-700');
+const SecondaryButton = styled(Button, 'w-full h-12 rounded-4 justify-center bg-white border border-pink-500');
+const SecondaryButtonText = styled(Text, 'text-center text-pink-500 font-bold active:text-pink-700');
 
 // Set default colors and border radius
 ThemeManager.setComponentTheme('Button', {
@@ -64,6 +73,8 @@ AppState.addEventListener('change', (state) => {
 })
 
 export default function Auth() {
+    const { colorScheme, setColorScheme } = useColorScheme();
+
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [loading, setLoading] = useState(false)
@@ -119,9 +130,13 @@ export default function Auth() {
 
     return (
         <SafeAreaView>
-            <ThemedView>
-                <View style={styles.container}>
-                    {/* <Card style={styles.card}> */}
+            <View className='flex p-6 justify-space-between h-screen gap-6'>
+                <View className='flex-1'>
+
+                    <Text className='text-3xl font-bold'>Hello again!</Text>
+
+                    <Spacer height={64} />
+
                     <TextField
                         label={'E-Mail'}
                         placeholder={'E-Mail'}
@@ -149,37 +164,36 @@ export default function Auth() {
                             <Ionicons name={showPassword ? 'eye-off' : 'eye'} size={24} color="gray" />
                         </TouchableOpacity>
                     </View>
-                    <View>
-                        <Text style={styles.requirementText}>Minimum 6 characters, and at least one of the following: uppercase/lowercase letter, number, special character.</Text>
-                    </View>
-                    {/* </Card> */}
+                    {/* <View>
+                        <Text>Minimum 6 characters, and at least one of the following: uppercase/lowercase letter, number, special character.</Text>
+                    </View> */}
+
+                    <Spacer height={32} />
+
+                    <PrimaryButton onPress={() => signInWithEmail()}>
+                        <PrimaryButtonText>Sign in</PrimaryButtonText>
+                    </PrimaryButton>
+
+                    <Spacer height={32} />
+
+                    <Text className='text-center text-md'>Forgot password?</Text>
+
+                    {/* <Spacer height={16} />
+
+                    <SecondaryButton onPress={() => signUpWithEmail()}>
+                        <SecondaryButtonText>Sign up</SecondaryButtonText>
+                    </SecondaryButton>*/}
 
 
-                    <Spacer height={16} />
-
-                    <Button
-                        label={'Sign in'}
-                        size={Button.sizes.large}
-                        disabled={loading}
-                        onPress={() => signInWithEmail()}
-                    />
-                    <Button
-                        label={'Sign up'}
-                        size={Button.sizes.large}
-                        disabled={loading}
-                        onPress={() => signUpWithEmail()}
-                        outline
-                        style={{ backgroundColor: 'white', borderColor: '#CD385C' }}
-                        labelStyle={{ color: '#CD385C' }}
-                    />
-                    <Text style={{ marginTop: 16, textAlign: 'right' }}>Forgot password?</Text>
-                    <Spacer height={16} />
-                    <View>
-                        <Text style={styles.termsText}>By signing up, you agree to our <Text style={{ color: '#CD385C' }}>Terms of Service</Text> and <Text style={{ color: '#CD385C' }}>Privacy Policy</Text>.</Text>
-                    </View>
                 </View>
-            </ThemedView>
-        </SafeAreaView>
+
+                <Text className='text-center text-md'>New here? <Text style={{ color: '#CD385C' }}>Create an account</Text></Text>
+
+                {/* <View>
+                    <Text style={styles.termsText}>By signing up, you agree to our <Text style={{ color: '#CD385C' }}>Terms of Service</Text> and <Text style={{ color: '#CD385C' }}>Privacy Policy</Text>.</Text>
+                </View> */}
+            </View >
+        </SafeAreaView >
     )
 }
 
