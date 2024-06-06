@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Alert, StyleSheet, View, AppState, TouchableOpacity, Pressable } from 'react-native'
+import { Alert, StyleSheet, View, AppState, TouchableOpacity, Pressable, TextInput } from 'react-native'
 import { supabase } from '@/lib/supabase'
 import { TextField, Text, Button, ThemeManager, Card } from 'react-native-ui-lib';
 import { Ionicons } from '@expo/vector-icons';
@@ -13,52 +13,52 @@ import { useColorScheme } from "nativewind";
 import { styled } from 'nativewind';
 
 const StyledView = styled(View, 'flex-1 items-center justify-center');
-const PrimaryButton = styled(Button, 'w-full h-12 rounded-4 justify-center bg-pink-500');
-const PrimaryButtonText = styled(Text, 'text-center text-white font-bold active:text-pink-700');
-const SecondaryButton = styled(Button, 'w-full h-12 rounded-4 justify-center bg-white border border-pink-500');
-const SecondaryButtonText = styled(Text, 'text-center text-pink-500 font-bold active:text-pink-700');
+const PrimaryButton = styled(Button, 'w-full h-12 rounded-lg justify-center bg-primary-600');
+const PrimaryButtonText = styled(Text, 'uppercase text-center text-white font-bold');
+const SecondaryButton = styled(Button, 'w-full h-12 rounded-4 justify-center bg-white border border-primary-500');
+const SecondaryButtonText = styled(Text, 'text-center text-pink-500 font-bold active:text-primary-700');
 
-// Set default colors and border radius
-ThemeManager.setComponentTheme('Button', {
-    backgroundColor: '#CD385C',
-    borderRadius: 8,
-    labelStyle: {
-        color: 'white',
-    },
-});
+// Set default colors and border radius 
+// ThemeManager.setComponentTheme('Button', {
+//     backgroundColor: '#CD385C',
+//     borderRadius: 8,
+//     labelStyle: {
+//         color: 'white',
+//     },
+// });
 
-ThemeManager.setComponentTheme('TextField', {
-    floatingPlaceholderStyle: {
-        fontSize: 18,
-    },
-    floatingPlaceholderColor: {
-        focus: '#CD385C',
-        default: 'gray',
-    },
-    underlineColor: {
-        focus: '#CD385C',
-        default: 'gray',
-    },
-    style: {
-        fontSize: 18,
-        borderBottomColor: 'gray',
-        borderBottomWidth: 1,
-    }
-});
+// ThemeManager.setComponentTheme('TextField', {
+//     floatingPlaceholderStyle: {
+//         fontSize: 18,
+//     },
+//     floatingPlaceholderColor: {
+//         focus: '#CD385C',
+//         default: 'gray',
+//     },
+//     underlineColor: {
+//         focus: '#CD385C',
+//         default: 'gray',
+//     },
+//     style: {
+//         fontSize: 18,
+//         borderBottomColor: 'gray',
+//         borderBottomWidth: 1,
+//     }
+// });
 
-Colors.loadColors({
-    pink: '#FF69B4',
-    gold: '#FFD700',
-});
+// Colors.loadColors({
+//     pink: '#FF69B4',
+//     gold: '#FFD700',
+// });
 
-Typography.loadTypographies({
-    h1: { fontSize: 58, fontWeight: '300', lineHeight: 80 },
-    h2: { fontSize: 46, fontWeight: '300', lineHeight: 64 },
-});
+// Typography.loadTypographies({
+//     h1: { fontSize: 58, fontWeight: '300', lineHeight: 80 },
+//     h2: { fontSize: 46, fontWeight: '300', lineHeight: 64 },
+// });
 
-Spacings.loadSpacings({
-    page: 16
-});
+// Spacings.loadSpacings({
+//     page: 8
+// });
 
 // Tells Supabase Auth to continuously refresh the session automatically if
 // the app is in the foreground. When this is added, you will continue to receive
@@ -75,6 +75,7 @@ AppState.addEventListener('change', (state) => {
 export default function Auth() {
     const { colorScheme, setColorScheme } = useColorScheme();
 
+    const [mode, setMode] = useState('signup');
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [loading, setLoading] = useState(false)
@@ -130,69 +131,122 @@ export default function Auth() {
 
     return (
         <SafeAreaView>
-            <View className='flex p-6 justify-space-between h-screen gap-6'>
-                <View className='flex-1'>
+            {mode === 'login' && (
 
-                    <Text className='text-3xl font-bold'>Hello again!</Text>
+                <View className='flex p-6 justify-space-between h-screen gap-6'>
+                    <View className='flex-1'>
 
-                    <Spacer height={64} />
+                        <Text className='text-3xl font-bold'>Hello again!</Text>
 
-                    <TextField
-                        label={'E-Mail'}
-                        placeholder={'E-Mail'}
-                        floatingPlaceholder
-                        onChangeText={(text) => setEmail(text)}
-                        validate={['required', 'email', (value: string | any[]) => value.length > 6]}
-                        validationMessage={['Field is required', 'Email is invalid', 'Password is too short']}
-                        enableErrors
-                    />
-                    <View style={styles.passwordContainer}>
+                        <Spacer height={64} />
+
                         <TextField
-                            label={'Password'}
-                            placeholder={'Password'}
-                            floatingPlaceholder
-                            secureTextEntry={!showPassword}
-                            onChangeText={(text) => setPassword(text)}
-                            validate={['required', (value: string | any[]) => value.length > 6]}
-                            validationMessage={['Field is required', 'Password is too short']}
-                            containerStyle={styles.passwordInput}
+                            className='w-full radius-4 text-lg bg-gray-100 p-2 rounded-lg'
+                            label={'E-Mail'}
+                            onChangeText={(text) => setEmail(text)}
+                            validate={['required', 'email', (value: string | any[]) => value.length > 6]}
+                            validationMessage={['Field is required', 'Email is invalid', 'Password is too short']}
+                            enableErrors
                         />
+                        <View className='flex-row items-center relative'>
+                            <TextField
+                                className='w-full radius-4 text-lg bg-gray-100 p-2 rounded-lg'
+                                label={'Password'}
+                                secureTextEntry={!showPassword}
+                                onChangeText={(text) => setPassword(text)}
+                                validate={['required', (value: string | any[]) => value.length > 6]}
+                                validationMessage={['Field is required', 'Password is too short']}
+                                containerStyle={styles.passwordInput}
+                            />
+                        </View>
+
+                        <Spacer height={64} />
+
+                        <PrimaryButton onPress={() => signInWithEmail()}>
+                            <PrimaryButtonText>Sign in</PrimaryButtonText>
+                        </PrimaryButton>
+
+                        <Spacer height={32} />
+
                         <TouchableOpacity
-                            onPress={() => setShowPassword(!showPassword)}
-                            style={styles.showPasswordButton}
+                            className='ml-4 mt-3'
+                            onPress={() => { }}
                         >
-                            <Ionicons name={showPassword ? 'eye-off' : 'eye'} size={24} color="gray" />
+                            <Text className='text-center text-primary-500'>Forgot password?</Text>
                         </TouchableOpacity>
+
                     </View>
-                    {/* <View>
-                        <Text>Minimum 6 characters, and at least one of the following: uppercase/lowercase letter, number, special character.</Text>
-                    </View> */}
 
-                    <Spacer height={32} />
+                    <TouchableOpacity
+                        className='ml-4 mt-3'
+                        onPress={() => setMode('signup')}
+                    >
+                        <Text className='text-center'>New here? <Text className='text-primary-500'>Create an account</Text></Text>
+                    </TouchableOpacity>
 
-                    <PrimaryButton onPress={() => signInWithEmail()}>
-                        <PrimaryButtonText>Sign in</PrimaryButtonText>
-                    </PrimaryButton>
+                </View >
+            )}
 
-                    <Spacer height={32} />
+            {mode === 'signup' && (
 
-                    <Text className='text-center text-md'>Forgot password?</Text>
+                <View className='flex p-6 justify-space-between h-screen gap-6'>
+                    <View className='flex-1'>
 
-                    {/* <Spacer height={16} />
+                        <Text className='text-3xl font-bold'>Welcome!</Text>
 
-                    <SecondaryButton onPress={() => signUpWithEmail()}>
-                        <SecondaryButtonText>Sign up</SecondaryButtonText>
-                    </SecondaryButton>*/}
+                        <Spacer height={64} />
 
+                        <TextField
+                            className='w-full radius-4 text-lg bg-gray-100 p-2 rounded-lg'
+                            label={'E-Mail'}
+                            onChangeText={(text) => setEmail(text)}
+                            validate={['required', 'email', (value: string | any[]) => value.length > 6]}
+                            validationMessage={['Field is required', 'Email is invalid', 'Password is too short']}
+                            enableErrors
+                        />
+                        <View className='flex-row items-center relative'>
+                            <TextField
+                                className='w-full radius-4 text-lg bg-gray-100 p-2 rounded-lg'
+                                label={'Password'}
+                                secureTextEntry={!showPassword}
+                                onChangeText={(text) => setPassword(text)}
+                                validate={['required', (value: string | any[]) => value.length > 6]}
+                                validationMessage={['Field is required', 'Password is too short']}
+                                containerStyle={styles.passwordInput}
+                            />
+                            <TouchableOpacity
+                                className='ml-4 mt-3'
+                                onPress={() => setShowPassword(!showPassword)}
+                            >
+                                <Ionicons name={showPassword ? 'eye-off' : 'eye'} size={24} color="gray" />
+                            </TouchableOpacity>
+                        </View>
 
-                </View>
+                        <Spacer height={8} />
 
-                <Text className='text-center text-md'>New here? <Text style={{ color: '#CD385C' }}>Create an account</Text></Text>
+                        <Text className='text-gray-500 leading-5'>Minimum 6 characters, and one each: uppercase/lowercase letter, number, special character.</Text>
 
-                {/* <View>
-                    <Text style={styles.termsText}>By signing up, you agree to our <Text style={{ color: '#CD385C' }}>Terms of Service</Text> and <Text style={{ color: '#CD385C' }}>Privacy Policy</Text>.</Text>
-                </View> */}
-            </View >
+                        <Spacer height={64} />
+
+                        <PrimaryButton onPress={() => signUpWithEmail()}>
+                            <PrimaryButtonText>Sign up</PrimaryButtonText>
+                        </PrimaryButton>
+
+                        <Spacer height={16} />
+
+                        <Text className='leading-5'>By signing up, you agree to our <Text className='text-primary-500'>Terms of Service</Text> and <Text className='text-primary-500'>Privacy Policy</Text>.</Text>
+
+                    </View>
+
+                    <TouchableOpacity
+                        className='ml-4 mt-3'
+                        onPress={() => setMode('login')}
+                    >
+                        <Text className='text-center'>Already have an account? <Text className='text-primary-500'>Sign in</Text></Text>
+                    </TouchableOpacity>
+
+                </View >
+            )}
         </SafeAreaView >
     )
 }
