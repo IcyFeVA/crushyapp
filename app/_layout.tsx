@@ -1,53 +1,74 @@
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
-import { Stack, useRouter, Link } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useState } from 'react';
 import 'react-native-reanimated';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
-import * as SecureStore from 'expo-secure-store';
-import { useColorScheme } from '@/hooks/useColorScheme';
-import { TouchableOpacity } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { ThemedView } from '@/components/ThemedView';
-import { ThemedText } from '@/components/ThemedText';
+import { Alert, View, useColorScheme } from 'react-native';
+import { supabase } from '@/lib/supabase';
+import Auth from '@/components/Auth';
+import Onboarding from '@/components/Onboarding';
+import Account from '@/components/Account';
+import { Session } from '@supabase/supabase-js';
 
-import 'react-native-url-polyfill/auto'
-import { supabase } from '@/lib/supabase'
-import Auth from '@/components/Auth'
-import Account from '@/components/Account'
-import { View } from 'react-native'
-import { Session } from '@supabase/supabase-js'
-
-
-
-// Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
-
-
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
-  const [session, setSession] = useState<Session | null>(null)
-
+  const [session, setSession] = useState<Session | null>(null);
+  const [showOnboarding, setShowOnboarding] = useState<boolean | null>(null);
   const [loaded, error] = useFonts({
     SpaceMono: require('@/assets/fonts/SpaceMono-Regular.ttf'),
   });
 
-  // Expo Router uses Error Boundaries to catch errors in the navigation tree.
+  async function getProfile() {
+    try {
+      const { data, error, status } = await supabase
+        .from('profiles')
+        .select('name, avatar_url, age')
+        .eq('id', session?.user.id)
+        .single();
+
+      if (error && status !== 406) {
+        throw error;
+      }
+
+      if (data && data.name) {
+        data.name === null ? setShowOnboarding(true) : setShowOnboarding(false);
+      }
+    } catch (error) {
+      if (error instanceof Error) {
+        Alert.alert(error.message);
+      }
+    }
+  }
+
   useEffect(() => {
     if (error) throw error;
   }, [error]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session)
-    })
+      setSession(session);
+    });
 
-    supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session)
-    })
-  }, [])
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (session) {
+      getProfile();
+    } else {
+      setShowOnboarding(null);
+    }
+  }, [session]);
 
   useEffect(() => {
     if (loaded) {
@@ -59,51 +80,32 @@ export default function RootLayout() {
     return null;
   }
 
-
-
-
-
   return (
     <SafeAreaProvider>
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        {/* <RootLayoutNav /> */}
-        <View>
-          {session && session.user ? <Account key={session.user.id} session={session} /> : <Auth />}
-        </View>
-      </ThemeProvider >
+        <SafeAreaView style={{ flex: 1 }}>
+          {session ? (
+            showOnboarding === false ? (
+              <RootLayoutNav />
+            ) : (
+              <Onboarding />
+              // <Account session={session} />
+            )
+          ) : (
+            <Auth />
+          )}
+        </SafeAreaView>
+      </ThemeProvider>
     </SafeAreaProvider>
   );
-
 }
 
-
 function RootLayoutNav() {
-
   return (
     <Stack>
-      {/* <Stack.Screen
-        name="(modals)/login"
-        options={{
-          presentation: 'modal',
-          title: 'Log in or sign up',
-          headerTitleStyle: {
-            fontFamily: 'SpaceMono',
-          },
-          headerLeft: () => (
-            <Link href="../" asChild>
-              <Ionicons name="close-outline" size={28} />
-            </Link>
-          ),
-        }}
-      /> */}
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      <Stack.Screen
-        name="(modals)/surf"
-        options={{
-          presentation: 'modal',
-        }}
-      />
+      <Stack.Screen name="(modals)/surf" options={{ presentation: 'modal' }} />
       <Stack.Screen name="+not-found" />
-    </Stack >
-  )
+    </Stack>
+  );
 }

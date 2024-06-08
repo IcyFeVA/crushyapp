@@ -3,9 +3,6 @@ import { Alert, StyleSheet, View, AppState, TouchableOpacity, Pressable, TextInp
 import { supabase } from '@/lib/supabase'
 import { TextField, Text, Button, ThemeManager, Card } from 'react-native-ui-lib';
 import { Ionicons } from '@expo/vector-icons';
-
-import { Typography, Colors, Spacings, ActionBar } from 'react-native-ui-lib';
-import { ThemedView } from '@/components/ThemedView';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Spacer from './Spacer';
 
@@ -18,59 +15,8 @@ const PrimaryButtonText = styled(Text, 'uppercase text-center text-white font-bo
 const SecondaryButton = styled(Button, 'w-full h-12 rounded-4 justify-center bg-white border border-primary-500');
 const SecondaryButtonText = styled(Text, 'text-center text-pink-500 font-bold active:text-primary-700');
 
-// Set default colors and border radius 
-// ThemeManager.setComponentTheme('Button', {
-//     backgroundColor: '#CD385C',
-//     borderRadius: 8,
-//     labelStyle: {
-//         color: 'white',
-//     },
-// });
 
-// ThemeManager.setComponentTheme('TextField', {
-//     floatingPlaceholderStyle: {
-//         fontSize: 18,
-//     },
-//     floatingPlaceholderColor: {
-//         focus: '#CD385C',
-//         default: 'gray',
-//     },
-//     underlineColor: {
-//         focus: '#CD385C',
-//         default: 'gray',
-//     },
-//     style: {
-//         fontSize: 18,
-//         borderBottomColor: 'gray',
-//         borderBottomWidth: 1,
-//     }
-// });
 
-// Colors.loadColors({
-//     pink: '#FF69B4',
-//     gold: '#FFD700',
-// });
-
-// Typography.loadTypographies({
-//     h1: { fontSize: 58, fontWeight: '300', lineHeight: 80 },
-//     h2: { fontSize: 46, fontWeight: '300', lineHeight: 64 },
-// });
-
-// Spacings.loadSpacings({
-//     page: 8
-// });
-
-// Tells Supabase Auth to continuously refresh the session automatically if
-// the app is in the foreground. When this is added, you will continue to receive
-// `onAuthStateChange` events with the `TOKEN_REFRESHED` or `SIGNED_OUT` event
-// if the user's session is terminated. This should only be registered once.
-AppState.addEventListener('change', (state) => {
-    if (state === 'active') {
-        supabase.auth.startAutoRefresh()
-    } else {
-        supabase.auth.stopAutoRefresh()
-    }
-})
 
 export default function Auth() {
     const { colorScheme, setColorScheme } = useColorScheme();
@@ -83,6 +29,7 @@ export default function Auth() {
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const passwordRegex = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d).{6,}$/;
+
 
     async function signInWithEmail() {
         if (!emailRegex.test(email)) {

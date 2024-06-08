@@ -13,37 +13,40 @@ export default function Account({ session }: { session: Session }) {
     const [website, setWebsite] = useState('')
     const [avatarUrl, setAvatarUrl] = useState('')
 
-    useEffect(() => {
-        if (session) getProfile()
-    }, [session])
 
-    async function getProfile() {
-        try {
-            setLoading(true)
-            if (!session?.user) throw new Error('No user on the session!')
+    // THIS DATE IS COMING FROM _layout.tsx
 
-            const { data, error, status } = await supabase
-                .from('profiles')
-                .select(`username, website, avatar_url`)
-                .eq('id', session?.user.id)
-                .single()
-            if (error && status !== 406) {
-                throw error
-            }
+    // useEffect(() => {
+    //     if (session) getProfile()
+    // }, [session])
 
-            if (data) {
-                setUsername(data.username)
-                setWebsite(data.website)
-                setAvatarUrl(data.avatar_url)
-            }
-        } catch (error) {
-            if (error instanceof Error) {
-                Alert.alert(error.message)
-            }
-        } finally {
-            setLoading(false)
-        }
-    }
+    // async function getProfile() {
+    //     try {
+    //         setLoading(true)
+    //         if (!session?.user) throw new Error('No user on the session!')
+
+    //         const { data, error, status } = await supabase
+    //             .from('profiles')
+    //             .select(`username, website, avatar_url`)
+    //             .eq('id', session?.user.id)
+    //             .single()
+    //         if (error && status !== 406) {
+    //             throw error
+    //         }
+
+    //         if (data) {
+    //             setUsername(data.username)
+    //             setWebsite(data.website)
+    //             setAvatarUrl(data.avatar_url)
+    //         }
+    //     } catch (error) {
+    //         if (error instanceof Error) {
+    //             Alert.alert(error.message)
+    //         }
+    //     } finally {
+    //         setLoading(false)
+    //     }
+    // }
 
     async function updateProfile({
         username,
