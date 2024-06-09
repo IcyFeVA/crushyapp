@@ -4,15 +4,23 @@ import { ThemedView } from '@/components/ThemedView';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
+import { Textfield } from '@/components/ui/Textfields';
+import { Pageview } from '@/components/ui/Containers';
 
 
 export default function Onboarding({ session }: { session: Session }) {
     return (
         <SafeAreaView>
-            <ThemedView>
-                <ThemedText type="title">Onboarding</ThemedText>
+            <Pageview>
+                <Textfield
+                    label={'E-Mail'}
+                    onChangeText={(text) => { }}
+                    validate={['required', 'email', (value: string | any[]) => value.length > 2]}
+                    validationMessage={['Field is required', 'Email is invalid', 'Password is too short']}
+                    enableErrors
+                />
                 <Button title={'Sign out'} onPress={() => { supabase.auth.signOut() }} />
-            </ThemedView>
+            </Pageview>
         </SafeAreaView>
     );
 }

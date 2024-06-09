@@ -11,7 +11,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useProfile } from '@/hooks/useProfile';
 import { Stack, useRouter } from 'expo-router';
 import { View } from 'react-native';
-import { PrimaryButton, PrimaryButtonText } from '@/components/buttons/Buttons';
+import { PrimaryButton, PrimaryButtonText } from '@/components/ui/Buttons';
 import { ThemedText } from '@/components/ThemedText';
 
 SplashScreen.preventAutoHideAsync();

@@ -5,11 +5,12 @@ import { TextField, Text } from 'react-native-ui-lib';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Spacer from './Spacer';
-
+import { Textfield } from '@/components/ui/Textfields';
+import { Pageview } from '@/components/ui/Containers';
 import { useColorScheme } from "nativewind";
 
 import { Image, Animated, FlatList, useWindowDimensions, ImageSourcePropType } from 'react-native';
-import { PrimaryButton, PrimaryButtonText, SecondaryButton, SecondaryButtonText } from './buttons/Buttons';
+import { PrimaryButton, PrimaryButtonText, SecondaryButton, SecondaryButtonText } from './ui/Buttons';
 import { useRef } from 'react';
 import { defaultStyles } from '@/constants/Styles';
 
@@ -165,15 +166,14 @@ export default function Auth() {
         <SafeAreaView>
             {mode === 'signin' && (
 
-                <View className='flex p-6 justify-space-between h-screen gap-6'>
+                <Pageview className='flex justify-space-between h-full gap-6'>
                     <View className='flex-1'>
 
                         <Text className='text-3xl font-bold'>Hello again!</Text>
 
                         <Spacer height={64} />
 
-                        <TextField
-                            className='w-full radius-4 text-lg bg-gray-100 p-2 rounded-lg'
+                        <Textfield
                             label={'E-Mail'}
                             onChangeText={(text) => setEmail(text)}
                             validate={['required', 'email', (value: string | any[]) => value.length > 6]}
@@ -181,8 +181,7 @@ export default function Auth() {
                             enableErrors
                         />
                         <View className='flex-row items-center relative'>
-                            <TextField
-                                className='w-full radius-4 text-lg bg-gray-100 p-2 rounded-lg'
+                            <Textfield
                                 label={'Password'}
                                 secureTextEntry={!showPassword}
                                 onChangeText={(text) => setPassword(text)}
@@ -225,22 +224,19 @@ export default function Auth() {
                         <Text className='text-center text-primary-500'>Back to welcome screen</Text>
                     </TouchableOpacity>
 
-                    <Spacer height={16} />
-
-                </View >
+                </Pageview >
             )}
 
             {mode === 'signup' && (
 
-                <View className='flex p-6 justify-space-between h-screen gap-6'>
+                <Pageview className='flex justify-space-between h-full gap-6'>
                     <View className='flex-1'>
 
                         <Text className='text-3xl font-bold'>Welcome!</Text>
 
                         <Spacer height={64} />
 
-                        <TextField
-                            className='w-full radius-4 text-lg bg-gray-100 p-2 rounded-lg'
+                        <Textfield
                             label={'E-Mail'}
                             onChangeText={(text) => setEmail(text)}
                             validate={['required', 'email', (value: string | any[]) => value.length > 6]}
@@ -248,8 +244,7 @@ export default function Auth() {
                             enableErrors
                         />
                         <View className='flex-row items-center relative'>
-                            <TextField
-                                className='w-full radius-4 text-lg bg-gray-100 p-2 rounded-lg'
+                            <Textfield
                                 label={'Password'}
                                 secureTextEntry={!showPassword}
                                 onChangeText={(text) => setPassword(text)}
@@ -299,7 +294,7 @@ export default function Auth() {
 
                     <Spacer height={16} />
 
-                </View >
+                </Pageview >
             )}
 
             {mode === 'welcome' && (
