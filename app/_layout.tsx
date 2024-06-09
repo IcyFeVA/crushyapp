@@ -66,7 +66,7 @@ export default function RootLayout() {
     if (session) {
       getProfile();
     } else {
-      setShowOnboarding(null);
+      //setShowOnboarding(null);
     }
   }, [session]);
 

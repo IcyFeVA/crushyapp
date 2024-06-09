@@ -1,17 +1,17 @@
 import React, { useState } from 'react'
-import { Alert, StyleSheet, View, AppState, TouchableOpacity, Pressable, TextInput } from 'react-native'
+import { Alert, StyleSheet, View, TouchableOpacity } from 'react-native'
 import { supabase } from '@/lib/supabase'
-import { TextField, Text, Button, ThemeManager, Card } from 'react-native-ui-lib';
+import { TextField, Text } from 'react-native-ui-lib';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Spacer from './Spacer';
 
 import { useColorScheme } from "nativewind";
-import { styled } from 'nativewind';
 
-const StyledView = styled(View, 'flex-1 items-center justify-center');
-const PrimaryButton = styled(Button, 'w-full h-12 rounded-lg justify-center bg-primary-600');
-const PrimaryButtonText = styled(Text, 'uppercase text-center text-white font-bold');
+import { Image, Animated, FlatList, useWindowDimensions, ImageSourcePropType } from 'react-native';
+import { PrimaryButton, PrimaryButtonText, SecondaryButton, SecondaryButtonText } from './buttons/Buttons';
+import { useRef } from 'react';
+import { defaultStyles } from '@/constants/Styles';
 
 
 
@@ -20,7 +20,7 @@ const PrimaryButtonText = styled(Text, 'uppercase text-center text-white font-bo
 export default function Auth() {
     const { colorScheme, setColorScheme } = useColorScheme();
 
-    const [mode, setMode] = useState('signup');
+    const [mode, setMode] = useState('welcome');
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [loading, setLoading] = useState(false)
@@ -28,6 +28,87 @@ export default function Auth() {
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const passwordRegex = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d).{6,}$/;
+
+
+    const onboardingContent = [
+        {
+            id: 1,
+            title: 'Step 1',
+            description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+            image: require('@/assets/images/onboarding/onboarding1.png'),
+        },
+        {
+            id: 2,
+            title: 'Step 2',
+            description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+            image: require('@/assets/images/onboarding/onboarding2.png'),
+        },
+        {
+            id: 3,
+            title: 'Step 3',
+            description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+            image: require('@/assets/images/onboarding/onboarding3.png'),
+        },
+        {
+            id: 4,
+            title: 'Step 4',
+            description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+            image: require('@/assets/images/onboarding/onboarding4.png'),
+        },
+        {
+            id: 5,
+            title: 'Step 5',
+            description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+            image: require('@/assets/images/onboarding/onboarding5.png'),
+        }
+    ]
+
+    interface OnboardingItem {
+        id: number;
+        title: string;
+        description: string;
+        image: ImageSourcePropType;
+    }
+
+    const { width } = useWindowDimensions();
+
+    function renderItem({ item }: { item: OnboardingItem }) {
+        return (
+            <View className='bg-primary-300' >
+                <Image source={item.image} style={{ width }} />
+                {/* <View>
+                    <Text>{item.title}</Text>
+                    <Text>{item.description}</Text>
+                </View> */}
+            </View >
+        )
+
+    }
+
+
+    const scrollX = useRef(new Animated.Value(0)).current;
+
+    const Pagination = ({ count }: { count: number }) => {
+        return (
+            <View className='flex-row justify-center'>
+                {Array(count).fill(0).map((_, index) => {
+                    const inputRange = [(index - 1) * width, index * width, (index + 1) * width];
+                    const dotColor = scrollX.interpolate({
+                        inputRange,
+                        outputRange: ['#cccccc', '#7A37D0', '#cccccc'],
+                        extrapolate: 'clamp'
+                    });
+                    return (
+                        <Animated.View
+                            key={index}
+                            className='w-2 h-2 mx-1 rounded-full'
+                            style={{ backgroundColor: dotColor }}
+                        />
+                    );
+                })}
+            </View>
+        );
+    };
 
 
     async function signInWithEmail() {
@@ -77,7 +158,7 @@ export default function Auth() {
 
     return (
         <SafeAreaView>
-            {mode === 'login' && (
+            {mode === 'signin' && (
 
                 <View className='flex p-6 justify-space-between h-screen gap-6'>
                     <View className='flex-1'>
@@ -129,6 +210,17 @@ export default function Auth() {
                     >
                         <Text className='text-center'>New here? <Text className='text-primary-500'>Create an account</Text></Text>
                     </TouchableOpacity>
+
+                    <Spacer height={16} />
+
+                    <TouchableOpacity
+                        className='ml-4 mt-3'
+                        onPress={() => setMode('welcome')}
+                    >
+                        <Text className='text-center text-primary-500'>Back to welcome screen</Text>
+                    </TouchableOpacity>
+
+                    <Spacer height={16} />
 
                 </View >
             )}
@@ -186,12 +278,56 @@ export default function Auth() {
 
                     <TouchableOpacity
                         className='ml-4 mt-3'
-                        onPress={() => setMode('login')}
+                        onPress={() => setMode('signin')}
                     >
                         <Text className='text-center'>Already have an account? <Text className='text-primary-500'>Sign in</Text></Text>
                     </TouchableOpacity>
 
+                    <Spacer height={16} />
+
+                    <TouchableOpacity
+                        className='ml-4 mt-3'
+                        onPress={() => setMode('welcome')}
+                    >
+                        <Text className='text-center text-primary-500'>Back to welcome screen</Text>
+                    </TouchableOpacity>
+
+                    <Spacer height={16} />
+
                 </View >
+            )}
+
+            {mode === 'welcome' && (
+                <View className='flex h-full justify-between'>
+                    <View className='flex-1/0.7'>
+                        <Spacer height={16} />
+                        <Image source={require('@/assets/images/logo/logo_crushy.png')} className='m-auto' />
+                        <FlatList
+                            data={onboardingContent}
+                            renderItem={renderItem}
+                            keyExtractor={item => item.id.toString()}
+                            horizontal
+                            showsHorizontalScrollIndicator={false}
+                            pagingEnabled
+                            bounces={false}
+                            onScroll={Animated.event(
+                                [{ nativeEvent: { contentOffset: { x: scrollX } } }],
+                                { useNativeDriver: false }
+                            )}
+                        />
+                        <Pagination count={onboardingContent.length} />
+                    </View>
+                    <View className='flex-1/0.3 p-6'>
+                        <PrimaryButton onPress={() => setMode('signup')} style={defaultStyles.buttonShadow}>
+                            <PrimaryButtonText>Create account</PrimaryButtonText>
+                        </PrimaryButton>
+                        <Spacer height={16} />
+                        <SecondaryButton onPress={() => setMode('signin')} style={defaultStyles.buttonShadow}>
+                            <SecondaryButtonText>Sign in</SecondaryButtonText>
+                        </SecondaryButton>
+                        <Spacer height={16} />
+                    </View>
+                </View>
             )}
         </SafeAreaView >
     )
@@ -227,3 +363,10 @@ const styles = StyleSheet.create({
         color: 'gray',
     },
 })
+
+
+
+
+
+
+
