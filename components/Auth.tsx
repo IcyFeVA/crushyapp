@@ -140,10 +140,7 @@ export default function Auth() {
             return
         }
         setLoading(true)
-        const {
-            data: { session },
-            error,
-        } = await supabase.auth.signUp({
+        const { data: { session }, error } = await supabase.auth.signUp({
             email: email,
             password: password,
         })
@@ -154,6 +151,14 @@ export default function Auth() {
         }
         //if (!session) Alert.alert('Please check your inbox for email verification!')
         setLoading(false)
+
+
+        if (session) {
+            // User is logged in
+            console.log('User is logged in:', session.user);
+        } else {
+            //Alert.alert('Please check your inbox for email verification!');
+        }
     }
 
     return (
