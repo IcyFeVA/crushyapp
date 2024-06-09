@@ -12,8 +12,7 @@ import { styled } from 'nativewind';
 const StyledView = styled(View, 'flex-1 items-center justify-center');
 const PrimaryButton = styled(Button, 'w-full h-12 rounded-lg justify-center bg-primary-600');
 const PrimaryButtonText = styled(Text, 'uppercase text-center text-white font-bold');
-const SecondaryButton = styled(Button, 'w-full h-12 rounded-4 justify-center bg-white border border-primary-500');
-const SecondaryButtonText = styled(Text, 'text-center text-pink-500 font-bold active:text-primary-700');
+
 
 
 

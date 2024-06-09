@@ -3,6 +3,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Spacer from './Spacer';
 import { PrimaryButton, PrimaryButtonText, SecondaryButton, SecondaryButtonText } from './buttons/Buttons';
 import { useRef } from 'react';
+import { defaultStyles } from '@/constants/Styles';
 
 
 export default function Onboarding() {
@@ -108,11 +109,11 @@ export default function Onboarding() {
                     <Pagination count={onboardingContent.length} />
                 </View>
                 <View className='flex-1/0.3 p-6'>
-                    <PrimaryButton onPress={() => { }}>
+                    <PrimaryButton onPress={() => { }} style={defaultStyles.buttonShadow}>
                         <PrimaryButtonText>Create account</PrimaryButtonText>
                     </PrimaryButton>
                     <Spacer height={16} />
-                    <SecondaryButton onPress={() => { }}>
+                    <SecondaryButton onPress={() => { }} style={defaultStyles.buttonShadow}>
                         <SecondaryButtonText>Sign in</SecondaryButtonText>
                     </SecondaryButton>
                     <Spacer height={16} />
