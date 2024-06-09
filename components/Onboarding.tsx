@@ -6,7 +6,7 @@ import { Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 
 
-export default function Onboarding() {
+export default function Onboarding({ session }: { session: Session }) {
     return (
         <SafeAreaView>
             <ThemedView>
