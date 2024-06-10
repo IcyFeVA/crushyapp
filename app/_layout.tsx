@@ -5,14 +5,14 @@ import { useEffect, useState } from 'react';
 import 'react-native-reanimated';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { useColorScheme } from 'react-native';
-import Auth from '@/components/Auth';
-import Onboarding from '@/components/Onboarding';
 import { useAuth } from '@/hooks/useAuth';
 import { useProfile } from '@/hooks/useProfile';
-import { Stack, useRouter } from 'expo-router';
+import { Redirect, Stack, router, useRouter } from 'expo-router';
 import { View } from 'react-native';
 import { PrimaryButton, PrimaryButtonText } from '@/components/ui/Buttons';
 import { ThemedText } from '@/components/ThemedText';
+import Auth from '@/components/Auth';
+import Onboarding from '@/components/Onboarding';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -38,27 +38,24 @@ export default function RootLayout() {
         return null;
     }
 
+
+
     return (
-        <SafeAreaProvider>
-            <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-                <SafeAreaView style={{ flex: 1 }}>
-                    {
-                        session ? (
-                            showOnboarding === false ? (
-                                <Stack>
-                                    <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-                                    <Stack.Screen name="(modals)/surf" options={{ presentation: 'modal' }} />
-                                    <Stack.Screen name="+not-found" />
-                                </Stack>
-                            ) : (
-                                <Onboarding session={session} />
-                            )
-                        ) : (
-                            <Auth />
-                        )
-                    }
-                </SafeAreaView>
-            </ThemeProvider>
-        </SafeAreaProvider>
+        <RootNav session={session} showOnboarding={showOnboarding} />
     );
+}
+
+
+function RootNav(props: any) {
+    if (props.session && props.showOnboarding === true) {
+        return <Onboarding session={props.session} />
+    } else if (props.session && props.showOnboarding === false) {
+        return (
+            <Stack>
+                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            </Stack>
+        )
+    } else {
+        return <Auth onboarding={props.showOnboarding} />
+    }
 }

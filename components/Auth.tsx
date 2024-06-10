@@ -18,7 +18,7 @@ import { defaultStyles } from '@/constants/Styles';
 
 
 
-export default function Auth() {
+export default function Auth({ onboarding }: any) {
     const { colorScheme, setColorScheme } = useColorScheme();
 
     const [mode, setMode] = useState('welcome');
