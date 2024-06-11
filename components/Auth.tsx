@@ -1,5 +1,5 @@
-import React, { useState } from 'react'
-import { Alert, StyleSheet, View, TouchableOpacity } from 'react-native'
+import React, { useEffect, useState } from 'react'
+import { Alert, StyleSheet, View, TouchableOpacity, Keyboard } from 'react-native'
 import { supabase } from '@/lib/supabase'
 import { TextField, Text } from 'react-native-ui-lib';
 import { Ionicons } from '@expo/vector-icons';
@@ -162,32 +162,51 @@ export default function Auth({ onboarding }: any) {
         }
     }
 
+
+
+    const [keyboardStatus, setKeyboardStatus] = useState('');
+
+    useEffect(() => {
+        const showSubscription = Keyboard.addListener('keyboardDidShow', () => {
+            setKeyboardStatus('Keyboard Shown');
+        });
+        const hideSubscription = Keyboard.addListener('keyboardDidHide', () => {
+            setKeyboardStatus('Keyboard Hidden');
+        });
+
+        return () => {
+            showSubscription.remove();
+            hideSubscription.remove();
+        };
+    }, []);
+
+
+
     return (
         <SafeAreaView>
             {mode === 'signin' && (
 
-                <Pageview className='flex justify-space-between h-full gap-6'>
+                <Pageview className='flex justify-space-between h-full'>
                     <View className='flex-1'>
 
                         <Text className='text-3xl font-bold'>Hello again!</Text>
 
                         <Spacer height={64} />
 
+                        <Text className='text-sm font-bold'>E-Mail</Text>
+                        <Spacer height={4} />
                         <Textfield
-                            label={'E-Mail'}
                             onChangeText={(text) => setEmail(text)}
-                            validate={['required', 'email', (value: string | any[]) => value.length > 6]}
-                            validationMessage={['Field is required', 'Email is invalid', 'Password is too short']}
-                            enableErrors
                         />
+
+                        <Spacer height={16} />
+
+                        <Text className='text-sm font-bold'>Password</Text>
+                        <Spacer height={4} />
                         <View className='flex-row items-center relative'>
                             <Textfield
-                                label={'Password'}
-                                secureTextEntry={!showPassword}
+                                secureTextEntry={true}
                                 onChangeText={(text) => setPassword(text)}
-                                validate={['required', (value: string | any[]) => value.length > 6]}
-                                validationMessage={['Field is required', 'Password is too short']}
-                                containerStyle={styles.passwordInput}
                             />
                         </View>
 
@@ -209,7 +228,7 @@ export default function Auth({ onboarding }: any) {
                     </View>
 
                     <TouchableOpacity
-                        className='ml-4 mt-3'
+                        className={keyboardStatus === 'Keyboard Shown' ? 'hidden' : 'ml-4 mt-3'}
                         onPress={() => setMode('signup')}
                     >
                         <Text className='text-center'>New here? <Text className='text-primary-500'>Create an account</Text></Text>
@@ -218,7 +237,7 @@ export default function Auth({ onboarding }: any) {
                     <Spacer height={16} />
 
                     <TouchableOpacity
-                        className='ml-4 mt-3'
+                        className={keyboardStatus === 'Keyboard Shown' ? 'hidden' : 'ml-4 mt-3'}
                         onPress={() => setMode('welcome')}
                     >
                         <Text className='text-center text-primary-500'>Back to welcome screen</Text>
@@ -229,31 +248,31 @@ export default function Auth({ onboarding }: any) {
 
             {mode === 'signup' && (
 
-                <Pageview className='flex justify-space-between h-full gap-6'>
+                <Pageview className='flex justify-space-between h-full'>
                     <View className='flex-1'>
 
                         <Text className='text-3xl font-bold'>Welcome!</Text>
 
                         <Spacer height={64} />
 
+                        <Text className='text-sm font-bold'>E-Mail</Text>
+                        <Spacer height={4} />
                         <Textfield
-                            label={'E-Mail'}
                             onChangeText={(text) => setEmail(text)}
-                            validate={['required', 'email', (value: string | any[]) => value.length > 6]}
-                            validationMessage={['Field is required', 'Email is invalid', 'Password is too short']}
-                            enableErrors
                         />
-                        <View className='flex-row items-center relative'>
+
+                        <Spacer height={16} />
+
+                        <Text className='text-sm font-bold'>Password</Text>
+                        <Spacer height={4} />
+                        <View className='flex flex-row items-center justify-between'>
                             <Textfield
-                                label={'Password'}
+                                className='flex-1'
                                 secureTextEntry={!showPassword}
                                 onChangeText={(text) => setPassword(text)}
-                                validate={['required', (value: string | any[]) => value.length > 6]}
-                                validationMessage={['Field is required', 'Password is too short']}
-                                containerStyle={styles.passwordInput}
                             />
                             <TouchableOpacity
-                                className='ml-4 mt-3'
+                                className='flex-none ml-4'
                                 onPress={() => setShowPassword(!showPassword)}
                             >
                                 <Ionicons name={showPassword ? 'eye-off' : 'eye'} size={24} color="gray" />
@@ -264,7 +283,7 @@ export default function Auth({ onboarding }: any) {
 
                         <Text className='text-gray-500 leading-5'>Minimum 6 characters, and one each: uppercase/lowercase letter, number, special character.</Text>
 
-                        <Spacer height={64} />
+                        <Spacer height={48} />
 
                         <PrimaryButton onPress={() => signUpWithEmail()}>
                             <PrimaryButtonText>Sign up</PrimaryButtonText>
@@ -277,7 +296,7 @@ export default function Auth({ onboarding }: any) {
                     </View>
 
                     <TouchableOpacity
-                        className='ml-4 mt-3'
+                        className={keyboardStatus === 'Keyboard Shown' ? 'hidden' : 'ml-4 mt-3'}
                         onPress={() => setMode('signin')}
                     >
                         <Text className='text-center'>Already have an account? <Text className='text-primary-500'>Sign in</Text></Text>
@@ -286,7 +305,7 @@ export default function Auth({ onboarding }: any) {
                     <Spacer height={16} />
 
                     <TouchableOpacity
-                        className='ml-4 mt-3'
+                        className={keyboardStatus === 'Keyboard Shown' ? 'hidden' : 'ml-4 mt-3'}
                         onPress={() => setMode('welcome')}
                     >
                         <Text className='text-center text-primary-500'>Back to welcome screen</Text>
@@ -337,31 +356,12 @@ export default function Auth({ onboarding }: any) {
 
 
 const styles = StyleSheet.create({
-    container: {
-        marginTop: 40,
-        padding: 16,
-        gap: 16,
-    },
-    passwordContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
+
+
     passwordInput: {
         flex: 1,
     },
-    showPasswordButton: {
-        marginLeft: 10,
-    },
-    card: {
-        padding: 16,
-    },
-    termsText: {
 
-    },
-    requirementText: {
-        fontSize: 14,
-        color: 'gray',
-    },
 })
 
 
