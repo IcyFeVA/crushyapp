@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { Alert, StyleSheet, View, TouchableOpacity, Keyboard } from 'react-native'
 import { supabase } from '@/lib/supabase'
-import { TextField, Text } from 'react-native-ui-lib';
+import { Text } from 'react-native-ui-lib';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Spacer from './Spacer';
