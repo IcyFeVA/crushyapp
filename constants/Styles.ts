@@ -20,5 +20,17 @@ export const defaultStyles = StyleSheet.create({
     radioButtonLabel: {
         fontSize: 16,
         fontFamily: 'BodySemiBold'
-    }
+    },
+    checkboxButton: {
+        flex: 1,
+        borderWidth: 1,
+        borderColor: Colors.light.tertiary,
+        padding: 16,
+        borderRadius: 8,
+        marginBottom: 16
+    },
+    checkboxButtonLabel: {
+        fontSize: 16,
+        fontFamily: 'BodySemiBold'
+    },
 });

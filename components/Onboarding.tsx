@@ -5,8 +5,8 @@ import { Pageview } from '@/components/ui/Containers';
 import Spacer from './Spacer';
 import { FlatList } from 'react-native';
 import { PrimaryButton, PrimaryButtonText, SecondaryButton, SecondaryButtonText } from './ui/Buttons';
-import React, { useRef, useState } from 'react';
-import { View, Card, CardProps, Text, RadioButton } from 'react-native-ui-lib';
+import React, { useEffect, useRef, useState } from 'react';
+import { View, Card, CardProps, Text, RadioButton, Checkbox } from 'react-native-ui-lib';
 import { Textfield } from '@/components/ui/Textfields';
 import { Colors } from '@/constants/Colors';
 import { defaultStyles } from '@/constants/Styles';
@@ -17,9 +17,10 @@ const Onboarding = ({ session }: { session: Session }) => {
     const flatListRef = useRef(null);
 
     const steps = [
-        { key: '1', title: 'Step 1', component: StepOne },
-        { key: '2', title: 'Step 2', component: StepTwo },
-        { key: '3', title: 'Step 3', component: StepThree },
+        { key: '1', title: 'Step 1', component: StepName },
+        { key: '2', title: 'Step 2', component: StepAge },
+        { key: '3', title: 'Step 3', component: StepGender },
+        { key: '4', title: 'Step 4', component: StepPronouns },
     ];
 
     const handleNext = () => {
@@ -70,7 +71,7 @@ const Onboarding = ({ session }: { session: Session }) => {
 
 
 
-const StepOne = () => (
+const StepName = () => (
     <View className='p-6 w-screen'>
         <Text className='text-2xl font-bold'>What is your name?</Text>
         <Spacer height={8} />
@@ -88,7 +89,7 @@ const StepOne = () => (
     </View>
 );
 
-const StepTwo = () => (
+const StepAge = () => (
     <View className='p-6 w-screen'>
         <Text className='text-2xl font-bold'>In what year were you born?</Text>
         <Spacer height={8} />
@@ -111,7 +112,7 @@ const StepTwo = () => (
 );
 
 
-const StepThree = () => {
+const StepGender = () => {
     const [selectedValue, setSelectedValue] = useState('');
 
     const handlePress = (value: string) => {
@@ -153,6 +154,64 @@ const StepThree = () => {
                         labelStyle={defaultStyles.radioButtonLabel}
                         selected={selectedValue === item.key}
                         onPress={() => handlePress(item.key)}
+                    />
+                )}
+                keyExtractor={item => item.key}
+                showsVerticalScrollIndicator={false}
+                bounces={false}
+            />
+        </View >
+    );
+};
+
+const StepPronouns = () => {
+    const [selectedValues, setSelectedValues] = useState([]);
+
+    const handlePress = (value) => {
+        if (selectedValues.includes(value)) {
+            setSelectedValues(selectedValues.filter(item => item !== value));
+        } else {
+            if (selectedValues.length > 1) {
+                return;
+            }
+            setSelectedValues([...selectedValues, value]);
+        }
+    };
+
+    useEffect(() => {
+        console.log('Selected Values:', selectedValues);
+    }, [selectedValues]);
+
+    return (
+        <View className='p-6 w-screen'>
+            <Text className='text-2xl' style={{ fontFamily: 'HeadingBold' }}>What are your pronouns?</Text>
+            <Spacer height={8} />
+            <View>
+                <Text className='text-base' style={{ fontFamily: 'BodyRegular' }}>Choose <Text className='text-base' style={{ fontFamily: 'BodyBold' }}>up to two</Text> pronouns.You will be able to add your own in a future update, if you don't see yours.</Text>
+            </View>
+
+            <Spacer height={48} />
+
+            <FlatList
+                className='py-4'
+                data={[
+                    { key: '1', title: 'he/him' },
+                    { key: '2', title: 'she/her' },
+                    { key: '3', title: 'they/them' },
+                    { key: '4', title: 'ze/zir' },
+                    { key: '5', title: 'xe/xem' },
+                    { key: '6', title: 've/ver' },
+                    { key: '7', title: 'ey/em' },
+                    { key: '99', title: 'other' },
+                ]}
+                showsHorizontalScrollIndicator={false}
+                renderItem={({ item }) => (
+                    <Checkbox
+                        label={item.title}
+                        value={selectedValues.includes(item.key) ? true : false}
+                        onValueChange={() => handlePress(item.key)}
+                        containerStyle={[defaultStyles.checkboxButton, { borderColor: selectedValues.includes(item.key) ? Colors.light.accent : Colors.light.tertiary }]}
+                        labelStyle={defaultStyles.checkboxButtonLabel}
                     />
                 )}
                 keyExtractor={item => item.key}

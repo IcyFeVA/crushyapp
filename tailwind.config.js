@@ -16,8 +16,8 @@ module.exports = {
       gray: colors.slate,
     },
     // fontFamily: {
-    //   'heading': ['ui-sans-serif', 'system-ui', ...],
-    //   'body': ['ui-serif', 'Georgia', ...],
+    //   'heading': ['HeadingBold', 'system-ui', ...],
+    //   'body': ['Bodyregular', 'Georgia', ...],
     // }
   },
   plugins: [],
