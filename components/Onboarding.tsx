@@ -1,4 +1,4 @@
-import { Image, StyleSheet, Button, View } from 'react-native';
+import { Image, StyleSheet, Button } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Session } from '@supabase/supabase-js';
 import { Pageview } from '@/components/ui/Containers';
@@ -6,7 +6,7 @@ import Spacer from './Spacer';
 import { FlatList } from 'react-native';
 import { PrimaryButton, PrimaryButtonText, SecondaryButton, SecondaryButtonText } from './ui/Buttons';
 import React, { useRef, useState } from 'react';
-import { Text } from 'react-native-ui-lib';
+import { Colors, View, Card, CardProps, Text, RadioButton } from 'react-native-ui-lib';
 import { Textfield } from '@/components/ui/Textfields';
 
 
@@ -70,15 +70,15 @@ const Onboarding = ({ session }: { session: Session }) => {
 
 const StepOne = () => (
     <View className='p-6 w-screen'>
-        <Text className='text-xl font-bold'>What is your name?</Text>
+        <Text className='text-2xl font-bold'>What is your name?</Text>
         <Spacer height={8} />
         <View className=''>
-            <Text className='text-md'>This will be visible to all users. You can also choose a nickname if you would like.</Text>
+            <Text className='text-lg'>This will be visible to all users. You can also choose a nickname if you would like.</Text>
         </View>
 
         <Spacer height={64} />
 
-        <Text className='text-sm font-bold'>Firstname or Nickname</Text>
+        <Text className='text-md font-bold'>Firstname or Nickname</Text>
         <Spacer height={4} />
         <Textfield
         // onChangeText={(text) => setEmail(text)}
@@ -88,15 +88,77 @@ const StepOne = () => (
 
 const StepTwo = () => (
     <View className='p-6 w-screen'>
-        <Text>What is your name? sadf asdf asdf asdfasdfasdf dasfa sdfasd fasdf asdf s as</Text>
+        <Text className='text-2xl font-bold'>In what year were you born?</Text>
+        <Spacer height={8} />
+        <View className=''>
+            <Text className='text-lg'>You can always change your settings later.</Text>
+        </View>
+
+        <Spacer height={64} />
+
+        <Text className='text-md font-bold'>Year of birth</Text>
+        <Spacer height={4} />
+        <Textfield
+            className='w-28 text-center'
+            placeholder='YYYY'
+            keyboardType='numeric'
+            maxLength={4}
+        // onChangeText={(text) => setEmail(text)}
+        />
     </View>
 );
 
-const StepThree = () => (
-    <View className='p-6 w-screen'>
-        <Text>What is your name? sadf asdf asdf asdfasdfasdf dasfa sdfasd fasdf asdf s as</Text>
-    </View>
-);
+
+const StepThree = () => {
+    const [selectedValue, setSelectedValue] = useState('');
+
+    const handlePress = (value: string) => {
+        setSelectedValue(value);
+        console.log('Selected Value:', value);
+    };
+
+    return (
+        <View className='p-6 w-screen'>
+            <Text className='text-2xl font-bold'>How do you identify in terms of gender?</Text>
+            <Spacer height={8} />
+            <View>
+                <Text className='text-lg'>We strive for inclusivity. If you don't see a gender that fits you, please let us know.</Text>
+            </View>
+
+            <Spacer height={48} />
+
+            <FlatList
+                className='py-4'
+                data={[
+                    { key: '1', title: 'Male' },
+                    { key: '2', title: 'Female' },
+                    { key: '3', title: 'Male (Transgender)' },
+                    { key: '4', title: 'Female (Transgender)' },
+                    { key: '5', title: 'Non-binary' },
+                    { key: '6', title: 'Genderqueer' },
+                    { key: '7', title: 'Genderfluid' },
+                    { key: '8', title: 'Agender' },
+                    { key: '9', title: 'Two-Spirit' },
+                ]}
+                showsHorizontalScrollIndicator={false}
+                renderItem={({ item }) => (
+                    <RadioButton
+                        label={item.title}
+                        size={20}
+                        contentOnLeft
+                        containerStyle={{ flex: 1, justifyContent: 'space-between', borderWidth: 1, borderColor: 'lightgray', padding: 16, borderRadius: 8, marginBottom: 16 }}
+                        labelStyle={{ fontSize: 16, fontWeight: 'bold' }}
+                        selected={selectedValue === item.key}
+                        onPress={() => handlePress(item.key)}
+                    />
+                )}
+                keyExtractor={item => item.key}
+            />
+        </View>
+    );
+};
+
+
 
 const styles = StyleSheet.create({
     container: {
