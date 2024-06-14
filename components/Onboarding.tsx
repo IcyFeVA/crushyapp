@@ -6,8 +6,10 @@ import Spacer from './Spacer';
 import { FlatList } from 'react-native';
 import { PrimaryButton, PrimaryButtonText, SecondaryButton, SecondaryButtonText } from './ui/Buttons';
 import React, { useRef, useState } from 'react';
-import { Colors, View, Card, CardProps, Text, RadioButton } from 'react-native-ui-lib';
+import { View, Card, CardProps, Text, RadioButton } from 'react-native-ui-lib';
 import { Textfield } from '@/components/ui/Textfields';
+import { Colors } from '@/constants/Colors';
+import { defaultStyles } from '@/constants/Styles';
 
 
 const Onboarding = ({ session }: { session: Session }) => {
@@ -73,7 +75,7 @@ const StepOne = () => (
         <Text className='text-2xl font-bold'>What is your name?</Text>
         <Spacer height={8} />
         <View className=''>
-            <Text className='text-lg'>This will be visible to all users. You can also choose a nickname if you would like.</Text>
+            <Text className='text-base'>This will be visible to all users. You can also choose a nickname if you would like.</Text>
         </View>
 
         <Spacer height={64} />
@@ -91,7 +93,7 @@ const StepTwo = () => (
         <Text className='text-2xl font-bold'>In what year were you born?</Text>
         <Spacer height={8} />
         <View className=''>
-            <Text className='text-lg'>You can always change your settings later.</Text>
+            <Text className='text-base'>You can always change your settings later.</Text>
         </View>
 
         <Spacer height={64} />
@@ -119,10 +121,10 @@ const StepThree = () => {
 
     return (
         <View className='p-6 w-screen'>
-            <Text className='text-2xl font-bold'>How do you identify in terms of gender?</Text>
+            <Text className='text-2xl' style={{ fontFamily: 'HeadingBold' }}>How do you identify in terms of gender?</Text>
             <Spacer height={8} />
             <View>
-                <Text className='text-lg'>We strive for inclusivity. If you don't see a gender that fits you, please let us know.</Text>
+                <Text className='text-base' style={{ fontFamily: 'BodyRegular' }}>We strive for inclusivity. If you don't see a gender that fits you, please let us know.</Text>
             </View>
 
             <Spacer height={48} />
@@ -145,16 +147,19 @@ const StepThree = () => {
                     <RadioButton
                         label={item.title}
                         size={20}
+                        color={selectedValue === item.key ? Colors.light.accent : Colors.light.tertiary}
                         contentOnLeft
-                        containerStyle={{ flex: 1, justifyContent: 'space-between', borderWidth: 1, borderColor: 'lightgray', padding: 16, borderRadius: 8, marginBottom: 16 }}
-                        labelStyle={{ fontSize: 16, fontWeight: 'bold' }}
+                        containerStyle={[defaultStyles.radioButton, { borderColor: selectedValue === item.key ? Colors.light.accent : Colors.light.tertiary }]}
+                        labelStyle={defaultStyles.radioButtonLabel}
                         selected={selectedValue === item.key}
                         onPress={() => handlePress(item.key)}
                     />
                 )}
                 keyExtractor={item => item.key}
+                showsVerticalScrollIndicator={false}
+                bounces={false}
             />
-        </View>
+        </View >
     );
 };
 

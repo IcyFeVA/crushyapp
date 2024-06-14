@@ -15,6 +15,10 @@ module.exports = {
       yellow: colors.amber,
       gray: colors.slate,
     },
+    // fontFamily: {
+    //   'heading': ['ui-sans-serif', 'system-ui', ...],
+    //   'body': ['ui-serif', 'Georgia', ...],
+    // }
   },
   plugins: [],
 }

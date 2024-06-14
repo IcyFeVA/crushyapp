@@ -8,4 +8,17 @@ export const defaultStyles = StyleSheet.create({
         shadowOpacity: 0.2,
         shadowRadius: 3,
     },
+    radioButton: {
+        flex: 1,
+        justifyContent: 'space-between',
+        borderWidth: 1,
+        borderColor: Colors.light.tertiary,
+        padding: 16,
+        borderRadius: 8,
+        marginBottom: 16
+    },
+    radioButtonLabel: {
+        fontSize: 16,
+        fontFamily: 'BodySemiBold'
+    }
 });
