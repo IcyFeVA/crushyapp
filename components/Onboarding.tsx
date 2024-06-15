@@ -23,7 +23,9 @@ const Onboarding = ({ toastConfig, session }: { toastConfig: any, session: Sessi
         { key: '2', title: 'Step 2', component: StepAge },
         { key: '3', title: 'Step 3', component: StepGender },
         { key: '4', title: 'Step 4', component: StepPronouns },
-        { key: '5', title: 'Step 5', component: StepInterests },
+        { key: '6', title: 'Step 6', component: StepRelationship },
+        { key: '7', title: 'Step 7', component: StepGenderPreferences },
+        { key: '8', title: 'Step 8', component: StepInterests },
     ];
 
 
@@ -120,7 +122,6 @@ const StepAge = () => (
     </View>
 );
 
-
 const StepGender = () => {
     const [selectedValue, setSelectedValue] = useState('');
 
@@ -157,9 +158,9 @@ const StepGender = () => {
                     <RadioButton
                         label={item.title}
                         size={20}
-                        color={selectedValue === item.key ? Colors.light.primary : Colors.light.tertiary}
+                        color={selectedValue === item.key ? Colors.light.text : Colors.light.tertiary}
                         contentOnLeft
-                        containerStyle={[defaultStyles.radioButton, { borderColor: selectedValue === item.key ? Colors.light.primary : Colors.light.tertiary }]}
+                        containerStyle={[defaultStyles.radioButton, { borderColor: selectedValue === item.key ? Colors.light.text : Colors.light.tertiary }]}
                         labelStyle={defaultStyles.radioButtonLabel}
                         selected={selectedValue === item.key}
                         onPress={() => handlePress(item.key)}
@@ -222,10 +223,10 @@ const StepPronouns = () => {
                 renderItem={({ item }) => (
                     <Pressable onPress={() => handlePress(item.key)}>
                         <Checkbox
-                            color={selectedValues.includes(item.key) ? Colors.light.primary : Colors.light.tertiary}
+                            color={selectedValues.includes(item.key) ? Colors.light.text : Colors.light.tertiary}
                             label={item.title}
                             value={selectedValues.includes(item.key) ? true : false}
-                            containerStyle={[defaultStyles.checkboxButton, { borderColor: selectedValues.includes(item.key) ? Colors.light.primary : Colors.light.tertiary }]}
+                            containerStyle={[defaultStyles.checkboxButton, { borderColor: selectedValues.includes(item.key) ? Colors.light.text : Colors.light.tertiary }]}
                             labelStyle={defaultStyles.checkboxButtonLabel}
                         />
                     </Pressable>
@@ -238,6 +239,97 @@ const StepPronouns = () => {
     );
 };
 
+const StepRelationship = () => {
+    const [selectedValue, setSelectedValue] = useState('');
+
+    const handlePress = (value: string) => {
+        setSelectedValue(value);
+        console.log('Selected Value:', value);
+    };
+
+    return (
+        <View className='p-6 w-screen'>
+            <Text className='text-2xl' style={{ fontFamily: 'HeadingBold' }}>What are you looking for right now?</Text>
+            <Spacer height={8} />
+            <View>
+                <Text className='text-base' style={{ fontFamily: 'BodyRegular' }}>You can always change your settings later.</Text>
+            </View>
+
+            <Spacer height={48} />
+
+            <FlatList
+                className='py-4'
+                data={[
+                    { key: '1', title: 'Relationship' },
+                    { key: '2', title: 'Friend' },
+                    { key: '3', title: 'Hookup' },
+                ]}
+                showsHorizontalScrollIndicator={false}
+                renderItem={({ item }) => (
+                    <RadioButton
+                        label={item.title}
+                        size={20}
+                        color={selectedValue === item.key ? Colors.light.text : Colors.light.tertiary}
+                        contentOnLeft
+                        containerStyle={[defaultStyles.radioButton, { borderColor: selectedValue === item.key ? Colors.light.text : Colors.light.tertiary }]}
+                        labelStyle={defaultStyles.radioButtonLabel}
+                        selected={selectedValue === item.key}
+                        onPress={() => handlePress(item.key)}
+                    />
+                )}
+                keyExtractor={item => item.key}
+                showsVerticalScrollIndicator={false}
+                bounces={false}
+            />
+        </View >
+    );
+};
+
+const StepGenderPreferences = () => {
+    const [selectedValue, setSelectedValue] = useState('');
+
+    const handlePress = (value: string) => {
+        setSelectedValue(value);
+        console.log('Selected Value:', value);
+    };
+
+    return (
+        <View className='p-6 w-screen'>
+            <Text className='text-2xl' style={{ fontFamily: 'HeadingBold' }}>What are you looking for right now?</Text>
+            <Spacer height={8} />
+            <View>
+                <Text className='text-base' style={{ fontFamily: 'BodyRegular' }}>You can always change your settings later.</Text>
+            </View>
+
+            <Spacer height={48} />
+
+            <FlatList
+                className='py-4'
+                data={[
+                    { key: '1', title: 'Female' },
+                    { key: '2', title: 'Male' },
+                    { key: '3', title: 'Both' },
+                ]}
+                showsHorizontalScrollIndicator={false}
+                renderItem={({ item }) => (
+                    <RadioButton
+                        label={item.title}
+                        size={20}
+                        color={selectedValue === item.key ? Colors.light.text : Colors.light.tertiary}
+                        contentOnLeft
+                        containerStyle={[defaultStyles.radioButton, { borderColor: selectedValue === item.key ? Colors.light.text : Colors.light.tertiary }]}
+                        labelStyle={defaultStyles.radioButtonLabel}
+                        selected={selectedValue === item.key}
+                        onPress={() => handlePress(item.key)}
+                    />
+                )}
+                keyExtractor={item => item.key}
+                showsVerticalScrollIndicator={false}
+                bounces={false}
+            />
+        </View >
+    );
+};
 
 const StepInterests = () => {
     const [selectedValues, setSelectedValues] = useState<string[]>([]);
@@ -257,10 +349,10 @@ const StepInterests = () => {
     const renderItem = ({ item }) => (
         // <Pressable onPress={() => handlePress(item.value)} >
         <Checkbox
-            color={selectedValues.includes(item.value) ? Colors.light.primary : Colors.light.tertiary}
+            color={selectedValues.includes(item.value) ? Colors.light.text : Colors.light.tertiary}
             label={item.label}
             value={selectedValues.includes(item.value)}
-            containerStyle={[defaultStyles.checkboxButton, { borderColor: selectedValues.includes(item.value) ? Colors.light.primary : Colors.light.tertiary }]}
+            containerStyle={[defaultStyles.checkboxButton]}
             labelStyle={defaultStyles.checkboxButtonLabel}
             onValueChange={() => handlePress(item.value)}
         />
@@ -269,13 +361,9 @@ const StepInterests = () => {
 
     const ITEM_HEIGHT = 75;
 
-    const renderSectionHeader = () => (
-        <Text className='text-base' style={{ fontFamily: 'BodyBold' }}>Select 3 or more</Text>
-    )
-
     return (
         <View className='p-6 w-screen'>
-            <Text className='text-2xl' style={{ fontFamily: 'HeadingBold' }}>Interests</Text>
+            <Text className='text-2xl' style={{ fontFamily: 'HeadingBold' }}>Interests ({selectedValues.length})</Text>
             <Spacer height={8} />
             <View>
                 <Text className='text-base' style={{ fontFamily: 'BodyRegular' }}>
