@@ -15,6 +15,7 @@ import Auth from '@/components/Auth';
 import Onboarding from '@/components/Onboarding';
 import Toast from 'react-native-toast-message';
 import { Colors } from '@/constants/Colors';
+import { create } from 'zustand';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -57,6 +58,10 @@ export default function RootLayout() {
             </View>
         )
     };
+
+
+
+
 
     return (
         <RootNav toastconfig={toastConfig} session={session} showOnboarding={showOnboarding} />

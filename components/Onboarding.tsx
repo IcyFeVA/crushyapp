@@ -13,8 +13,28 @@ import { defaultStyles } from '@/constants/Styles';
 import Toast, { ToastRef } from 'react-native-toast-message';
 import hobbiesInterests from '@/constants/Interests';
 import BigList from "react-native-big-list"
+import { create } from 'zustand';
 
 const screenWidth = Dimensions.get('window').width;
+
+const useOnboardingStore = create((set) => ({
+    name: null,
+    age: null,
+    gender: null,
+    pronouns: null,
+    relationship: null,
+    genderPreferences: null,
+    interests: [],
+    addName: () => set((state: { name: string; }) => ({ name: state.name })),
+    addAge: () => set((state: { age: string; }) => ({ age: state.age })),
+    addGender: () => set((state: { gender: string; }) => ({ gender: state.gender })),
+    addPronouns: () => set((state: { pronouns: string; }) => ({ pronouns: state.pronouns })),
+    addRelationship: () => set((state: { relationship: string; }) => ({ relationship: state.relationship })),
+    addGenderPreferences: () => set((state: { genderPreferences: string; }) => ({ genderPreferences: state.genderPreferences })),
+    addInterests: () => set((state: { interests: object; }) => ({ interests: state.interests })),
+    addBears: () => set((state: { bears: number; }) => ({ bears: state.bears + 1 })),
+    removeAllBears: () => set({ bears: 0 }),
+}))
 
 const Onboarding = ({ toastConfig, session }: { toastConfig: any, session: Session }) => {
     const [currentStep, setCurrentStep] = useState(0);
@@ -49,6 +69,8 @@ const Onboarding = ({ toastConfig, session }: { toastConfig: any, session: Sessi
             }
         }
     };
+
+
 
     return (
         <SafeAreaView>
@@ -123,7 +145,7 @@ const StepName = () => {
             <Text style={defaultStyles.inputLabel}>Firstname or Nickname</Text>
             <Spacer height={4} />
             <Textfield
-                onChangeText={(text) => setName(text)}
+                onChangeText={(text) => useOnboardingStore.setState({ name: text })}
             />
         </View>
     )
@@ -152,7 +174,7 @@ const StepAge = () => (
             placeholder='YYYY'
             keyboardType='numeric'
             maxLength={4}
-        // onChangeText={(text) => setEmail(text)}
+            onChangeText={(text) => useOnboardingStore.setState({ age: text })}
         />
     </View>
 );
@@ -162,7 +184,8 @@ const StepGender = () => {
 
     const handlePress = (value: string) => {
         setSelectedValue(value);
-        console.log('Selected Value:', value);
+        useOnboardingStore.setState({ gender: value })
+        console.log('Gender:', value);
     };
 
     return (
@@ -235,7 +258,8 @@ const StepPronouns = () => {
     };
 
     useEffect(() => {
-        console.log('Selected Values:', selectedValues);
+        console.log('Pronouns:', selectedValues);
+        useOnboardingStore.setState({ pronouns: selectedValues })
     }, [selectedValues]);
 
     return (
@@ -275,6 +299,7 @@ const StepPronouns = () => {
                             value={selectedValues.includes(item.key) ? true : false}
                             containerStyle={[defaultStyles.checkboxButton, { borderColor: selectedValues.includes(item.key) ? Colors.light.text : Colors.light.tertiary }]}
                             labelStyle={defaultStyles.checkboxButtonLabel}
+                            onValueChange={() => handlePress(item.key)}
                         />
                     </Pressable>
                 )}
@@ -291,7 +316,8 @@ const StepRelationship = () => {
 
     const handlePress = (value: string) => {
         setSelectedValue(value);
-        console.log('Selected Value:', value);
+        useOnboardingStore.setState({ relationship: value })
+        console.log('Relationship:', value);
     };
 
     return (
@@ -343,7 +369,8 @@ const StepGenderPreferences = () => {
 
     const handlePress = (value: string) => {
         setSelectedValue(value);
-        console.log('Selected Value:', value);
+        useOnboardingStore.setState({ genderPreferences: value })
+        console.log('Gender Preferences:', value);
     };
 
     return (
@@ -402,10 +429,12 @@ const StepInterests = () => {
     };
 
     useEffect(() => {
-        console.log('Selected Values:', selectedValues);
+        useOnboardingStore.setState({ interests: selectedValues })
+        console.log('Interests:', selectedValues);
     }, [selectedValues]);
 
     const renderItem = ({ item }: { item: { label: string, value: string } }) => (
+        // TODO: Pressable adds weird padding
         // <Pressable onPress={() => handlePress(item.value)} >
         <Checkbox
             color={selectedValues.includes(item.value) ? Colors.light.text : Colors.light.tertiary}
