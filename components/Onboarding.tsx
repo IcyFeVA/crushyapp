@@ -1,4 +1,4 @@
-import { Image, StyleSheet, Button } from 'react-native';
+import { Image, StyleSheet, Button, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Session } from '@supabase/supabase-js';
 import { Pageview } from '@/components/ui/Containers';
@@ -148,9 +148,9 @@ const StepGender = () => {
                     <RadioButton
                         label={item.title}
                         size={20}
-                        color={selectedValue === item.key ? Colors.light.accent : Colors.light.tertiary}
+                        color={selectedValue === item.key ? Colors.light.primary : Colors.light.tertiary}
                         contentOnLeft
-                        containerStyle={[defaultStyles.radioButton, { borderColor: selectedValue === item.key ? Colors.light.accent : Colors.light.tertiary }]}
+                        containerStyle={[defaultStyles.radioButton, { borderColor: selectedValue === item.key ? Colors.light.primary : Colors.light.tertiary }]}
                         labelStyle={defaultStyles.radioButtonLabel}
                         selected={selectedValue === item.key}
                         onPress={() => handlePress(item.key)}
@@ -165,9 +165,9 @@ const StepGender = () => {
 };
 
 const StepPronouns = () => {
-    const [selectedValues, setSelectedValues] = useState([]);
+    const [selectedValues, setSelectedValues] = useState<string[]>([]);
 
-    const handlePress = (value) => {
+    const handlePress = (value: string) => {
         if (selectedValues.includes(value)) {
             setSelectedValues(selectedValues.filter(item => item !== value));
         } else {
@@ -206,13 +206,15 @@ const StepPronouns = () => {
                 ]}
                 showsHorizontalScrollIndicator={false}
                 renderItem={({ item }) => (
-                    <Checkbox
-                        label={item.title}
-                        value={selectedValues.includes(item.key) ? true : false}
-                        onValueChange={() => handlePress(item.key)}
-                        containerStyle={[defaultStyles.checkboxButton, { borderColor: selectedValues.includes(item.key) ? Colors.light.accent : Colors.light.tertiary }]}
-                        labelStyle={defaultStyles.checkboxButtonLabel}
-                    />
+                    <Pressable onPress={() => handlePress(item.key)}>
+                        <Checkbox
+                            color={selectedValues.includes(item.key) ? Colors.light.primary : Colors.light.tertiary}
+                            label={item.title}
+                            value={selectedValues.includes(item.key) ? true : false}
+                            containerStyle={[defaultStyles.checkboxButton, { borderColor: selectedValues.includes(item.key) ? Colors.light.primary : Colors.light.tertiary }]}
+                            labelStyle={defaultStyles.checkboxButtonLabel}
+                        />
+                    </Pressable>
                 )}
                 keyExtractor={item => item.key}
                 showsVerticalScrollIndicator={false}
