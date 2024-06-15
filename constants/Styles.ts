@@ -5,12 +5,14 @@ export const defaultStyles = StyleSheet.create({
     body: {
         fontFamily: 'BodyRegular',
         color: Colors.light.text,
-        fontSize: 16
+        fontSize: 16,
+        lineHeight: 24
     },
     bodyBold: {
         fontFamily: 'BodyBold',
         color: Colors.light.text,
-        fontSize: 16
+        fontSize: 16,
+        lineHeight: 24
     },
     buttonShadow: {
         shadowColor: '#171717',

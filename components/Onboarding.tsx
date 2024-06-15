@@ -246,7 +246,7 @@ const StepPronouns = () => {
 
             <Spacer height={48} />
 
-            <Text style={defaultStyles.h2}>What are your pronouns?</Text>
+            <Text style={defaultStyles.h2}>What are your pronouns? ({selectedValues.length})</Text>
             <Spacer height={8} />
             <View>
                 <Text style={defaultStyles.body}>Choose <Text style={defaultStyles.bodyBold}>up to two</Text> pronouns.You will be able to add your own in a future update, if you don't see yours.</Text>
