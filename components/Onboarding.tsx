@@ -18,7 +18,7 @@ import { create } from 'zustand';
 const screenWidth = Dimensions.get('window').width;
 
 const useOnboardingStore = create((set) => ({
-    name: null,
+    name: '',
     age: null,
     gender: null,
     pronouns: null,
@@ -36,9 +36,13 @@ const useOnboardingStore = create((set) => ({
     removeAllBears: () => set({ bears: 0 }),
 }))
 
+
+
 const Onboarding = ({ toastConfig, session }: { toastConfig: any, session: Session }) => {
     const [currentStep, setCurrentStep] = useState(0);
     const flatListRef = useRef(null);
+
+    const { name, age, gender, pronouns, relationship, genderPreferences, interests } = useOnboardingStore((state) => state);
 
     const steps: object[] = [
         { key: '1', title: 'Step 1', component: StepName },
@@ -52,7 +56,85 @@ const Onboarding = ({ toastConfig, session }: { toastConfig: any, session: Sessi
 
 
 
-    const handleNext = () => {
+    function handleNext() {
+
+        console.log('currentStep:', currentStep);
+
+        if (currentStep === 0) {
+            if (name.length < 1) {
+                Toast.show({
+                    type: 'default',
+                    text1: '👋 Hey',
+                    text2: 'You can only select two pronouns',
+                });
+                return
+            }
+        }
+        if (currentStep === 1) {
+            if (age === null || parseInt(age) > 2006) {
+                Toast.show({
+                    type: 'default',
+                    text1: '👋 Check your age',
+                    text2: 'You have to be 18 or older to continue',
+                });
+                return
+            }
+        }
+        if (currentStep === 2) {
+            if (gender === null) {
+                Toast.show({
+                    type: 'default',
+                    text1: '👋 Hey',
+                    text2: 'Please select your gender',
+                });
+                return
+            }
+        }
+
+        if (currentStep === 3) {
+            if (pronouns === null || pronouns < 1) {
+                Toast.show({
+                    type: 'default',
+                    text1: '👋 Hey',
+                    text2: 'Please select at least one pronoun',
+                });
+                return
+            }
+        }
+
+        if (currentStep === 4) {
+            if (relationship === null || relationship < 1) {
+                Toast.show({
+                    type: 'default',
+                    text1: '👋 Hey',
+                    text2: 'Please select what you are looking for',
+                });
+                return
+            }
+        }
+
+        if (currentStep === 5) {
+            if (genderPreferences === null || genderPreferences < 1) {
+                Toast.show({
+                    type: 'default',
+                    text1: '👋 Hey',
+                    text2: 'Please select your gender preferences',
+                });
+                return
+            }
+        }
+
+        if (currentStep === 6) {
+            if (interests.length === 0) {
+                Toast.show({
+                    type: 'default',
+                    text1: '👋 Hey',
+                    text2: 'Please select at least one hobby or interest',
+                });
+                return
+            }
+        }
+
         if (currentStep < steps.length - 1) {
             setCurrentStep(currentStep + 1);
             if (flatListRef.current) {
@@ -100,7 +182,7 @@ const Onboarding = ({ toastConfig, session }: { toastConfig: any, session: Sessi
                             <PrimaryButtonText>Next</PrimaryButtonText>
                         </PrimaryButton>
                     ) : (
-                        <PrimaryButton onPress={() => console.log('Form Submitted')}>
+                        <PrimaryButton onPress={handleNext}>
                             <PrimaryButtonText>Done</PrimaryButtonText>
                         </PrimaryButton>
                     )}
