@@ -8,11 +8,13 @@ import { useColorScheme } from 'react-native';
 import { useAuth } from '@/hooks/useAuth';
 import { useProfile } from '@/hooks/useProfile';
 import { Redirect, Stack, router, useRouter } from 'expo-router';
-import { View } from 'react-native';
+import { View, Text } from 'react-native-ui-lib';
 import { PrimaryButton, PrimaryButtonText } from '@/components/ui/Buttons';
 import { ThemedText } from '@/components/ThemedText';
 import Auth from '@/components/Auth';
 import Onboarding from '@/components/Onboarding';
+import Toast from 'react-native-toast-message';
+import { Colors } from '@/constants/Colors';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -47,17 +49,33 @@ export default function RootLayout() {
         return null;
     }
 
-
+    const toastConfig = {
+        default: ({ text1, text2, props }) => (
+            <View style={{ display: 'flex', justifyContent: 'center', width: '94%', backgroundColor: Colors.light.accent, borderRadius: 8, padding: 16 }}>
+                <Text style={{ fontFamily: 'HeadingBold', color: 'white' }}>{text1}</Text>
+                <Text style={{ fontFamily: 'BodyRegular', color: 'white' }}>{text2}</Text>
+            </View>
+        )
+    };
 
     return (
-        <RootNav session={session} showOnboarding={showOnboarding} />
+        <RootNav toastconfig={toastConfig} session={session} showOnboarding={showOnboarding} />
     );
 }
+
+// const showToast = () => {
+//     Toast.show({
+//         type: 'warning',
+//         text1: 'Max 2 pronouns',
+//         text2: 'You can only select up to two pronouns 👋'
+//     });
+// };
+
 
 
 function RootNav(props: any) {
     if (props.session && props.showOnboarding === true) {
-        return <Onboarding session={props.session} />
+        return <Onboarding toastConfig={props.toastconfig} session={props.session} />
     } else if (props.session && props.showOnboarding === false) {
         return (
             <Stack>

@@ -10,9 +10,10 @@ import { View, Card, CardProps, Text, RadioButton, Checkbox } from 'react-native
 import { Textfield } from '@/components/ui/Textfields';
 import { Colors } from '@/constants/Colors';
 import { defaultStyles } from '@/constants/Styles';
+import Toast, { BaseToast, ErrorToast } from 'react-native-toast-message';
 
 
-const Onboarding = ({ session }: { session: Session }) => {
+const Onboarding = ({ toastConfig, session }: { toastConfig: any, session: Session }) => {
     const [currentStep, setCurrentStep] = useState(0);
     const flatListRef = useRef(null);
 
@@ -22,6 +23,8 @@ const Onboarding = ({ session }: { session: Session }) => {
         { key: '3', title: 'Step 3', component: StepGender },
         { key: '4', title: 'Step 4', component: StepPronouns },
     ];
+
+
 
     const handleNext = () => {
         if (currentStep < steps.length - 1) {
@@ -64,10 +67,14 @@ const Onboarding = ({ session }: { session: Session }) => {
                         <Button title="Done" onPress={() => console.log('Form Submitted')} />
                     )}
                 </View>
+                <Toast config={toastConfig} ref={(ref) => Toast.setRef(ref)} />
             </View>
         </SafeAreaView>
     );
 };
+
+
+
 
 
 
@@ -172,6 +179,11 @@ const StepPronouns = () => {
             setSelectedValues(selectedValues.filter(item => item !== value));
         } else {
             if (selectedValues.length > 1) {
+                Toast.show({
+                    type: 'default',
+                    text1: '👋 Info',
+                    text2: 'You can only select up to two pronouns.',
+                });
                 return;
             }
             setSelectedValues([...selectedValues, value]);
