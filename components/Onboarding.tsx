@@ -5,13 +5,14 @@ import { Pageview } from '@/components/ui/Containers';
 import Spacer from './Spacer';
 import { FlatList } from 'react-native';
 import { PrimaryButton, PrimaryButtonText, SecondaryButton, SecondaryButtonText } from './ui/Buttons';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { View, Card, CardProps, Text, RadioButton, Checkbox } from 'react-native-ui-lib';
 import { Textfield } from '@/components/ui/Textfields';
 import { Colors } from '@/constants/Colors';
 import { defaultStyles } from '@/constants/Styles';
 import Toast, { ToastRef } from 'react-native-toast-message';
-
+import hobbiesInterests from '@/constants/Interests';
+import BigList from "react-native-big-list"
 
 const Onboarding = ({ toastConfig, session }: { toastConfig: any, session: Session }) => {
     const [currentStep, setCurrentStep] = useState(0);
@@ -22,6 +23,7 @@ const Onboarding = ({ toastConfig, session }: { toastConfig: any, session: Sessi
         { key: '2', title: 'Step 2', component: StepAge },
         { key: '3', title: 'Step 3', component: StepGender },
         { key: '4', title: 'Step 4', component: StepPronouns },
+        { key: '5', title: 'Step 5', component: StepInterests },
     ];
 
 
@@ -67,7 +69,7 @@ const Onboarding = ({ toastConfig, session }: { toastConfig: any, session: Sessi
                         <Button title="Done" onPress={() => console.log('Form Submitted')} />
                     )}
                 </View>
-                <Toast config={toastConfig} ref={(ref: ToastRef) => Toast.setRef(ref)} />
+                <Toast config={toastConfig} />
             </View>
         </SafeAreaView>
     );
@@ -233,6 +235,95 @@ const StepPronouns = () => {
                 bounces={false}
             />
         </View >
+    );
+};
+
+
+const StepInterests = () => {
+    const [selectedValues, setSelectedValues] = useState<string[]>([]);
+
+    const handlePress = (value: string) => {
+        if (selectedValues.includes(value)) {
+            setSelectedValues(selectedValues.filter(item => item !== value));
+        } else {
+            setSelectedValues([...selectedValues, value]);
+        }
+    };
+
+    useEffect(() => {
+        console.log('Selected Values:', selectedValues);
+    }, [selectedValues]);
+
+    const renderItem = ({ item }) => (
+        // <Pressable onPress={() => handlePress(item.value)} >
+        <Checkbox
+            color={selectedValues.includes(item.value) ? Colors.light.primary : Colors.light.tertiary}
+            label={item.label}
+            value={selectedValues.includes(item.value)}
+            containerStyle={[defaultStyles.checkboxButton, { borderColor: selectedValues.includes(item.value) ? Colors.light.primary : Colors.light.tertiary }]}
+            labelStyle={defaultStyles.checkboxButtonLabel}
+            onValueChange={() => handlePress(item.value)}
+        />
+        // </Pressable >
+    );
+
+    const ITEM_HEIGHT = 75;
+
+    const renderSectionHeader = () => (
+        <Text className='text-base' style={{ fontFamily: 'BodyBold' }}>Select 3 or more</Text>
+    )
+
+    return (
+        <View className='p-6 w-screen'>
+            <Text className='text-2xl' style={{ fontFamily: 'HeadingBold' }}>Interests</Text>
+            <Spacer height={8} />
+            <View>
+                <Text className='text-base' style={{ fontFamily: 'BodyRegular' }}>
+                    This helps us find people with similar interests
+                </Text>
+            </View>
+
+            <Spacer height={48} />
+
+            <BigList
+                // data={hobbiesInterests}
+                sections={hobbiesInterests}
+                renderItem={renderItem}
+                renderSectionHeader={(section) => {
+                    const categories = [
+                        "Outdoor Activities",
+                        "Sports & Fitness",
+                        "Creative Arts",
+                        "Entertainment & Media",
+                        "Culinary Interests",
+                        "Social Activities",
+                        "Tech & Science",
+                        "Intellectual Pursuits",
+                        "Nature & Animals",
+                        "Miscellaneous"
+                    ];
+                    return (
+                        <View style={{ backgroundColor: Colors.light.white }}>
+                            <Text style={{ fontFamily: 'HeadingBold', fontSize: 20, color: Colors.light.accent }}>{categories[section]}</Text>
+                        </View>
+                    )
+                }}
+                keyExtractor={(item) => item.value}
+
+                // ListHeaderComponent={`renderHeader`} // Replaceable with `renderHeader`
+                // ListFooterComponent={<Spacer height={48} />}
+                // ListEmptyComponent={`renderEmpty`} // Replaceable with `renderEmpty`
+
+                getItemLayout={(data, index) => ({
+                    length: ITEM_HEIGHT,
+                    offset: ITEM_HEIGHT * index,
+                    index,
+                })} // Replaceable with `itemHeight={ITEM_HEIGHT}`
+                headerHeight={0} // Default 0, need to specify the header height
+                footerHeight={48} // Default 0, need to specify the foorer height
+                sectionHeaderHeight={48}
+            />
+        </View>
     );
 };
 

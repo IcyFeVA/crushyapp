@@ -27,7 +27,7 @@ export const defaultStyles = StyleSheet.create({
         borderColor: Colors.light.tertiary,
         padding: 16,
         borderRadius: 8,
-        marginBottom: 16
+        marginBottom: 16,
     },
     checkboxButtonLabel: {
         fontSize: 16,
