@@ -8,6 +8,8 @@ const tintColorDark = '#fff';
 
 export const Colors = {
   light: {
+    white: '#FFFFFF',
+    black: '#000000',
     text: '#341D1D',
     textSecondary: '#867272',
     textInverted: '#FFFFFF',

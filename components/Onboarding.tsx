@@ -10,7 +10,7 @@ import { View, Card, CardProps, Text, RadioButton, Checkbox } from 'react-native
 import { Textfield } from '@/components/ui/Textfields';
 import { Colors } from '@/constants/Colors';
 import { defaultStyles } from '@/constants/Styles';
-import Toast, { BaseToast, ErrorToast } from 'react-native-toast-message';
+import Toast, { ToastRef } from 'react-native-toast-message';
 
 
 const Onboarding = ({ toastConfig, session }: { toastConfig: any, session: Session }) => {
@@ -67,7 +67,7 @@ const Onboarding = ({ toastConfig, session }: { toastConfig: any, session: Sessi
                         <Button title="Done" onPress={() => console.log('Form Submitted')} />
                     )}
                 </View>
-                <Toast config={toastConfig} ref={(ref) => Toast.setRef(ref)} />
+                <Toast config={toastConfig} ref={(ref: ToastRef) => Toast.setRef(ref)} />
             </View>
         </SafeAreaView>
     );
@@ -181,8 +181,8 @@ const StepPronouns = () => {
             if (selectedValues.length > 1) {
                 Toast.show({
                     type: 'default',
-                    text1: '👋 Info',
-                    text2: 'You can only select up to two pronouns.',
+                    text1: '👋 Hey',
+                    text2: 'You can only select two pronouns',
                 });
                 return;
             }

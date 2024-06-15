@@ -51,9 +51,9 @@ export default function RootLayout() {
 
     const toastConfig = {
         default: ({ text1, text2, props }) => (
-            <View style={{ display: 'flex', justifyContent: 'center', width: '94%', backgroundColor: Colors.light.accent, borderRadius: 8, padding: 16 }}>
-                <Text style={{ fontFamily: 'HeadingBold', color: 'white' }}>{text1}</Text>
-                <Text style={{ fontFamily: 'BodyRegular', color: 'white' }}>{text2}</Text>
+            <View style={{ display: 'flex', justifyContent: 'center', width: '94%', backgroundColor: Colors.light.accent, borderColor: Colors.light.white, borderRadius: 8, padding: 16 }}>
+                <Text style={{ fontFamily: 'HeadingBold', color: Colors.light.textInverted }}>{text1}</Text>
+                <Text style={{ fontFamily: 'BodyRegular', color: Colors.light.textInverted }}>{text2}</Text>
             </View>
         )
     };
@@ -62,15 +62,6 @@ export default function RootLayout() {
         <RootNav toastconfig={toastConfig} session={session} showOnboarding={showOnboarding} />
     );
 }
-
-// const showToast = () => {
-//     Toast.show({
-//         type: 'warning',
-//         text1: 'Max 2 pronouns',
-//         text2: 'You can only select up to two pronouns 👋'
-//     });
-// };
-
 
 
 function RootNav(props: any) {
