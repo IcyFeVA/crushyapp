@@ -20,7 +20,7 @@ const Onboarding = ({ toastConfig, session }: { toastConfig: any, session: Sessi
     const [currentStep, setCurrentStep] = useState(0);
     const flatListRef = useRef(null);
 
-    const steps = [
+    const steps: object[] = [
         { key: '1', title: 'Step 1', component: StepName },
         { key: '2', title: 'Step 2', component: StepAge },
         { key: '3', title: 'Step 3', component: StepGender },
@@ -59,10 +59,8 @@ const Onboarding = ({ toastConfig, session }: { toastConfig: any, session: Sessi
                     horizontal
                     showsHorizontalScrollIndicator={false}
                     pagingEnabled
-                    scrollEnabled={false}
-                    renderItem={({ item }) => (
-                        <item.component />
-                    )}
+                    // scrollEnabled={false}
+                    renderItem={({ item }) => React.createElement(item.component)}
                     keyExtractor={item => item.key}
                 />
                 <View style={styles.buttonContainer}>
@@ -93,38 +91,61 @@ const Onboarding = ({ toastConfig, session }: { toastConfig: any, session: Sessi
 
 
 
-
-
-
-const StepName = () => (
-    <View className='p-6 w-screen'>
-        <Text className='text-2xl font-bold'>What is your name?</Text>
-        <Spacer height={8} />
-        <View className=''>
-            <Text className='text-base'>This will be visible to all users. You can also choose a nickname if you would like.</Text>
+function Progress({ percent }: { percent: number }) {
+    return (
+        <View className='w-full h-2 bg-gray-200 rounded-full relative'>
+            <View style={{ width: `${percent}%` }} className='h-2 absolute  bg-accent-500 rounded-full'></View>
         </View>
+    )
+}
 
-        <Spacer height={64} />
 
-        <Text className='text-md font-bold'>Firstname or Nickname</Text>
-        <Spacer height={4} />
-        <Textfield
-        // onChangeText={(text) => setEmail(text)}
-        />
-    </View>
-);
+const StepName = () => {
+    const [name, setName] = useState<string>('');
+
+    return (
+        <View className='p-6 w-screen'>
+
+            <Spacer height={16} />
+
+            <Progress percent={11} />
+
+            <Spacer height={48} />
+
+            <Text style={defaultStyles.h2}>What is your name?</Text>
+            <Spacer height={8} />
+            <View className=''>
+                <Text style={defaultStyles.body}>This will be visible to all users. You can also choose a nickname if you would like.</Text>
+            </View>
+
+            <Spacer height={64} />
+
+            <Text style={defaultStyles.inputLabel}>Firstname or Nickname</Text>
+            <Spacer height={4} />
+            <Textfield
+                onChangeText={(text) => setName(text)}
+            />
+        </View>
+    )
+};
 
 const StepAge = () => (
     <View className='p-6 w-screen'>
-        <Text className='text-2xl font-bold'>In what year were you born?</Text>
+        <Spacer height={16} />
+
+        <Progress percent={22} />
+
+        <Spacer height={48} />
+
+        <Text style={defaultStyles.h2}>In what year were you born?</Text>
         <Spacer height={8} />
         <View className=''>
-            <Text className='text-base'>You can always change your settings later.</Text>
+            <Text style={defaultStyles.body}>You can always change your settings later.</Text>
         </View>
 
         <Spacer height={64} />
 
-        <Text className='text-md font-bold'>Year of birth</Text>
+        <Text style={defaultStyles.inputLabel}>Year of birth</Text>
         <Spacer height={4} />
         <Textfield
             className='w-28 text-center'
@@ -146,10 +167,16 @@ const StepGender = () => {
 
     return (
         <View className='p-6 w-screen'>
-            <Text className='text-2xl' style={{ fontFamily: 'HeadingBold' }}>How do you identify in terms of gender?</Text>
+            <Spacer height={16} />
+
+            <Progress percent={33} />
+
+            <Spacer height={48} />
+
+            <Text style={defaultStyles.h2}>How do you identify in terms of gender?</Text>
             <Spacer height={8} />
             <View>
-                <Text className='text-base' style={{ fontFamily: 'BodyRegular' }}>We strive for inclusivity. If you don't see a gender that fits you, please let us know.</Text>
+                <Text style={defaultStyles.body}>We strive for inclusivity. If you don't see a gender that fits you, please let us know.</Text>
             </View>
 
             <Spacer height={48} />
@@ -213,10 +240,16 @@ const StepPronouns = () => {
 
     return (
         <View className='p-6 w-screen'>
-            <Text className='text-2xl' style={{ fontFamily: 'HeadingBold' }}>What are your pronouns?</Text>
+            <Spacer height={16} />
+
+            <Progress percent={44} />
+
+            <Spacer height={48} />
+
+            <Text style={defaultStyles.h2}>What are your pronouns?</Text>
             <Spacer height={8} />
             <View>
-                <Text className='text-base' style={{ fontFamily: 'BodyRegular' }}>Choose <Text className='text-base' style={{ fontFamily: 'BodyBold' }}>up to two</Text> pronouns.You will be able to add your own in a future update, if you don't see yours.</Text>
+                <Text style={defaultStyles.body}>Choose <Text style={defaultStyles.bodyBold}>up to two</Text> pronouns.You will be able to add your own in a future update, if you don't see yours.</Text>
             </View>
 
             <Spacer height={48} />
@@ -263,10 +296,16 @@ const StepRelationship = () => {
 
     return (
         <View className='p-6 w-screen'>
-            <Text className='text-2xl' style={{ fontFamily: 'HeadingBold' }}>What are you looking for right now?</Text>
+            <Spacer height={16} />
+
+            <Progress percent={55} />
+
+            <Spacer height={48} />
+
+            <Text style={defaultStyles.h2}>What are you looking for right now?</Text>
             <Spacer height={8} />
             <View>
-                <Text className='text-base' style={{ fontFamily: 'BodyRegular' }}>You can always change your settings later.</Text>
+                <Text style={defaultStyles.body}>You can always change your settings later.</Text>
             </View>
 
             <Spacer height={48} />
@@ -309,10 +348,16 @@ const StepGenderPreferences = () => {
 
     return (
         <View className='p-6 w-screen'>
-            <Text className='text-2xl' style={{ fontFamily: 'HeadingBold' }}>What are you looking for right now?</Text>
+            <Spacer height={16} />
+
+            <Progress percent={66} />
+
+            <Spacer height={48} />
+
+            <Text style={defaultStyles.h2}>What are your gender preferences?</Text>
             <Spacer height={8} />
             <View>
-                <Text className='text-base' style={{ fontFamily: 'BodyRegular' }}>You can always change your settings later.</Text>
+                <Text style={defaultStyles.body}>Please understand that this app is new. We will include more gender filters soon!</Text>
             </View>
 
             <Spacer height={48} />
@@ -377,10 +422,16 @@ const StepInterests = () => {
 
     return (
         <View className='p-6 w-screen'>
-            <Text className='text-2xl' style={{ fontFamily: 'HeadingBold' }}>Interests ({selectedValues.length})</Text>
+            <Spacer height={16} />
+
+            <Progress percent={77} />
+
+            <Spacer height={48} />
+
+            <Text style={defaultStyles.h2}>Interests ({selectedValues.length})</Text>
             <Spacer height={8} />
             <View>
-                <Text className='text-base' style={{ fontFamily: 'BodyRegular' }}>
+                <Text style={defaultStyles.body}>
                     This helps us find people with similar interests
                 </Text>
             </View>
@@ -470,3 +521,5 @@ const styles = StyleSheet.create({
 });
 
 export default Onboarding;
+
+
