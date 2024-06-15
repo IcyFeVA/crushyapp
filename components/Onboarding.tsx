@@ -1,4 +1,4 @@
-import { Image, StyleSheet, Button, Pressable } from 'react-native';
+import { Image, StyleSheet, Button, Pressable, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Session } from '@supabase/supabase-js';
 import { Pageview } from '@/components/ui/Containers';
@@ -13,6 +13,8 @@ import { defaultStyles } from '@/constants/Styles';
 import Toast, { ToastRef } from 'react-native-toast-message';
 import hobbiesInterests from '@/constants/Interests';
 import BigList from "react-native-big-list"
+
+const screenWidth = Dimensions.get('window').width;
 
 const Onboarding = ({ toastConfig, session }: { toastConfig: any, session: Session }) => {
     const [currentStep, setCurrentStep] = useState(0);
@@ -34,7 +36,7 @@ const Onboarding = ({ toastConfig, session }: { toastConfig: any, session: Sessi
         if (currentStep < steps.length - 1) {
             setCurrentStep(currentStep + 1);
             if (flatListRef.current) {
-                // flatListRef.current.scrollToIndex({ index: currentStep + 1 });
+                flatListRef.current.scrollToIndex({ index: currentStep + 1 });
             }
         }
     };
@@ -43,7 +45,7 @@ const Onboarding = ({ toastConfig, session }: { toastConfig: any, session: Sessi
         if (currentStep > 0) {
             setCurrentStep(currentStep - 1);
             if (flatListRef.current) {
-                // flatListRef.current.scrollToIndex({ index: currentStep - 1 });
+                flatListRef.current.scrollToIndex({ index: currentStep - 1 });
             }
         }
     };
@@ -57,18 +59,30 @@ const Onboarding = ({ toastConfig, session }: { toastConfig: any, session: Sessi
                     horizontal
                     showsHorizontalScrollIndicator={false}
                     pagingEnabled
-                    // scrollEnabled={false}
+                    scrollEnabled={false}
                     renderItem={({ item }) => (
                         <item.component />
                     )}
                     keyExtractor={item => item.key}
                 />
                 <View style={styles.buttonContainer}>
-                    {currentStep > 0 && <Button title="Back" onPress={handleBack} />}
-                    {currentStep < steps.length - 1 ? (
-                        <Button title="Next" onPress={handleNext} />
+                    {currentStep > 0 ? (
+                        <SecondaryButton onPress={handleBack}>
+                            <SecondaryButtonText>Back</SecondaryButtonText>
+                        </SecondaryButton>
                     ) : (
-                        <Button title="Done" onPress={() => console.log('Form Submitted')} />
+                        <SecondaryButton disabled className=' bg-gray-100 border-gray-100'>
+                            <SecondaryButtonText className='text-gray-400'>Back</SecondaryButtonText>
+                        </SecondaryButton>
+                    )}
+                    {currentStep < steps.length - 1 ? (
+                        <PrimaryButton onPress={handleNext}>
+                            <PrimaryButtonText>Next</PrimaryButtonText>
+                        </PrimaryButton>
+                    ) : (
+                        <PrimaryButton onPress={() => console.log('Form Submitted')}>
+                            <PrimaryButtonText>Done</PrimaryButtonText>
+                        </PrimaryButton>
                     )}
                 </View>
                 <Toast config={toastConfig} />
@@ -346,7 +360,7 @@ const StepInterests = () => {
         console.log('Selected Values:', selectedValues);
     }, [selectedValues]);
 
-    const renderItem = ({ item }) => (
+    const renderItem = ({ item }: { item: { label: string, value: string } }) => (
         // <Pressable onPress={() => handlePress(item.value)} >
         <Checkbox
             color={selectedValues.includes(item.value) ? Colors.light.text : Colors.light.tertiary}
@@ -417,6 +431,7 @@ const StepInterests = () => {
 
 
 
+
 const styles = StyleSheet.create({
     container: {
         // flex: 1,
@@ -443,9 +458,14 @@ const styles = StyleSheet.create({
         // width: '100%',
     },
     buttonContainer: {
-        // flexDirection: 'row',
-        // justifyContent: 'space-between',
-        // marginTop: 16,
+        display: 'flex',
+        alignItems: 'flex-end',
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        gap: 8,
+        width: screenWidth * 0.5 - 20,
+        marginHorizontal: 16,
+        marginBottom: 16,
     },
 });
 
