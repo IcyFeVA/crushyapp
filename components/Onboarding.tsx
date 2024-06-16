@@ -14,6 +14,7 @@ import Toast, { ToastRef } from 'react-native-toast-message';
 import hobbiesInterests from '@/constants/Interests';
 import BigList from "react-native-big-list"
 import { create } from 'zustand';
+import { useShallow } from 'zustand/react/shallow'
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -21,19 +22,17 @@ const useOnboardingStore = create((set) => ({
     name: '',
     age: null,
     gender: null,
-    pronouns: null,
+    pronouns: [],
     relationship: null,
     genderPreferences: null,
     interests: [],
-    addName: () => set((state: { name: string; }) => ({ name: state.name })),
-    addAge: () => set((state: { age: string; }) => ({ age: state.age })),
-    addGender: () => set((state: { gender: string; }) => ({ gender: state.gender })),
-    addPronouns: () => set((state: { pronouns: string; }) => ({ pronouns: state.pronouns })),
-    addRelationship: () => set((state: { relationship: string; }) => ({ relationship: state.relationship })),
-    addGenderPreferences: () => set((state: { genderPreferences: string; }) => ({ genderPreferences: state.genderPreferences })),
-    addInterests: () => set((state: { interests: object; }) => ({ interests: state.interests })),
-    addBears: () => set((state: { bears: number; }) => ({ bears: state.bears + 1 })),
-    removeAllBears: () => set({ bears: 0 }),
+    setName: () => set((state: { name: string; }) => ({ name: state.name })),
+    setAge: () => set((state: { age: string; }) => ({ age: state.age })),
+    setGender: () => set((state: { gender: string; }) => ({ gender: state.gender })),
+    setPronouns: () => set((state: { pronouns: object; }) => ({ pronouns: state.pronouns })),
+    setRelationship: () => set((state: { relationship: string; }) => ({ relationship: state.relationship })),
+    setGenderPreferences: () => set((state: { genderPreferences: string; }) => ({ genderPreferences: state.genderPreferences })),
+    setInterests: () => set((state: { interests: object; }) => ({ interests: state.interests })),
 }))
 
 
@@ -41,8 +40,10 @@ const useOnboardingStore = create((set) => ({
 const Onboarding = ({ toastConfig, session }: { toastConfig: any, session: Session }) => {
     const [currentStep, setCurrentStep] = useState(0);
     const flatListRef = useRef(null);
+    const [name, age, gender, pronouns, relationship, genderPreferences, interests] = useOnboardingStore(
+        useShallow((state) => [state.name, state.age, state.gender, state.pronouns, state.relationship, state.genderPreferences, state.interests])
+    )
 
-    const { name, age, gender, pronouns, relationship, genderPreferences, interests } = useOnboardingStore((state) => state);
 
     const steps: object[] = [
         { key: '1', title: 'Step 1', component: StepName },
@@ -61,17 +62,28 @@ const Onboarding = ({ toastConfig, session }: { toastConfig: any, session: Sessi
         console.log('currentStep:', currentStep);
 
         if (currentStep === 0) {
-            if (name.length < 1) {
+            if (name.length < 2) {
                 Toast.show({
                     type: 'default',
                     text1: '👋 Hey',
-                    text2: 'You can only select two pronouns',
+                    text2: 'Your name is too short',
+                });
+                return
+            }
+            // check if name containes the words crushy or crush or official
+            const words = ['crushy', 'crush', 'official', 'admin', 'administrator', 'moderator', 'ceo', 'cmo', 'cto'];
+            const contains = words.some(word => name.toLowerCase().includes(word));
+            if (contains) {
+                Toast.show({
+                    type: 'default',
+                    text1: '👋 Hey',
+                    text2: 'This name is not allowed',
                 });
                 return
             }
         }
         if (currentStep === 1) {
-            if (age === null || parseInt(age) > 2006) {
+            if (age === null || parseInt(age) > 2006 || parseInt(age) < 1924) {
                 Toast.show({
                     type: 'default',
                     text1: '👋 Check your age',
@@ -167,6 +179,7 @@ const Onboarding = ({ toastConfig, session }: { toastConfig: any, session: Sessi
                     renderItem={({ item }) => React.createElement(item.component)}
                     keyExtractor={item => item.key}
                 />
+                {/* <Text className='text-center'>{name}, {age}, {gender}, {pronouns}</Text> */}
                 <View style={styles.buttonContainer}>
                     {currentStep > 0 ? (
                         <SecondaryButton onPress={handleBack}>
@@ -198,7 +211,7 @@ const Onboarding = ({ toastConfig, session }: { toastConfig: any, session: Sessi
 function Progress({ percent }: { percent: number }) {
     return (
         <View className='w-full h-2 bg-gray-200 rounded-full relative'>
-            <View style={{ width: `${percent}%` }} className='h-2 absolute  bg-accent-500 rounded-full'></View>
+            <View style={{ width: `${percent}%`, backgroundColor: Colors.light.accent }} className='h-2 absolute rounded-full'></View>
         </View>
     )
 }
@@ -543,11 +556,11 @@ const StepInterests = () => {
             <Spacer height={8} />
             <View>
                 <Text style={defaultStyles.body}>
-                    This helps us find people with similar interests
+                    This helps us find people with the same hobbies and interests.
                 </Text>
             </View>
 
-            <Spacer height={48} />
+            <Spacer height={24} />
 
             <BigList
                 // data={hobbiesInterests}
