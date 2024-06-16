@@ -22,7 +22,7 @@ SplashScreen.preventAutoHideAsync();
 export default function RootLayout() {
     const colorScheme = useColorScheme();
     const session = useAuth();
-    const showOnboarding = useProfile(session);
+    let showOnboarding = useProfile(session);
     const [loaded, error] = useFonts({
         SpaceMono: require('@/assets/fonts/SpaceMono-Regular.ttf'),
         HeadingBold: require('@/assets/fonts/RobotoSlab-Bold.ttf'),
@@ -50,6 +50,14 @@ export default function RootLayout() {
         return null;
     }
 
+    const setShowOnboarding = () => {
+        showOnboarding = false
+        console.log("showOnboarding>>>>>>", showOnboarding)
+        setTimeout(() => {
+            return router.replace('(tabs)');
+        }, 1000)
+    }
+
     const toastConfig = {
         default: ({ text1, text2, props }) => (
             <View style={{ display: 'flex', justifyContent: 'center', width: '94%', backgroundColor: Colors.light.accent, borderColor: Colors.light.white, borderRadius: 8, padding: 16 }}>
@@ -64,21 +72,20 @@ export default function RootLayout() {
 
 
     return (
-        <RootNav toastconfig={toastConfig} session={session} showOnboarding={showOnboarding} />
+        <RootNav toastconfig={toastConfig} session={session} showOnboarding={showOnboarding} setShowOnboarding={setShowOnboarding} />
     );
 }
 
 
 function RootNav(props: any) {
-    if (props.session && props.showOnboarding === true) {
-        return <Onboarding toastConfig={props.toastconfig} session={props.session} />
-    } else if (props.session && props.showOnboarding === false) {
+    if (props.session) {
         return (
-            <Stack>
+            <Stack initialRouteName="(tabs)">
+                <Stack.Screen name="onboarding" options={{ headerShown: false }} />
                 <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
             </Stack>
         )
     } else {
-        return <Auth onboarding={props.showOnboarding} />
+        return <Auth />
     }
 }

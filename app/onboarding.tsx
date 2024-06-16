@@ -16,6 +16,8 @@ import BigList from "react-native-big-list"
 import { create } from 'zustand';
 import { useShallow } from 'zustand/react/shallow'
 import { supabase } from '@/lib/supabase';
+import { router } from 'expo-router';
+import { useAuth } from '@/hooks/useAuth';
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -38,8 +40,9 @@ const useOnboardingStore = create((set) => ({
 
 
 
-const Onboarding = ({ toastConfig, session, setShowOnboarding }: { toastConfig: any, session: Session, setShowOnboarding: any }) => {
+const Onboarding = ({ toastConfig, setShowOnboarding }: { toastConfig: any, setShowOnboarding: any }) => {
     const [currentStep, setCurrentStep] = useState(0);
+    const session = useAuth();
     const flatListRef = useRef(null);
     const [name, age, gender, pronouns, relationship, genderPreferences, interests] = useOnboardingStore(
         useShallow((state) => [state.name, state.age, state.gender, state.pronouns, state.relationship, state.genderPreferences, state.interests])
@@ -179,18 +182,18 @@ const Onboarding = ({ toastConfig, session, setShowOnboarding }: { toastConfig: 
         try {
             const { data, error } = await supabase
                 .from('profiles')
-                // .update({
-                //     name: name,
-                //     age: age,
-                //     gender: gender,
-                //     pronouns: pronouns,
-                //     looking_for: relationship,
-                //     gender_preference: genderPreferences,
-                //     interests: interests,
-                // })
                 .update({
-                    age: '18',
+                    name: name,
+                    age: age,
+                    gender: gender,
+                    pronouns: pronouns,
+                    looking_for: relationship,
+                    gender_preference: genderPreferences,
+                    interests: interests,
                 })
+                // .update({
+                //     age: '18',
+                // })
                 .eq('id', session?.user.id)
                 .select();
 
@@ -198,12 +201,7 @@ const Onboarding = ({ toastConfig, session, setShowOnboarding }: { toastConfig: 
                 console.error(error);
             } else {
                 console.log(data);
-                Toast.show({
-                    type: 'success',
-                    text1: 'Congratulations',
-                    text2: 'Your profile has been updated',
-                })
-                setShowOnboarding()
+                return router.replace('/(tabs)');
             }
         } catch (error) {
             console.error(error);
@@ -214,42 +212,40 @@ const Onboarding = ({ toastConfig, session, setShowOnboarding }: { toastConfig: 
 
 
     return (
-        <SafeAreaView>
-            <View className='flex h-full justify-between'>
-                <FlatList
-                    ref={flatListRef}
-                    data={steps}
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    pagingEnabled
-                    // scrollEnabled={false}
-                    renderItem={({ item }) => React.createElement(item.component)}
-                    keyExtractor={item => item.key}
-                />
-                {/* <Text className='text-center'>{name}, {age}, {gender}, {pronouns}</Text> */}
-                <View style={styles.buttonContainer}>
-                    {currentStep > 0 ? (
-                        <SecondaryButton onPress={handleBack}>
-                            <SecondaryButtonText>Back</SecondaryButtonText>
-                        </SecondaryButton>
-                    ) : (
-                        <SecondaryButton disabled className=' bg-gray-100 border-gray-100'>
-                            <SecondaryButtonText className='text-gray-400'>Back</SecondaryButtonText>
-                        </SecondaryButton>
-                    )}
-                    {currentStep < steps.length - 1 ? (
-                        <PrimaryButton onPress={handleDone}>
-                            <PrimaryButtonText>Next</PrimaryButtonText>
-                        </PrimaryButton>
-                    ) : (
-                        <PrimaryButton onPress={handleNext}>
-                            <PrimaryButtonText>Done</PrimaryButtonText>
-                        </PrimaryButton>
-                    )}
-                </View>
-                <Toast config={toastConfig} />
+        <View className='flex h-full justify-between bg-white' >
+            <FlatList
+                ref={flatListRef}
+                data={steps}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                pagingEnabled
+                // scrollEnabled={false}
+                renderItem={({ item }) => React.createElement(item.component)}
+                keyExtractor={item => item.key}
+            />
+            {/* <Text className='text-center'>{name}, {age}, {gender}, {pronouns}</Text> */}
+            <View style={styles.buttonContainer}>
+                {currentStep > 0 ? (
+                    <SecondaryButton onPress={handleBack}>
+                        <SecondaryButtonText>Back</SecondaryButtonText>
+                    </SecondaryButton>
+                ) : (
+                    <SecondaryButton disabled className=' bg-gray-100 border-gray-100'>
+                        <SecondaryButtonText className='text-gray-400'>Back</SecondaryButtonText>
+                    </SecondaryButton>
+                )}
+                {currentStep < steps.length - 1 ? (
+                    <PrimaryButton onPress={handleNext}>
+                        <PrimaryButtonText>Next</PrimaryButtonText>
+                    </PrimaryButton>
+                ) : (
+                    <PrimaryButton onPress={handleDone}>
+                        <PrimaryButtonText>Done</PrimaryButtonText>
+                    </PrimaryButton>
+                )}
             </View>
-        </SafeAreaView>
+            <Toast config={toastConfig} />
+        </View>
     );
 };
 
