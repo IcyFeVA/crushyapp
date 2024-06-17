@@ -1,6 +1,5 @@
 // app/_layout.tsx
 import { Slot, SplashScreen } from 'expo-router';
-import FontLoader from '@/components/FontLoader';
 import RootNavigator from '@/components/RootNavigator';
 import { useAuth } from '@/hooks/useAuth';
 import { useProfile } from '@/hooks/useProfile';
@@ -39,12 +38,10 @@ export default function RootLayout() {
     }
 
     return (
-        <FontLoader>
-            <RootNavigator
-                session={session}
-                showOnboarding={showOnboarding}
-                setShowOnboarding={setShowOnboarding}
-            />
-        </FontLoader>
+        <RootNavigator
+            session={session}
+            showOnboarding={showOnboarding}
+            setShowOnboarding={setShowOnboarding}
+        />
     );
 }
