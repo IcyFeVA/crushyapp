@@ -96,7 +96,7 @@ export default function Avatar({ url, size = 70, onUpload }: Props) {
         <View>
             <Spacer height={24} />
 
-            <SecondaryButton onPress={uploadAvatar}>
+            <SecondaryButton onPress={uploadAvatar} style={defaultStyles.buttonShadow}>
                 <SecondaryButtonText>{uploading ? 'Uploading ...' : 'Upload'}</SecondaryButtonText>
             </SecondaryButton>
 

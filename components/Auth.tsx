@@ -111,7 +111,7 @@ export default function Auth({ onboarding }: any) {
         );
     };
 
-
+    // TODO: make email lowercase
     async function signInWithEmail() {
         if (!emailRegex.test(email)) {
             Alert.alert('Invalid email format')
@@ -212,7 +212,7 @@ export default function Auth({ onboarding }: any) {
 
                         <Spacer height={64} />
 
-                        <PrimaryButton onPress={() => signInWithEmail()}>
+                        <PrimaryButton onPress={() => signInWithEmail()} style={defaultStyles.buttonShadow}>
                             <PrimaryButtonText>Sign in</PrimaryButtonText>
                         </PrimaryButton>
 
@@ -285,7 +285,7 @@ export default function Auth({ onboarding }: any) {
 
                         <Spacer height={48} />
 
-                        <PrimaryButton onPress={() => signUpWithEmail()}>
+                        <PrimaryButton onPress={() => signUpWithEmail()} style={defaultStyles.buttonShadow}>
                             <PrimaryButtonText>Sign up</PrimaryButtonText>
                         </PrimaryButton>
 

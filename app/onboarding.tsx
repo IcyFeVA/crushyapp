@@ -244,7 +244,7 @@ const Onboarding = ({ toastConfig, setShowOnboarding }: { toastConfig: any, setS
                     />
                     <View style={styles.buttonContainer}>
                         {currentStep > 0 ? (
-                            <SecondaryButton onPress={handleBack}>
+                            <SecondaryButton onPress={handleBack} style={defaultStyles.buttonShadow}>
                                 <SecondaryButtonText>Back</SecondaryButtonText>
                             </SecondaryButton>
                         ) : (
@@ -253,11 +253,11 @@ const Onboarding = ({ toastConfig, setShowOnboarding }: { toastConfig: any, setS
                             </SecondaryButton>
                         )}
                         {currentStep < steps.length - 1 ? (
-                            <PrimaryButton onPress={handleNext}>
+                            <PrimaryButton onPress={handleNext} style={defaultStyles.buttonShadow}>
                                 <PrimaryButtonText>Next</PrimaryButtonText>
                             </PrimaryButton>
                         ) : (
-                            <PrimaryButton onPress={handleDone}>
+                            <PrimaryButton onPress={handleDone} style={defaultStyles.buttonShadow}>
                                 <PrimaryButtonText>Done</PrimaryButtonText>
                             </PrimaryButton>
                         )}
@@ -850,7 +850,7 @@ const StepFinal = () => {
                 <Pagination count={finalSlidesContent.length} />
             </View>
             <View className='p-6'>
-                <PrimaryButton onPress={handleDone}>
+                <PrimaryButton onPress={handleDone} style={defaultStyles.buttonShadow}>
                     <PrimaryButtonText>Got it</PrimaryButtonText>
                 </PrimaryButton>
             </View>
