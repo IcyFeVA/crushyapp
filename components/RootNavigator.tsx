@@ -1,7 +1,6 @@
 // RootNavigator.tsx
 import { Stack, useRouter } from 'expo-router';
 import Auth from '@/components/Auth';
-import Onboarding from '@/components/Onboarding';
 
 export default function RootNavigator({ session, showOnboarding, setShowOnboarding }: any) {
     if (session) {

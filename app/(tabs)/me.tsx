@@ -18,6 +18,7 @@ export default function Account({ session }: { session: Session }) {
     }, [session])
 
     async function getProfile() {
+        console.log('getProfile')
         try {
             setLoading(true)
             if (!session?.user) throw new Error('No user on the session!')

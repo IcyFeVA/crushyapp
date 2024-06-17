@@ -2,17 +2,21 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { StyleSheet, View, Alert, Image, Button } from 'react-native'
 import * as ImagePicker from 'expo-image-picker'
+import { PrimaryButton, PrimaryButtonText, SecondaryButton, SecondaryButtonText } from './ui/Buttons'
+import Spacer from './Spacer'
+import { defaultStyles } from '@/constants/Styles'
+import { Colors } from '@/constants/Colors'
 
 interface Props {
-    size: number
+    size: number | string
     url: string | null
     onUpload: (filePath: string) => void
 }
 
-export default function Avatar({ url, size = 150, onUpload }: Props) {
+export default function Avatar({ url, size = 70, onUpload }: Props) {
     const [uploading, setUploading] = useState(false)
     const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
-    const avatarSize = { height: size, width: size }
+    const avatarSize = { width: size + '%' }
 
     useEffect(() => {
         if (url) downloadImage(url)
@@ -90,22 +94,31 @@ export default function Avatar({ url, size = 150, onUpload }: Props) {
 
     return (
         <View>
+            <Spacer height={24} />
+
+            <SecondaryButton onPress={uploadAvatar}>
+                <SecondaryButtonText>{uploading ? 'Uploading ...' : 'Upload'}</SecondaryButtonText>
+            </SecondaryButton>
+
+            <Spacer height={24} />
+
             {avatarUrl ? (
                 <Image
                     source={{ uri: avatarUrl }}
                     accessibilityLabel="Avatar"
                     style={[avatarSize, styles.avatar, styles.image]}
                 />
+                // <Image
+                //     source={{ uri: avatarUrl }}
+                //     accessibilityLabel="Avatar"
+                //     style={[avatarSize, styles.avatar, styles.image]}
+                // />
             ) : (
-                <View style={[avatarSize, styles.avatar, styles.noImage]} />
+                // No image
+                <Spacer height={0} />
+                // <View className='w-full h-3/4' style={[styles.avatar, styles.noImage]} />
+                // <View style={[avatarSize, styles.avatar, styles.noImage]} />
             )}
-            <View>
-                <Button
-                    title={uploading ? 'Uploading ...' : 'Upload'}
-                    onPress={uploadAvatar}
-                    disabled={uploading}
-                />
-            </View>
         </View>
     )
 }
@@ -115,13 +128,15 @@ const styles = StyleSheet.create({
         borderRadius: 16,
         overflow: 'hidden',
         maxWidth: '100%',
+        aspectRatio: 2 / 3,
     },
     image: {
         objectFit: 'cover',
         paddingTop: 0,
+        marginHorizontal: 'auto'
     },
     noImage: {
-        backgroundColor: '#eee',
+        backgroundColor: Colors.light.backgroundSecondary,
         borderWidth: 1,
         borderStyle: 'solid',
         borderColor: 'rgb(200, 200, 200)',

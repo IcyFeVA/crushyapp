@@ -1,4 +1,4 @@
-import { Image, StyleSheet, Button, Pressable, Dimensions } from 'react-native';
+import { Image, StyleSheet, Animated, Pressable, Dimensions, Alert, useWindowDimensions, ImageSourcePropType } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Session } from '@supabase/supabase-js';
 import { Pageview } from '@/components/ui/Containers';
@@ -18,6 +18,8 @@ import { useShallow } from 'zustand/react/shallow'
 import { supabase } from '@/lib/supabase';
 import { router } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
+import Avatar from '@/components/Avatar';
+
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -29,6 +31,9 @@ const useOnboardingStore = create((set) => ({
     relationship: null,
     genderPreferences: null,
     interests: [],
+    photoUploaded: false,
+    dataUploaded: false,
+    onboardingCompleted: false,
     setName: () => set((state: { name: string; }) => ({ name: state.name })),
     setAge: () => set((state: { age: string; }) => ({ age: state.age })),
     setGender: () => set((state: { gender: string; }) => ({ gender: state.gender })),
@@ -41,11 +46,11 @@ const useOnboardingStore = create((set) => ({
 
 
 const Onboarding = ({ toastConfig, setShowOnboarding }: { toastConfig: any, setShowOnboarding: any }) => {
-    const [currentStep, setCurrentStep] = useState(0);
     const session = useAuth();
+    const [currentStep, setCurrentStep] = useState(0);
     const flatListRef = useRef(null);
-    const [name, age, gender, pronouns, relationship, genderPreferences, interests] = useOnboardingStore(
-        useShallow((state) => [state.name, state.age, state.gender, state.pronouns, state.relationship, state.genderPreferences, state.interests])
+    const [name, age, gender, pronouns, relationship, genderPreferences, interests, photoUploaded, dataUploaded, onboardingCompleted] = useOnboardingStore(
+        useShallow((state) => [state.name, state.age, state.gender, state.pronouns, state.relationship, state.genderPreferences, state.interests, state.photoUploaded, state.dataUploaded, state.onboardingCompleted]),
     )
 
 
@@ -57,6 +62,7 @@ const Onboarding = ({ toastConfig, setShowOnboarding }: { toastConfig: any, setS
         { key: '6', title: 'Step 6', component: StepRelationship },
         { key: '7', title: 'Step 7', component: StepGenderPreferences },
         { key: '8', title: 'Step 8', component: StepInterests },
+        { key: '9', title: 'Step 9', component: StepPhoto },
     ];
 
 
@@ -151,6 +157,17 @@ const Onboarding = ({ toastConfig, setShowOnboarding }: { toastConfig: any, setS
             }
         }
 
+        if (currentStep === 7) {
+            if (photoUploaded === false) {
+                Toast.show({
+                    type: 'default',
+                    text1: '👋 Hey',
+                    text2: 'Please upload a photo',
+                });
+                return
+            }
+        }
+
         if (currentStep < steps.length - 1) {
             setCurrentStep(currentStep + 1);
             if (flatListRef.current) {
@@ -170,6 +187,7 @@ const Onboarding = ({ toastConfig, setShowOnboarding }: { toastConfig: any, setS
 
 
     const handleDone = async () => {
+
         console.log('name:', name);
         console.log('age:', age);
         console.log('gender:', gender);
@@ -191,9 +209,6 @@ const Onboarding = ({ toastConfig, setShowOnboarding }: { toastConfig: any, setS
                     gender_preference: genderPreferences,
                     interests: interests,
                 })
-                // .update({
-                //     age: '18',
-                // })
                 .eq('id', session?.user.id)
                 .select();
 
@@ -201,7 +216,7 @@ const Onboarding = ({ toastConfig, setShowOnboarding }: { toastConfig: any, setS
                 console.error(error);
             } else {
                 console.log(data);
-                return router.replace('/(tabs)');
+                useOnboardingStore.setState({ dataUploaded: true })
             }
         } catch (error) {
             console.error(error);
@@ -212,38 +227,44 @@ const Onboarding = ({ toastConfig, setShowOnboarding }: { toastConfig: any, setS
 
 
     return (
-        <View className='flex h-full justify-between bg-white' >
-            <FlatList
-                ref={flatListRef}
-                data={steps}
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                pagingEnabled
-                // scrollEnabled={false}
-                renderItem={({ item }) => React.createElement(item.component)}
-                keyExtractor={item => item.key}
-            />
-            {/* <Text className='text-center'>{name}, {age}, {gender}, {pronouns}</Text> */}
-            <View style={styles.buttonContainer}>
-                {currentStep > 0 ? (
-                    <SecondaryButton onPress={handleBack}>
-                        <SecondaryButtonText>Back</SecondaryButtonText>
-                    </SecondaryButton>
-                ) : (
-                    <SecondaryButton disabled className=' bg-gray-100 border-gray-100'>
-                        <SecondaryButtonText className='text-gray-400'>Back</SecondaryButtonText>
-                    </SecondaryButton>
-                )}
-                {currentStep < steps.length - 1 ? (
-                    <PrimaryButton onPress={handleNext}>
-                        <PrimaryButtonText>Next</PrimaryButtonText>
-                    </PrimaryButton>
-                ) : (
-                    <PrimaryButton onPress={handleDone}>
-                        <PrimaryButtonText>Done</PrimaryButtonText>
-                    </PrimaryButton>
-                )}
-            </View>
+        <View  >
+            {dataUploaded ? (
+                <StepFinal />
+            ) : (
+                <View className='flex h-full justify-between bg-white'>
+                    <FlatList
+                        ref={flatListRef}
+                        data={steps}
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        pagingEnabled
+                        scrollEnabled={false}
+                        renderItem={({ item }) => React.createElement(item.component)}
+                        keyExtractor={item => item.key}
+                    />
+                    <View style={styles.buttonContainer}>
+                        {currentStep > 0 ? (
+                            <SecondaryButton onPress={handleBack}>
+                                <SecondaryButtonText>Back</SecondaryButtonText>
+                            </SecondaryButton>
+                        ) : (
+                            <SecondaryButton disabled className=' bg-gray-100 border-gray-100'>
+                                <SecondaryButtonText className='text-gray-400'>Back</SecondaryButtonText>
+                            </SecondaryButton>
+                        )}
+                        {currentStep < steps.length - 1 ? (
+                            <PrimaryButton onPress={handleNext}>
+                                <PrimaryButtonText>Next</PrimaryButtonText>
+                            </PrimaryButton>
+                        ) : (
+                            <PrimaryButton onPress={handleDone}>
+                                <PrimaryButtonText>Done</PrimaryButtonText>
+                            </PrimaryButton>
+                        )}
+                    </View>
+                </View>
+            )}
+
             <Toast config={toastConfig} />
         </View>
     );
@@ -455,7 +476,7 @@ const StepRelationship = () => {
     const handlePress = (value: string) => {
         setSelectedValue(value);
         useOnboardingStore.setState({ relationship: value })
-        console.log('Relationship:', value);
+        console.log('Relationship:', value, typeof value);
     };
 
     return (
@@ -647,6 +668,192 @@ const StepInterests = () => {
     );
 };
 
+const StepPhoto = () => {
+    const [loading, setLoading] = useState(true)
+    const [avatarUrl, setAvatarUrl] = useState('')
+    const session = useAuth();
+
+    async function updateProfile({
+        avatar_url,
+    }: {
+        avatar_url: string
+    }) {
+        try {
+            setLoading(true)
+            if (!session?.user) throw new Error('No user on the session!')
+
+            const updates = {
+                id: session?.user.id,
+                avatar_url,
+                updated_at: new Date(),
+            }
+
+            const { error } = await supabase.from('profiles').upsert(updates)
+
+            if (error) {
+                throw error
+            } else {
+
+            }
+        } catch (error) {
+            if (error instanceof Error) {
+                Alert.alert(error.message)
+            }
+        } finally {
+            useOnboardingStore.setState({ photoUploaded: true })
+            setLoading(false)
+        }
+    }
+
+    return (
+        <View className='p-6 w-screen'>
+            <Spacer height={16} />
+
+            <Progress percent={88} />
+
+            <Spacer height={48} />
+
+            <Text style={defaultStyles.h2}>Your Photo</Text>
+            <Spacer height={8} />
+            <View>
+                <Text style={defaultStyles.body}>
+                    You can only add one. So, make it count :)
+                </Text>
+            </View>
+
+            <Spacer height={24} />
+
+            <View className=''>
+                <Avatar
+                    size={80}
+                    url={avatarUrl}
+                    onUpload={(url: string) => {
+                        setAvatarUrl(url)
+                        updateProfile({ avatar_url: url })
+                    }}
+                />
+            </View>
+
+        </View>
+    );
+};
+
+const StepFinal = () => {
+
+    const [relationshipType] = useOnboardingStore(
+        useShallow((state) => [state.relationship]),
+    )
+    console.log('relationshipType', relationshipType)
+
+    let subHeading = `Since you chose to look for a relationship, “Dive mode” was automatically activated.`
+    if (relationshipType == 2) {
+        subHeading = `Since you chose to look for friendship, "Dive mode" was automatically activated. You can change this in your settings.`
+    } else if (relationshipType == 3) {
+        subHeading = `Since you are looking for a hookup, “Surf mode” has been activated.`
+    }
+
+    const finalSlidesContent = [
+        {
+            id: 1,
+            title: 'Step 1',
+            description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+            image: require('@/assets/images/onboarding/onboarding3.png'),
+        },
+        {
+            id: 2,
+            title: 'Step 2',
+            description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+            image: require('@/assets/images/onboarding/onboarding4.png'),
+        },
+    ]
+
+
+
+
+    interface OnboardingItem {
+        id: number;
+        title: string;
+        description: string;
+        image: ImageSourcePropType;
+    }
+
+    const { width } = useWindowDimensions();
+
+    function renderItem({ item }: { item: OnboardingItem }) {
+        return (
+            <View className='' >
+                <Image source={item.image} style={{ width }} />
+            </View >
+        )
+
+    }
+
+
+    const scrollX = useRef(new Animated.Value(0)).current;
+
+    const Pagination = ({ count }: { count: number }) => {
+        return (
+            <View className='flex-row justify-center'>
+                {Array(count).fill(0).map((_, index) => {
+                    const inputRange = [(index - 1) * width, index * width, (index + 1) * width];
+                    const dotColor = scrollX.interpolate({
+                        inputRange,
+                        outputRange: ['#cccccc', '#7A37D0', '#cccccc'],
+                        extrapolate: 'clamp'
+                    });
+                    return (
+                        <Animated.View
+                            key={index}
+                            className='w-2 h-2 mx-1 rounded-full'
+                            style={{ backgroundColor: dotColor }}
+                        />
+                    );
+                })}
+            </View>
+        );
+    };
+
+    const handleDone = () => {
+        useOnboardingStore.setState({ dataUploaded: true })
+        return router.replace('/(tabs)')
+    }
+
+
+
+    return (
+        <View className='w-screen flex justify-between h-full bg-white'>
+            <View>
+                <View className='p-6'>
+                    <Spacer height={24} />
+                    <Text style={defaultStyles.h2}>You are all set!</Text>
+                    <Spacer height={8} />
+                    <Text style={defaultStyles.body}>{subHeading}</Text>
+                    <Spacer height={24} />
+                    <Text style={defaultStyles.bodyBold}>Surf and Dive modes explained</Text>
+                </View>
+                <FlatList
+                    data={finalSlidesContent}
+                    renderItem={renderItem}
+                    keyExtractor={item => item.id.toString()}
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    pagingEnabled
+                    bounces={false}
+                    onScroll={Animated.event(
+                        [{ nativeEvent: { contentOffset: { x: scrollX } } }],
+                        { useNativeDriver: false }
+                    )}
+                />
+                <Pagination count={finalSlidesContent.length} />
+            </View>
+            <View className='p-6'>
+                <PrimaryButton onPress={handleDone}>
+                    <PrimaryButtonText>Got it</PrimaryButtonText>
+                </PrimaryButton>
+            </View>
+        </View>
+    );
+};
 
 
 

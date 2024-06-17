@@ -75,7 +75,7 @@ export default function Auth({ onboarding }: any) {
 
     function renderItem({ item }: { item: OnboardingItem }) {
         return (
-            <View className='bg-primary-300' >
+            <View className='' >
                 <Image source={item.image} style={{ width }} />
                 {/* <View>
                     <Text>{item.title}</Text>
