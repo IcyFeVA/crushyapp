@@ -15,10 +15,10 @@ export const defaultStyles = StyleSheet.create({
         lineHeight: 24
     },
     buttonShadow: {
-        shadowColor: '#171717',
-        shadowOffset: { width: -2, height: 4 },
-        shadowOpacity: 0.2,
-        shadowRadius: 3,
+        shadowColor: Colors.light.primary,
+        // shadowOffset: { width: -2, height: 4 },
+        // shadowOpacity: 0.9,
+        // shadowRadius: 1,
     },
     h2: {
         fontSize: 24,

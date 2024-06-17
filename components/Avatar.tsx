@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
-import { StyleSheet, View, Alert, Image, Button } from 'react-native'
+import { StyleSheet, View, Alert, Image, Button, ActivityIndicator } from 'react-native'
 import * as ImagePicker from 'expo-image-picker'
 import { PrimaryButton, PrimaryButtonText, SecondaryButton, SecondaryButtonText } from './ui/Buttons'
 import Spacer from './Spacer'
@@ -96,7 +96,7 @@ export default function Avatar({ url, size = 70, onUpload }: Props) {
         <View>
             <Spacer height={24} />
 
-            <SecondaryButton onPress={uploadAvatar} style={defaultStyles.buttonShadow}>
+            <SecondaryButton onPress={uploadAvatar} style={defaultStyles.buttonShadow} disabled={uploading}>
                 <SecondaryButtonText>{uploading ? 'Uploading ...' : 'Upload'}</SecondaryButtonText>
             </SecondaryButton>
 
@@ -108,16 +108,8 @@ export default function Avatar({ url, size = 70, onUpload }: Props) {
                     accessibilityLabel="Avatar"
                     style={[avatarSize, styles.avatar, styles.image]}
                 />
-                // <Image
-                //     source={{ uri: avatarUrl }}
-                //     accessibilityLabel="Avatar"
-                //     style={[avatarSize, styles.avatar, styles.image]}
-                // />
             ) : (
-                // No image
-                <Spacer height={0} />
-                // <View className='w-full h-3/4' style={[styles.avatar, styles.noImage]} />
-                // <View style={[avatarSize, styles.avatar, styles.noImage]} />
+                uploading ? <ActivityIndicator size="large" color={Colors.light.accent} /> : <Spacer height={0} />
             )}
         </View>
     )

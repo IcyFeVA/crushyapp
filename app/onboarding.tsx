@@ -171,6 +171,9 @@ const Onboarding = ({ setShowOnboarding }: { setShowOnboarding: any }) => {
                     text2: 'Please upload a photo',
                 });
                 return
+            } else {
+                saveData();
+                return
             }
         }
 
@@ -192,7 +195,7 @@ const Onboarding = ({ setShowOnboarding }: { setShowOnboarding: any }) => {
     };
 
 
-    const handleDone = async () => {
+    const saveData = async () => {
 
         console.log('name:', name);
         console.log('age:', age);
@@ -263,8 +266,8 @@ const Onboarding = ({ setShowOnboarding }: { setShowOnboarding: any }) => {
                                 <PrimaryButtonText>Next</PrimaryButtonText>
                             </PrimaryButton>
                         ) : (
-                            <PrimaryButton onPress={handleDone} style={defaultStyles.buttonShadow}>
-                                <PrimaryButtonText>Done</PrimaryButtonText>
+                            <PrimaryButton onPress={handleNext} style={defaultStyles.buttonShadow}>
+                                <PrimaryButtonText>Finish</PrimaryButtonText>
                             </PrimaryButton>
                         )}
                     </View>
@@ -831,14 +834,12 @@ const StepFinal = () => {
 
     return (
         <View className='w-screen flex justify-between h-full bg-white'>
-            <View>
-                <View className='p-6'>
+            <View className='flex just'>
+                <View className='p-6 pb-0'>
                     <Spacer height={24} />
                     <Text style={defaultStyles.h2}>You are all set!</Text>
                     <Spacer height={8} />
                     <Text style={defaultStyles.body}>{subHeading}</Text>
-                    <Spacer height={24} />
-                    <Text style={defaultStyles.bodyBold}>Surf and Dive modes explained</Text>
                 </View>
                 <FlatList
                     data={finalSlidesContent}
