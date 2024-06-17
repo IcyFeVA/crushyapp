@@ -815,6 +815,9 @@ const StepFinal = () => {
 
     const handleDone = () => {
         useOnboardingStore.setState({ dataUploaded: true })
+
+        // TODO: save in local storage
+
         return router.replace('/(tabs)')
     }
 
