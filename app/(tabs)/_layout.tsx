@@ -1,5 +1,5 @@
 import React from 'react';
-import { Tabs, Link } from 'expo-router';
+import { Tabs, Link, router } from 'expo-router';
 import { Image, Pressable } from 'react-native';
 
 import { TabBarIcon } from '@/components/navigation/TabBarIcon';
@@ -42,11 +42,9 @@ export default function TabLayout() {
         options={{
           title: 'Explore',
           tabBarIcon: ({ color, focused }) => (
-            <Link href="/surf" asChild>
-              <Pressable style={{ marginTop: 8 }}>
-                <Image source={require('@/assets/images/icons/tab-explore.png')} />
-              </Pressable>
-            </Link>
+            <Pressable style={{ marginTop: 8 }} onPress={() => router.push('/mode-surf')}>
+              <Image source={require('@/assets/images/icons/tab-explore.png')} />
+            </Pressable>
           ),
         }}
       />
