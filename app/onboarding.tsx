@@ -676,7 +676,7 @@ const StepInterests = () => {
         </View>
     );
 };
-// TODO: prevent next step without uploading photo first
+
 const StepPhoto = () => {
     const [loading, setLoading] = useState(true)
     const [avatarUrl, setAvatarUrl] = useState('')
@@ -894,7 +894,6 @@ const styles = StyleSheet.create({
     },
     buttonContainer: {
         display: 'flex',
-        alignItems: 'flex-end',
         flexDirection: 'row',
         justifyContent: 'space-between',
         gap: 8,
