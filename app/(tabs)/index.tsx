@@ -1,6 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import React from 'react';
-import { View, Text, Button } from 'react-native';
+import { View, Text, Button, StatusBar } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useProfile } from '@/hooks/useProfile';
 import { useAuth } from '@/hooks/useAuth';
@@ -18,6 +18,7 @@ export default function Home() {
 
     return (
         <View>
+            <StatusBar backgroundColor="white" barStyle="dark-content" />
             <Text>Home Screen</Text>
             <Button title="Sign Out" onPress={() => supabase.auth.signOut()} />
         </View>

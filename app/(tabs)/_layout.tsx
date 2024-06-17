@@ -5,7 +5,9 @@ import { Image, Pressable } from 'react-native';
 import { TabBarIcon } from '@/components/navigation/TabBarIcon';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import * as NavigationBar from 'expo-navigation-bar';
 
+NavigationBar.setBackgroundColorAsync('white');
 export default function TabLayout() {
   const colorScheme = useColorScheme();
 

@@ -20,12 +20,8 @@ text1Style = {{
 error: (props) => (
     <ErrorToast
             { ...props }
-            text1Style = {{
-    fontSize: 17
-}}
-text2Style = {{
-    fontSize: 15
-}}
+            text1Style = {{ fontSize: 17 }}
+text2Style = {{ fontSize: 15 }}
 />
     ),
     /*

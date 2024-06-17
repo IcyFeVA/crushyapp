@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { Alert, StyleSheet, View, TouchableOpacity, Keyboard } from 'react-native'
+import { Alert, StyleSheet, View, TouchableOpacity, Keyboard, StatusBar } from 'react-native'
 import { supabase } from '@/lib/supabase'
 import { Text } from 'react-native-ui-lib';
 import { Ionicons } from '@expo/vector-icons';
@@ -184,6 +184,7 @@ export default function Auth({ onboarding }: any) {
 
     return (
         <SafeAreaView>
+            <StatusBar backgroundColor="white" barStyle="dark-content" />
             {mode === 'signin' && (
 
                 <Pageview className='flex justify-space-between h-full'>

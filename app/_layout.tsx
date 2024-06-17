@@ -5,6 +5,12 @@ import { useAuth } from '@/hooks/useAuth';
 import { useProfile } from '@/hooks/useProfile';
 import { useEffect, useState } from 'react';
 import { useFonts } from 'expo-font';
+import * as NavigationBar from 'expo-navigation-bar';
+
+NavigationBar.setBackgroundColorAsync('white');
+
+
+
 
 export default function RootLayout() {
     const session = useAuth();

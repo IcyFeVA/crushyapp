@@ -20,7 +20,6 @@ import { router } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import Avatar from '@/components/Avatar';
 
-
 const screenWidth = Dimensions.get('window').width;
 
 const useOnboardingStore = create((set) => ({
@@ -45,14 +44,21 @@ const useOnboardingStore = create((set) => ({
 
 
 
-const Onboarding = ({ toastConfig, setShowOnboarding }: { toastConfig: any, setShowOnboarding: any }) => {
+const Onboarding = ({ setShowOnboarding }: { setShowOnboarding: any }) => {
     const session = useAuth();
     const [currentStep, setCurrentStep] = useState(0);
     const flatListRef = useRef(null);
     const [name, age, gender, pronouns, relationship, genderPreferences, interests, photoUploaded, dataUploaded, onboardingCompleted] = useOnboardingStore(
         useShallow((state) => [state.name, state.age, state.gender, state.pronouns, state.relationship, state.genderPreferences, state.interests, state.photoUploaded, state.dataUploaded, state.onboardingCompleted]),
     )
-
+    const toastConfig = {
+        default: ({ text1, text2, props }) => (
+            <View style={{ display: 'flex', justifyContent: 'center', width: '94%', backgroundColor: Colors.light.accent, borderColor: Colors.light.white, borderRadius: 8, padding: 16 }}>
+                <Text style={{ fontFamily: 'HeadingBold', color: Colors.light.textInverted }}>{text1}</Text>
+                <Text style={{ fontFamily: 'BodyRegular', color: Colors.light.textInverted }}>{text2}</Text>
+            </View>
+        )
+    };
 
     const steps: object[] = [
         { key: '1', title: 'Step 1', component: StepName },
@@ -667,7 +673,7 @@ const StepInterests = () => {
         </View>
     );
 };
-
+// TODO: prevent next step without uploading photo first
 const StepPhoto = () => {
     const [loading, setLoading] = useState(true)
     const [avatarUrl, setAvatarUrl] = useState('')
