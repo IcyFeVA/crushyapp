@@ -6,6 +6,7 @@ import { useProfile } from '@/hooks/useProfile';
 import { useEffect, useState } from 'react';
 import { useFonts } from 'expo-font';
 import * as NavigationBar from 'expo-navigation-bar';
+import { SafeAreaView } from 'react-native';
 
 NavigationBar.setBackgroundColorAsync('white');
 
@@ -44,10 +45,12 @@ export default function RootLayout() {
     }
 
     return (
-        <RootNavigator
-            session={session}
-            showOnboarding={showOnboarding}
-            setShowOnboarding={setShowOnboarding}
-        />
+        <SafeAreaView style={{ flex: 1 }}>
+            <RootNavigator
+                session={session}
+                showOnboarding={showOnboarding}
+                setShowOnboarding={setShowOnboarding}
+            />
+        </SafeAreaView>
     );
 }
