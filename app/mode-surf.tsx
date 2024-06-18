@@ -12,7 +12,7 @@ export default function Modal() {
                 <View style={styles.header}>
                     <Image source={require('@/assets/images/logo/logo_crushy.png')} style={styles.logo} />
                     <Button style={styles.buttonFilter} className="shadow-md active:shadow-none" onPress={() => { }}>
-                        <Ionicons name="filter-outline" size={12} color={Colors.light.text} style={{ marginRight: 8 }} />
+                        <Ionicons name="filter-outline" size={12} color={Colors.light.text} />
                         <Text style={styles.buttonFilterText}>Search Filters <Text style={{ fontFamily: 'BodySemiBold' }}>(4)</Text></Text>
                     </Button>
                 </View>
@@ -77,6 +77,7 @@ const styles = StyleSheet.create({
         backgroundColor: Colors.light.white,
         paddingVertical: 6,
         paddingHorizontal: 16,
+        paddingBottom: 8,
         borderRadius: 99,
         borderWidth: 1,
         borderColor: Colors.light.tertiary,
@@ -84,6 +85,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
+        gap: 4,
         shadowColor: Colors.light.primary,
     },
     buttonFilterText: {
@@ -109,8 +111,8 @@ const styles = StyleSheet.create({
     },
     buttonClose: {
         backgroundColor: Colors.light.white,
-        width: 40,
-        height: 40,
+        width: 32,
+        height: 32,
         borderWidth: 1,
         borderColor: Colors.light.tertiary,
         borderRadius: 99,
@@ -124,8 +126,8 @@ const styles = StyleSheet.create({
     },
     buttonExpand: {
         backgroundColor: Colors.light.white,
-        width: 40,
-        height: 40,
+        width: 32,
+        height: 32,
         borderWidth: 1,
         borderColor: Colors.light.tertiary,
         borderRadius: 99,
