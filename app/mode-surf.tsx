@@ -1,9 +1,10 @@
-import { Image, SafeAreaView, View, StyleSheet, Text, Pressable } from 'react-native';
+import { Image, SafeAreaView, View, StyleSheet, Text, Pressable, StatusBar, ScrollView } from 'react-native';
 import { Link, router } from 'expo-router';
 import { Colors } from '@/constants/Colors';
-import { Button } from 'react-native-ui-lib';
+import { Button, Chip, Fader } from 'react-native-ui-lib';
 import { FontAwesome6, Ionicons } from '@expo/vector-icons';
 import Spacer from '@/components/Spacer';
+import { opacity } from 'react-native-reanimated/lib/typescript/reanimated2/Colors';
 
 export default function Modal() {
     return ( //<Link href="../">Dismiss</Link>
@@ -12,12 +13,28 @@ export default function Modal() {
                 <View style={styles.header}>
                     <Image source={require('@/assets/images/logo/logo_crushy.png')} style={styles.logo} />
                     <Button style={styles.buttonFilter} className="shadow-md active:shadow-none" onPress={() => { }}>
-                        <Ionicons name="filter-outline" size={12} color={Colors.light.text} />
+                        <Ionicons name="search" size={12} color={Colors.light.text} style={{ marginTop: 3 }} />
                         <Text style={styles.buttonFilterText}>Search Filters <Text style={{ fontFamily: 'BodySemiBold' }}>(4)</Text></Text>
                     </Button>
                 </View>
                 <View style={styles.personContainer}>
                     <Image source={require('@/assets/images/dummies/dummy1.png')} style={styles.person} />
+                    <Fader visible position={Fader.position.BOTTOM} tintColor={'#282828'} size={100} />
+                    <View style={styles.personInfo}>
+                        <Text style={styles.personName} numberOfLines={2} ellipsizeMode='tail' >Sweetiepie</Text>
+                        <Text style={styles.personAge}>32</Text>
+                    </View>
+                    <ScrollView horizontal style={styles.chipsContainer}>
+                        <Chip style={styles.chip} label="Sushi" labelStyle={styles.chipLabel} />
+                        <Chip style={styles.chip} label="Basketball" labelStyle={styles.chipLabel} />
+                        <Chip style={styles.chip} label="Tennis" labelStyle={styles.chipLabel} />
+                        <Chip style={styles.chip} label="Videogames" labelStyle={styles.chipLabel} />
+                        <Chip style={styles.chip} label="Movies" labelStyle={styles.chipLabel} />
+                        <Chip style={styles.chip} label="Dancing" labelStyle={styles.chipLabel} />
+                        <Chip style={styles.chip} label="Diving" labelStyle={styles.chipLabel} />
+                        <Chip style={styles.chip} label="Skiing" labelStyle={styles.chipLabel} />
+                        <Chip style={styles.chip} label="Hiking" labelStyle={styles.chipLabel} />
+                    </ScrollView>
                     <Pressable onPress={() => router.push('../')} style={styles.buttonClose} className='shadow-md active:shadow-none' >
                         <Ionicons name="close" size={24} color={Colors.light.accent} />
                     </Pressable>
@@ -51,10 +68,31 @@ const styles = StyleSheet.create({
         maxWidth: '100%',
         resizeMode: 'cover',
     },
+    personInfo: {
+        display: 'flex',
+        flexDirection: 'row',
+        alignItems: 'flex-end',
+        gap: 8,
+        position: 'absolute',
+        bottom: 56,
+        left: 16,
+        width: '78%',
+    },
+    personName: {
+        fontFamily: 'HeadingBold',
+        fontSize: 32,
+        color: Colors.light.white,
+    },
+    personAge: {
+        fontFamily: 'HeadingBold',
+        fontSize: 32,
+        color: Colors.light.white,
+        opacity: 0.7
+    },
     container: {
         flex: 1,
+        paddingTop: StatusBar.currentHeight + 24,
         padding: 16,
-        paddingTop: 48,
         backgroundColor: Colors.light.background,
     },
     innerContainer: {
@@ -75,9 +113,9 @@ const styles = StyleSheet.create({
     },
     buttonFilter: {
         backgroundColor: Colors.light.white,
-        paddingVertical: 6,
-        paddingHorizontal: 16,
-        paddingBottom: 8,
+        paddingVertical: 2,
+        paddingHorizontal: 12,
+        paddingBottom: 6,
         borderRadius: 99,
         borderWidth: 1,
         borderColor: Colors.light.tertiary,
@@ -138,5 +176,23 @@ const styles = StyleSheet.create({
         position: 'absolute',
         bottom: 64,
         right: 16,
-    }
+    },
+    chipsContainer: {
+        position: 'absolute',
+        bottom: 16,
+        left: 16,
+    },
+    chip: {
+        backgroundColor: Colors.light.white,
+        paddingVertical: 8,
+        paddingHorizontal: 4,
+        marginRight: 8,
+        borderRadius: 99,
+        shadowColor: Colors.light.black,
+    },
+    chipLabel: {
+        color: Colors.light.text,
+        fontSize: 13,
+        fontFamily: 'BodyRegular',
+    },
 });
