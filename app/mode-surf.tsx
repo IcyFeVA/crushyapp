@@ -25,7 +25,7 @@ export default function Modal() {
                         <Text style={styles.personName} numberOfLines={2} ellipsizeMode='tail' >Sweetiepie</Text>
                         <Text style={styles.personAge}>32</Text>
                     </View>
-                    <ScrollView horizontal style={styles.chipsContainer}>
+                    <ScrollView horizontal style={styles.chipsContainer} contentContainerStyle={styles.scrollContainer} showsHorizontalScrollIndicator={false}>
                         <Chip style={[styles.chip, styles.chipActive]} label="Sushi" labelStyle={[styles.chipLabel, styles.chipActiveLabel]} />
                         <Chip style={styles.chip} label="Basketball" labelStyle={styles.chipLabel} />
                         <Chip style={styles.chip} label="Tennis" labelStyle={styles.chipLabel} />
@@ -181,7 +181,6 @@ const styles = StyleSheet.create({
     chipsContainer: {
         position: 'absolute',
         bottom: 16,
-        left: 16,
     },
     chip: {
         backgroundColor: Colors.light.white,
@@ -201,5 +200,8 @@ const styles = StyleSheet.create({
     },
     chipActiveLabel: {
         color: Colors.light.textInverted,
+    },
+    scrollContainer: {
+        marginLeft: 16,
     },
 });
