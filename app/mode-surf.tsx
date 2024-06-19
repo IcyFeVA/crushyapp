@@ -5,6 +5,7 @@ import { Button, Chip, Fader } from 'react-native-ui-lib';
 import { FontAwesome6, Ionicons } from '@expo/vector-icons';
 import Spacer from '@/components/Spacer';
 import { opacity } from 'react-native-reanimated/lib/typescript/reanimated2/Colors';
+import { getBackgroundColor } from 'react-native-ui-lib/src/helpers/AvatarHelper';
 
 export default function Modal() {
     return ( //<Link href="../">Dismiss</Link>
@@ -25,7 +26,7 @@ export default function Modal() {
                         <Text style={styles.personAge}>32</Text>
                     </View>
                     <ScrollView horizontal style={styles.chipsContainer}>
-                        <Chip style={styles.chip} label="Sushi" labelStyle={styles.chipLabel} />
+                        <Chip style={[styles.chip, styles.chipActive]} label="Sushi" labelStyle={[styles.chipLabel, styles.chipActiveLabel]} />
                         <Chip style={styles.chip} label="Basketball" labelStyle={styles.chipLabel} />
                         <Chip style={styles.chip} label="Tennis" labelStyle={styles.chipLabel} />
                         <Chip style={styles.chip} label="Videogames" labelStyle={styles.chipLabel} />
@@ -190,9 +191,15 @@ const styles = StyleSheet.create({
         borderRadius: 99,
         shadowColor: Colors.light.black,
     },
+    chipActive: {
+        backgroundColor: Colors.light.accent,
+    },
     chipLabel: {
         color: Colors.light.text,
         fontSize: 13,
         fontFamily: 'BodyRegular',
+    },
+    chipActiveLabel: {
+        color: Colors.light.textInverted,
     },
 });
