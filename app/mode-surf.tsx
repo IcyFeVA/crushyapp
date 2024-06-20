@@ -1,46 +1,48 @@
 import { Image, SafeAreaView, View, StyleSheet, Text, Pressable, StatusBar, ScrollView } from 'react-native';
-import { Link, router } from 'expo-router';
+import { router } from 'expo-router';
 import { Colors } from '@/constants/Colors';
 import { Button, Chip, Fader } from 'react-native-ui-lib';
-import { FontAwesome6, Ionicons } from '@expo/vector-icons';
-import Spacer from '@/components/Spacer';
-import { opacity } from 'react-native-reanimated/lib/typescript/reanimated2/Colors';
-import { getBackgroundColor } from 'react-native-ui-lib/src/helpers/AvatarHelper';
-import { useEffect, useState } from 'react';
+import { Ionicons } from '@expo/vector-icons';
+import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
-// import { Image } from 'expo-image';
+import { useFocusEffect } from '@react-navigation/native';
 
 
 
 export default function Modal() {
     const session = useAuth();
     const [imageUrl, setImageUrl] = useState<string | null>(null);
-
-    useEffect(() => {
-        if (session) {
-            const fetchImage = async () => {
-                const url = await getProfileImage();
-                setImageUrl(url);
-            };
-
-            fetchImage();
-        }
-    }, [imageUrl]);
-
+    const [name, setName] = useState<string | null>(null);
+    const [userObj, setUserObj] = useState<any>(null); // Change the type to 'any' to accommodate the expected object
 
     const getProfileImage = async () => {
         let { data, error } = await supabase
             .from('profiles')
-            .select('avatar_url')
+            .select('*')
             .eq('id', session?.user.id);
 
-        if (data) {
-            console.log(data[0].avatar_url);
+        if (data && data.length > 0) {
+            console.log(data[0].avatar_url, data[0].name);
+            setName(data[0].name);
+            setUserObj(data[0]);
             return supabase.storage.from('avatars').getPublicUrl(data[0].avatar_url).data.publicUrl;
         }
         return null;
     };
+
+    useFocusEffect(
+        useCallback(() => {
+            if (session) {
+                const fetchImage = async () => {
+                    const url = await getProfileImage();
+                    setImageUrl(url);
+                };
+
+                fetchImage();
+            }
+        }, [session])
+    );
 
 
     return ( //<Link href="../">Dismiss</Link>
@@ -57,8 +59,8 @@ export default function Modal() {
                     <Image source={{ uri: imageUrl }} style={styles.person} />
                     <Fader visible position={Fader.position.BOTTOM} tintColor={'#282828'} size={100} />
                     <View style={styles.personInfo}>
-                        <Text style={styles.personName} numberOfLines={2} ellipsizeMode='tail' >PizzaPasta</Text>
-                        <Text style={styles.personAge}>32</Text>
+                        <Text style={styles.personName} numberOfLines={2} ellipsizeMode='tail' >{name}</Text>
+                        <Text style={styles.personAge}>{userObj?.age && 2024 - parseInt(userObj.age)}</Text>
                     </View>
                     <ScrollView horizontal style={styles.chipsContainer} contentContainerStyle={styles.scrollContainer} showsHorizontalScrollIndicator={false}>
                         <Chip style={[styles.chip, styles.chipActive]} label="Sushi" labelStyle={[styles.chipLabel, styles.chipActiveLabel]} />
