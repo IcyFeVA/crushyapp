@@ -13,8 +13,7 @@ import { useFocusEffect } from '@react-navigation/native';
 export default function Modal() {
     const session = useAuth();
     const [imageUrl, setImageUrl] = useState<string | null>(null);
-    const [name, setName] = useState<string | null>(null);
-    const [userObj, setUserObj] = useState<any>(null); // Change the type to 'any' to accommodate the expected object
+    const [userObj, setUserObj] = useState<any>(null);
 
     const getProfileImage = async () => {
         let { data, error } = await supabase
@@ -23,8 +22,6 @@ export default function Modal() {
             .eq('id', session?.user.id);
 
         if (data && data.length > 0) {
-            console.log(data[0].avatar_url, data[0].name);
-            setName(data[0].name);
             setUserObj(data[0]);
             return supabase.storage.from('avatars').getPublicUrl(data[0].avatar_url).data.publicUrl;
         }
@@ -59,7 +56,7 @@ export default function Modal() {
                     <Image source={{ uri: imageUrl }} style={styles.person} />
                     <Fader visible position={Fader.position.BOTTOM} tintColor={'#282828'} size={100} />
                     <View style={styles.personInfo}>
-                        <Text style={styles.personName} numberOfLines={2} ellipsizeMode='tail' >{name}</Text>
+                        <Text style={styles.personName} numberOfLines={2} ellipsizeMode='tail' >{userObj?.name && userObj.name}</Text>
                         <Text style={styles.personAge}>{userObj?.age && 2024 - parseInt(userObj.age)}</Text>
                     </View>
                     <ScrollView horizontal style={styles.chipsContainer} contentContainerStyle={styles.scrollContainer} showsHorizontalScrollIndicator={false}>
