@@ -6,8 +6,43 @@ import { FontAwesome6, Ionicons } from '@expo/vector-icons';
 import Spacer from '@/components/Spacer';
 import { opacity } from 'react-native-reanimated/lib/typescript/reanimated2/Colors';
 import { getBackgroundColor } from 'react-native-ui-lib/src/helpers/AvatarHelper';
+import { useEffect, useState } from 'react';
+import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/hooks/useAuth';
+// import { Image } from 'expo-image';
+
+
 
 export default function Modal() {
+    const session = useAuth();
+    const [imageUrl, setImageUrl] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (session) {
+            const fetchImage = async () => {
+                const url = await getProfileImage();
+                setImageUrl(url);
+            };
+
+            fetchImage();
+        }
+    }, [imageUrl]);
+
+
+    const getProfileImage = async () => {
+        let { data, error } = await supabase
+            .from('profiles')
+            .select('avatar_url')
+            .eq('id', session?.user.id);
+
+        if (data) {
+            console.log(data[0].avatar_url);
+            return supabase.storage.from('avatars').getPublicUrl(data[0].avatar_url).data.publicUrl;
+        }
+        return null;
+    };
+
+
     return ( //<Link href="../">Dismiss</Link>
         <SafeAreaView style={styles.container}>
             <View style={styles.innerContainer}>
@@ -19,10 +54,10 @@ export default function Modal() {
                     </Button>
                 </View>
                 <View style={styles.personContainer}>
-                    <Image source={require('@/assets/images/dummies/dummy1.png')} style={styles.person} />
+                    <Image source={{ uri: imageUrl }} style={styles.person} />
                     <Fader visible position={Fader.position.BOTTOM} tintColor={'#282828'} size={100} />
                     <View style={styles.personInfo}>
-                        <Text style={styles.personName} numberOfLines={2} ellipsizeMode='tail' >Sweetiepie</Text>
+                        <Text style={styles.personName} numberOfLines={2} ellipsizeMode='tail' >PizzaPasta</Text>
                         <Text style={styles.personAge}>32</Text>
                     </View>
                     <ScrollView horizontal style={styles.chipsContainer} contentContainerStyle={styles.scrollContainer} showsHorizontalScrollIndicator={false}>
@@ -63,11 +98,12 @@ const styles = StyleSheet.create({
         flex: 1,
         borderRadius: 20,
         overflow: 'hidden',
+        width: '100%',
+        height: '100%',
     },
     person: {
-        height: '100%',
-        maxWidth: '100%',
-        resizeMode: 'cover',
+        flex: 1,
+        backgroundColor: Colors.light.tertiary,
     },
     personInfo: {
         display: 'flex',
