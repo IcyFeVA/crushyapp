@@ -236,46 +236,48 @@ const Onboarding = ({ setShowOnboarding }: { setShowOnboarding: any }) => {
 
 
     return (
-        <View  >
-            {dataUploaded ? (
-                <StepFinal />
-            ) : (
-                <View className='flex h-full justify-between bg-white'>
-                    <FlatList
-                        ref={flatListRef}
-                        data={steps}
-                        horizontal
-                        showsHorizontalScrollIndicator={false}
-                        pagingEnabled
-                        scrollEnabled={false}
-                        renderItem={({ item }) => React.createElement(item.component)}
-                        keyExtractor={item => item.key}
-                    />
-                    <View style={styles.buttonContainer}>
-                        {currentStep > 0 ? (
-                            <SecondaryButton onPress={handleBack} style={defaultStyles.buttonShadow}>
-                                <SecondaryButtonText>Back</SecondaryButtonText>
-                            </SecondaryButton>
-                        ) : (
-                            <SecondaryButton disabled className=' bg-gray-100 border-gray-100'>
-                                <SecondaryButtonText className='text-gray-400'>Back</SecondaryButtonText>
-                            </SecondaryButton>
-                        )}
-                        {currentStep < steps.length - 1 ? (
-                            <PrimaryButton onPress={handleNext} style={defaultStyles.buttonShadow}>
-                                <PrimaryButtonText>Next</PrimaryButtonText>
-                            </PrimaryButton>
-                        ) : (
-                            <PrimaryButton onPress={handleNext} style={defaultStyles.buttonShadow}>
-                                <PrimaryButtonText>Finish</PrimaryButtonText>
-                            </PrimaryButton>
-                        )}
+        <SafeAreaView style={{ flex: 1, backgroundColor: 'white' }}>
+            <View>
+                {dataUploaded ? (
+                    <StepFinal />
+                ) : (
+                    <View className='flex h-full justify-between bg-white'>
+                        <FlatList
+                            ref={flatListRef}
+                            data={steps}
+                            horizontal
+                            showsHorizontalScrollIndicator={false}
+                            pagingEnabled
+                            scrollEnabled={false}
+                            renderItem={({ item }) => React.createElement(item.component)}
+                            keyExtractor={item => item.key}
+                        />
+                        <View style={styles.buttonContainer}>
+                            {currentStep > 0 ? (
+                                <SecondaryButton onPress={handleBack} style={defaultStyles.buttonShadow}>
+                                    <SecondaryButtonText>Back</SecondaryButtonText>
+                                </SecondaryButton>
+                            ) : (
+                                <SecondaryButton disabled className=' bg-gray-100 border-gray-100'>
+                                    <SecondaryButtonText className='text-gray-400'>Back</SecondaryButtonText>
+                                </SecondaryButton>
+                            )}
+                            {currentStep < steps.length - 1 ? (
+                                <PrimaryButton onPress={handleNext} style={defaultStyles.buttonShadow}>
+                                    <PrimaryButtonText>Next</PrimaryButtonText>
+                                </PrimaryButton>
+                            ) : (
+                                <PrimaryButton onPress={handleNext} style={defaultStyles.buttonShadow}>
+                                    <PrimaryButtonText>Finish</PrimaryButtonText>
+                                </PrimaryButton>
+                            )}
+                        </View>
                     </View>
-                </View>
-            )}
+                )}
 
-            <Toast config={toastConfig} />
-        </View>
+                <Toast config={toastConfig} />
+            </View>
+        </SafeAreaView>
     );
 };
 

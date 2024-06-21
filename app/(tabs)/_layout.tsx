@@ -1,6 +1,6 @@
 import React from 'react';
 import { Tabs, Link, router } from 'expo-router';
-import { Image, Pressable } from 'react-native';
+import { Image, Platform, Pressable } from 'react-native';
 
 import { TabBarIcon } from '@/components/navigation/TabBarIcon';
 import { Colors } from '@/constants/Colors';
@@ -17,7 +17,7 @@ export default function TabLayout() {
         tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
         headerShown: false,
         tabBarShowLabel: false,
-        tabBarStyle: { height: 64 },
+        tabBarStyle: { height: Platform.OS === 'ios' ? 80 : 64 },
       }}>
       <Tabs.Screen
         name="index"
@@ -42,7 +42,7 @@ export default function TabLayout() {
         options={{
           title: 'Explore',
           tabBarIcon: ({ color, focused }) => (
-            <Pressable style={{ marginTop: 8 }} onPress={() => router.push('/mode-surf')}>
+            <Pressable style={{ marginTop: Platform.OS === 'ios' ? 0 : 8 }} onPress={() => router.push('/mode-surf')}>
               <Image source={require('@/assets/images/icons/tab-explore.png')} />
             </Pressable>
           ),

@@ -6,9 +6,14 @@ import { useProfile } from '@/hooks/useProfile';
 import { useEffect, useState } from 'react';
 import { useFonts } from 'expo-font';
 import * as NavigationBar from 'expo-navigation-bar';
-import { SafeAreaView } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { Platform } from 'react-native';
 
-NavigationBar.setBackgroundColorAsync('white');
+
+
+if (Platform.OS != 'ios') {
+    NavigationBar.setBackgroundColorAsync('white');
+}
 
 
 
@@ -45,12 +50,12 @@ export default function RootLayout() {
     }
 
     return (
-        <SafeAreaView style={{ flex: 1 }}>
+        <SafeAreaProvider>
             <RootNavigator
                 session={session}
                 showOnboarding={showOnboarding}
                 setShowOnboarding={setShowOnboarding}
             />
-        </SafeAreaView>
+        </SafeAreaProvider>
     );
 }

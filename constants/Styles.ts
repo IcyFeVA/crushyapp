@@ -1,5 +1,5 @@
 import { Colors } from '@/constants/Colors';
-import { StyleSheet } from 'react-native';
+import { Platform, StyleSheet } from 'react-native';
 
 export const defaultStyles = StyleSheet.create({
     body: {
@@ -15,10 +15,18 @@ export const defaultStyles = StyleSheet.create({
         lineHeight: 24
     },
     buttonShadow: {
-        shadowColor: Colors.light.primary,
-        // shadowOffset: { width: -2, height: 4 },
-        // shadowOpacity: 0.9,
-        // shadowRadius: 1,
+        shadowColor: Colors.light.black,
+        ...Platform.select({
+            ios: {
+                shadowColor: "#ccc",
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.5,
+                shadowRadius: 3,
+            },
+            android: {
+                elevation: 3,
+            },
+        }),
     },
     h2: {
         fontSize: 24,

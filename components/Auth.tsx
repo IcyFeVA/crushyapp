@@ -183,7 +183,7 @@ export default function Auth({ onboarding }: any) {
 
 
     return (
-        <SafeAreaView>
+        <SafeAreaView style={{ flex: 1 }}>
             <StatusBar backgroundColor="white" barStyle="dark-content" />
             {mode === 'signin' && (
 

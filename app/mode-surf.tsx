@@ -1,4 +1,5 @@
-import { Image, SafeAreaView, View, StyleSheet, Text, Pressable, StatusBar, ScrollView, ActivityIndicator } from 'react-native';
+import { Image, View, StyleSheet, Text, Pressable, StatusBar, ScrollView, ActivityIndicator, Platform } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Colors } from '@/constants/Colors';
 import { Button, Chip, Fader } from 'react-native-ui-lib';
@@ -7,6 +8,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
 import { useFocusEffect } from '@react-navigation/native';
+import { defaultStyles } from '@/constants/Styles';
 
 
 
@@ -64,11 +66,11 @@ export default function Modal() {
 
 
     return ( //<Link href="../">Dismiss</Link>
-        <SafeAreaView style={styles.container}>
+        <SafeAreaView style={{ flex: 1 }}>
             <View style={styles.innerContainer}>
                 <View style={styles.header}>
                     <Image source={require('@/assets/images/logo/logo_crushy.png')} style={styles.logo} />
-                    <Button style={styles.buttonFilter} className="shadow-md active:shadow-none" onPress={() => { }}>
+                    <Button style={[styles.buttonFilter, defaultStyles.buttonShadow]} onPress={() => { }}>
                         <Ionicons name="search" size={12} color={Colors.light.text} style={{ marginTop: 3 }} />
                         <Text style={styles.buttonFilterText}>Search Filters <Text style={{ fontFamily: 'BodySemiBold' }}>(4)</Text></Text>
                     </Button>
@@ -91,10 +93,10 @@ export default function Modal() {
                         <Chip style={styles.chip} label="Skiing" labelStyle={styles.chipLabel} />
                         <Chip style={styles.chip} label="Hiking" labelStyle={styles.chipLabel} />
                     </ScrollView>
-                    <Pressable onPress={() => router.push('../')} style={styles.buttonClose} className='shadow-md active:shadow-none' >
+                    <Pressable onPress={() => router.push('../')} style={[styles.buttonClose, defaultStyles.buttonShadow]}  >
                         <Ionicons name="close" size={24} color={Colors.light.accent} />
                     </Pressable>
-                    <Pressable onPress={() => { }} style={styles.buttonExpand} className='shadow-md active:shadow-none' >
+                    <Pressable onPress={() => { }} style={[styles.buttonExpand, defaultStyles.buttonShadow]} >
                         <Ionicons name="chevron-down" size={24} color={Colors.light.accent} />
                     </Pressable>
                 </View>
@@ -148,14 +150,15 @@ const styles = StyleSheet.create({
     },
     container: {
         flex: 1,
-        paddingTop: StatusBar.currentHeight + 24,
+        // paddingTop: StatusBar.currentHeight + 24,
         padding: 16,
         backgroundColor: Colors.light.background,
     },
     innerContainer: {
         flex: 1,
-        justifyContent: 'space-between',
-        alignItems: 'center',
+        padding: 16,
+        // justifyContent: 'space-between',
+        // alignItems: 'center',
     },
     header: {
         width: '100%',
@@ -181,7 +184,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         gap: 4,
-        shadowColor: Colors.light.primary,
     },
     buttonFilterText: {
         fontSize: 14,
