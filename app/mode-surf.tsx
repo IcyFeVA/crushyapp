@@ -1,4 +1,4 @@
-import { Image, SafeAreaView, View, StyleSheet, Text, Pressable, StatusBar, ScrollView } from 'react-native';
+import { Image, SafeAreaView, View, StyleSheet, Text, Pressable, StatusBar, ScrollView, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
 import { Colors } from '@/constants/Colors';
 import { Button, Chip, Fader } from 'react-native-ui-lib';
@@ -15,25 +15,46 @@ export default function Modal() {
     const [imageUrl, setImageUrl] = useState<string | null>(null);
     const [userObj, setUserObj] = useState<any>(null);
 
-    const getProfileImage = async () => {
+    const getData = async (table: string, fields: string, setFunction: any): Promise<any> => {
         let { data, error } = await supabase
-            .from('profiles')
-            .select('*')
+            .from(table)
+            .select(fields)
             .eq('id', session?.user.id);
 
         if (data && data.length > 0) {
-            setUserObj(data[0]);
-            return supabase.storage.from('avatars').getPublicUrl(data[0].avatar_url).data.publicUrl;
+            setFunction(data[0]);
+            return data[0]
         }
         return null;
     };
+
+
+    useEffect(() => {
+        fetchUsers();
+    }, []);
+
+    const fetchUsers = async () => {
+        const { data, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('gender_preference', 2)
+            .range(0, 1)
+
+        if (data) {
+            for (let i = 0; i < data.length; i++) {
+                console.log(data[i].name, data[i].age, data[i].avatar_url)
+            }
+        }
+    }
 
     useFocusEffect(
         useCallback(() => {
             if (session) {
                 const fetchImage = async () => {
-                    const url = await getProfileImage();
-                    setImageUrl(url);
+                    const data = await getData('profiles', '*', setUserObj);
+                    if (data && data.avatar_url) {
+                        setImageUrl(supabase.storage.from('avatars').getPublicUrl(data.avatar_url).data.publicUrl);
+                    }
                 };
 
                 fetchImage();
@@ -53,15 +74,15 @@ export default function Modal() {
                     </Button>
                 </View>
                 <View style={styles.personContainer}>
-                    <Image source={{ uri: imageUrl }} style={styles.person} />
+                    {imageUrl ? <Image source={{ uri: imageUrl }} style={styles.person} /> : <ActivityIndicator size="large" color={Colors.light.accent} />}
                     <Fader visible position={Fader.position.BOTTOM} tintColor={'#282828'} size={100} />
                     <View style={styles.personInfo}>
                         <Text style={styles.personName} numberOfLines={2} ellipsizeMode='tail' >{userObj?.name && userObj.name}</Text>
                         <Text style={styles.personAge}>{userObj?.age && 2024 - parseInt(userObj.age)}</Text>
                     </View>
                     <ScrollView horizontal style={styles.chipsContainer} contentContainerStyle={styles.scrollContainer} showsHorizontalScrollIndicator={false}>
-                        <Chip style={[styles.chip, styles.chipActive]} label="Sushi" labelStyle={[styles.chipLabel, styles.chipActiveLabel]} />
-                        <Chip style={styles.chip} label="Basketball" labelStyle={styles.chipLabel} />
+                        <Chip style={[styles.chip, styles.chipActive]} label="Burgers" labelStyle={[styles.chipLabel, styles.chipActiveLabel]} />
+                        <Chip style={[styles.chip, styles.chipActive]} label="Basketball" labelStyle={[styles.chipLabel, styles.chipActiveLabel]} />
                         <Chip style={styles.chip} label="Tennis" labelStyle={styles.chipLabel} />
                         <Chip style={styles.chip} label="Videogames" labelStyle={styles.chipLabel} />
                         <Chip style={styles.chip} label="Movies" labelStyle={styles.chipLabel} />
