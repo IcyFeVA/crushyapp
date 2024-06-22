@@ -35,6 +35,8 @@ export default function Modal() {
             .range(limit, limit)
 
         if (data && data.length > 0) {
+            console.log("🚀 ~ fetchNextUser ~ data:", data)
+
             setUser(data);
             setImageUrl(supabase.storage.from('avatars').getPublicUrl(data[0].avatar_url).data.publicUrl);
         } else if (data && data.length === 0) {
@@ -82,15 +84,16 @@ export default function Modal() {
                                 {!loading && <TypewriterEffect styling={styles.personAge} text={user.length > 0 ? (2024 - parseInt(user[0].age)).toString() : ''} speed={150} />}
                             </View>
                             <ScrollView horizontal style={styles.chipsContainer} contentContainerStyle={styles.scrollContainer} showsHorizontalScrollIndicator={false}>
-                                <Chip style={[styles.chip, styles.chipActive]} label="Burgers" labelStyle={[styles.chipLabel, styles.chipActiveLabel]} />
-                                <Chip style={[styles.chip, styles.chipActive]} label="Basketball" labelStyle={[styles.chipLabel, styles.chipActiveLabel]} />
-                                <Chip style={styles.chip} label="Tennis" labelStyle={styles.chipLabel} />
-                                <Chip style={styles.chip} label="Videogames" labelStyle={styles.chipLabel} />
-                                <Chip style={styles.chip} label="Movies" labelStyle={styles.chipLabel} />
-                                <Chip style={styles.chip} label="Dancing" labelStyle={styles.chipLabel} />
-                                <Chip style={styles.chip} label="Diving" labelStyle={styles.chipLabel} />
-                                <Chip style={styles.chip} label="Skiing" labelStyle={styles.chipLabel} />
-                                <Chip style={styles.chip} label="Hiking" labelStyle={styles.chipLabel} />
+                                {user.length > 0 && user[0].interests.map((interest: string, index: number) => (
+                                    <Chip
+                                        key={index}
+                                        label={interest}
+                                        labelStyle={styles.chipLabel}
+                                        containerStyle={[styles.chip, { backgroundColor: Colors.light.white }]}
+                                    />
+                                ))}
+                                {/* <Chip style={[styles.chip, styles.chipActive]} label="Burgers" labelStyle={[styles.chipLabel, styles.chipActiveLabel]} /> */}
+                                {/* <Chip style={styles.chip} label="Tennis" labelStyle={styles.chipLabel} /> */}
                             </ScrollView>
                             <Pressable onPress={() => router.push('../')} style={[styles.buttonClose, defaultStyles.buttonShadow]}  >
                                 <Ionicons name="close" size={24} color={Colors.light.accent} />
