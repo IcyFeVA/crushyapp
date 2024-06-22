@@ -11,33 +11,36 @@ import Spacer from '@/components/Spacer';
 import TypewriterEffect from '@/components/TypewriterEffect';
 import { MMKV, useMMKVString } from 'react-native-mmkv'
 import hobbiesInterests from '@/constants/Interests'
+import { useAuth } from '@/hooks/useAuth';
 
 
 
 export default function Surf() {
+    const session = useAuth();
     const [imageUrl, setImageUrl] = useState<string | null>(null);
     const [limit, setLimit] = useState<number | null>(0);
     const [user, setUser] = useState<any[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
     const [noMoreData, setNoMoreData] = useState<boolean>(false);
     const [interestsList, setInterestsList] = useState<string[]>([]);
+    const [myData, setMyData] = useState<any[]>([]);
     // const [interests, setInterests] = useMMKVString('app.interests')
     // let interestsObject: string[] = []
-
-
-    function flattenArray(arr) {
-        return arr.flat();
-    }
-    function findObjectByValue(arr, targetValue) {
-        return arr.find(item => item.value === targetValue);
-    }
-
 
 
     useEffect(() => {
         // interestsObject = JSON.parse(interests)
         // console.log(interestsObject)
-    }, []);
+        const fetchMe = async () => {
+            const { data } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', session?.user.id);
+            if (data) setMyData(data[0])
+        }
+
+        fetchMe();
+    }, [session]);
 
     useEffect(() => {
         setInterestsList(flattenArray(hobbiesInterests))
@@ -52,8 +55,11 @@ export default function Surf() {
             .range(limit, limit)
 
         if (data && data.length > 0) {
-            console.log("🚀 ~ fetchNextUser ~ data:", data)
-
+            if (data[0].id === session?.user.id) {
+                console.log('Skipping self')
+                setLimit(limit + 1)
+                return;
+            }
             setUser(data);
             setImageUrl(supabase.storage.from('avatars').getPublicUrl(data[0].avatar_url).data.publicUrl);
         } else if (data && data.length === 0) {
@@ -66,6 +72,13 @@ export default function Surf() {
         setLimit(limit + 1);
     }
 
+
+    function flattenArray(arr) {
+        return arr.flat();
+    }
+    function findObjectByValue(arr, targetValue) {
+        return arr.find(item => item.value === targetValue);
+    }
 
     return (
         <SafeAreaView style={{ flex: 1, backgroundColor: Colors.light.background }}>
@@ -100,7 +113,8 @@ export default function Surf() {
                                 {!loading && <TypewriterEffect styling={styles.personAge} text={user.length > 0 ? (2024 - parseInt(user[0].age)).toString() : ''} speed={150} />}
                             </View>
                             <ScrollView horizontal style={styles.chipsContainer} contentContainerStyle={styles.scrollContainer} showsHorizontalScrollIndicator={false}>
-                                {user.length > 0 && user[0].interests.map((interest: string, index: number) => {
+
+                                {user.length > 0 && myData.interests && user[0].interests.map((interest: string, index: number) => {
                                     if (interestsList.length === 0) return (<Text key={index}>No interests found</Text>);
 
                                     const interestObject = findObjectByValue(interestsList, interest.toString());
@@ -116,15 +130,26 @@ export default function Surf() {
                                             />
                                         );
                                     }
+                                    if (myData.interests.includes(parseInt(interestObject.value))) {
+                                        return (
+                                            <Chip
+                                                key={index}
+                                                label={interestObject.label}
+                                                labelStyle={[styles.chipLabel, styles.chipActiveLabel]}
+                                                style={[styles.chip, styles.chipActive]}
+                                            />
+                                        )
+                                    } else {
+                                        return (
+                                            <Chip
+                                                key={index}
+                                                label={interestObject.label}
+                                                labelStyle={styles.chipLabel}
+                                                style={styles.chip}
+                                            />
+                                        )
+                                    }
 
-                                    return (
-                                        <Chip
-                                            key={index}
-                                            label={interestObject.label}
-                                            labelStyle={styles.chipLabel}
-                                            containerStyle={[styles.chip, { backgroundColor: Colors.light.white }]}
-                                        />
-                                    )
                                 })}
                                 {/* <Chip style={[styles.chip, styles.chipActive]} label="Burgers" labelStyle={[styles.chipLabel, styles.chipActiveLabel]} /> */}
                                 {/* <Chip style={styles.chip} label="Tennis" labelStyle={styles.chipLabel} /> */}
