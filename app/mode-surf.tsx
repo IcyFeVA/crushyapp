@@ -8,6 +8,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { defaultStyles } from '@/constants/Styles';
 import Spacer from '@/components/Spacer';
+import TypewriterEffect from '@/components/TypewriterEffect';
 
 
 
@@ -73,10 +74,12 @@ export default function Modal() {
                 ) : (
                     <>
                         <View style={styles.personContainer}>
-                            {loading ? <ActivityIndicator size="large" color={Colors.light.primary} /> : <Image source={{ uri: imageUrl }} style={styles.person} />}
+                            <Image source={{ uri: imageUrl }} style={styles.person} />
+                            {loading && <ActivityIndicator size="large" color={Colors.light.primary} style={{ position: 'absolute', top: 32, left: 32 }} />}
                             <Fader visible position={Fader.position.BOTTOM} tintColor={'#282828'} size={100} />
                             <View style={styles.personInfo}>
-                                <Text style={styles.personName} numberOfLines={2} ellipsizeMode='tail' >{users.length > 0 ? users[0].name + " " : 'loading '}<Text style={styles.personAge}>{users.length > 0 ? 2024 - parseInt(users[0].age) : 0}</Text></Text>
+                                {!loading && <TypewriterEffect styling={styles.personName} text={users.length > 0 ? users[0].name + " " : ' '} speed={10} />}
+                                {!loading && <TypewriterEffect styling={styles.personAge} text={users.length > 0 ? (2024 - parseInt(users[0].age)).toString() : ''} speed={150} />}
                             </View>
                             <ScrollView horizontal style={styles.chipsContainer} contentContainerStyle={styles.scrollContainer} showsHorizontalScrollIndicator={false}>
                                 <Chip style={[styles.chip, styles.chipActive]} label="Burgers" labelStyle={[styles.chipLabel, styles.chipActiveLabel]} />
