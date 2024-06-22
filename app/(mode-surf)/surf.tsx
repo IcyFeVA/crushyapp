@@ -9,6 +9,8 @@ import { supabase } from '@/lib/supabase';
 import { defaultStyles } from '@/constants/Styles';
 import Spacer from '@/components/Spacer';
 import TypewriterEffect from '@/components/TypewriterEffect';
+import { MMKV, useMMKVString } from 'react-native-mmkv'
+import hobbiesInterests from '@/constants/Interests'
 
 
 
@@ -18,12 +20,27 @@ export default function Surf() {
     const [user, setUser] = useState<any[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
     const [noMoreData, setNoMoreData] = useState<boolean>(false);
+    const [interestsList, setInterestsList] = useState<string[]>([]);
+    // const [interests, setInterests] = useMMKVString('app.interests')
+    // let interestsObject: string[] = []
+
+
+    function flattenArray(arr) {
+        return arr.flat();
+    }
+    function findObjectByValue(arr, targetValue) {
+        return arr.find(item => item.value === targetValue);
+    }
+
+
 
     useEffect(() => {
-        fetchNextUser();
+        // interestsObject = JSON.parse(interests)
+        // console.log(interestsObject)
     }, []);
 
     useEffect(() => {
+        setInterestsList(flattenArray(hobbiesInterests))
         fetchNextUser();
     }, [limit]);
 
@@ -48,7 +65,6 @@ export default function Surf() {
     const likeUser = () => {
         setLimit(limit + 1);
     }
-
 
 
     return (
@@ -84,14 +100,32 @@ export default function Surf() {
                                 {!loading && <TypewriterEffect styling={styles.personAge} text={user.length > 0 ? (2024 - parseInt(user[0].age)).toString() : ''} speed={150} />}
                             </View>
                             <ScrollView horizontal style={styles.chipsContainer} contentContainerStyle={styles.scrollContainer} showsHorizontalScrollIndicator={false}>
-                                {user.length > 0 && user[0].interests.map((interest: string, index: number) => (
-                                    <Chip
-                                        key={index}
-                                        label={interest}
-                                        labelStyle={styles.chipLabel}
-                                        containerStyle={[styles.chip, { backgroundColor: Colors.light.white }]}
-                                    />
-                                ))}
+                                {user.length > 0 && user[0].interests.map((interest: string, index: number) => {
+                                    if (interestsList.length === 0) return (<Text key={index}>No interests found</Text>);
+
+                                    const interestObject = findObjectByValue(interestsList, interest.toString());
+
+                                    if (!interestObject) {
+                                        console.error(`No label found for interest: ${interest}`);
+                                        return (
+                                            <Chip
+                                                key={index}
+                                                label="Unknown"
+                                                labelStyle={styles.chipLabel}
+                                                containerStyle={[styles.chip, { backgroundColor: Colors.light.white }]}
+                                            />
+                                        );
+                                    }
+
+                                    return (
+                                        <Chip
+                                            key={index}
+                                            label={interestObject.label}
+                                            labelStyle={styles.chipLabel}
+                                            containerStyle={[styles.chip, { backgroundColor: Colors.light.white }]}
+                                        />
+                                    )
+                                })}
                                 {/* <Chip style={[styles.chip, styles.chipActive]} label="Burgers" labelStyle={[styles.chipLabel, styles.chipActiveLabel]} /> */}
                                 {/* <Chip style={styles.chip} label="Tennis" labelStyle={styles.chipLabel} /> */}
                             </ScrollView>

@@ -8,6 +8,21 @@ import { useFonts } from 'expo-font';
 import * as NavigationBar from 'expo-navigation-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Platform } from 'react-native';
+import { MMKV } from 'react-native-mmkv'
+import hobbiesInterests from '@/constants/Interests'
+
+// export const storage = new MMKV()
+
+// const interests = hobbiesInterests
+
+// const hasInterests = storage.contains('app.interests')
+// if (!hasInterests) {
+//     console.log('storing interests')
+//     storage.set('app.interests', JSON.stringify(interests))
+// }
+
+
+
 
 
 
