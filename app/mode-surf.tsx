@@ -15,7 +15,7 @@ import TypewriterEffect from '@/components/TypewriterEffect';
 export default function Modal() {
     const [imageUrl, setImageUrl] = useState<string | null>(null);
     const [limit, setLimit] = useState<number | null>(0);
-    const [users, setUsers] = useState<any[]>([]);
+    const [user, setUser] = useState<any[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
     const [noMoreData, setNoMoreData] = useState<boolean>(false);
 
@@ -35,7 +35,7 @@ export default function Modal() {
             .range(limit, limit)
 
         if (data && data.length > 0) {
-            setUsers(data);
+            setUser(data);
             setImageUrl(supabase.storage.from('avatars').getPublicUrl(data[0].avatar_url).data.publicUrl);
         } else if (data && data.length === 0) {
             setNoMoreData(true)
@@ -78,8 +78,8 @@ export default function Modal() {
                             {loading && <ActivityIndicator size="large" color={Colors.light.primary} style={{ position: 'absolute', top: 32, left: 32 }} />}
                             <Fader visible position={Fader.position.BOTTOM} tintColor={'#282828'} size={100} />
                             <View style={styles.personInfo}>
-                                {!loading && <TypewriterEffect styling={styles.personName} text={users.length > 0 ? users[0].name + " " : ' '} speed={10} />}
-                                {!loading && <TypewriterEffect styling={styles.personAge} text={users.length > 0 ? (2024 - parseInt(users[0].age)).toString() : ''} speed={150} />}
+                                {!loading && <TypewriterEffect styling={styles.personName} text={user.length > 0 ? user[0].name + " " : ' '} speed={10} />}
+                                {!loading && <TypewriterEffect styling={styles.personAge} text={user.length > 0 ? (2024 - parseInt(user[0].age)).toString() : ''} speed={150} />}
                             </View>
                             <ScrollView horizontal style={styles.chipsContainer} contentContainerStyle={styles.scrollContainer} showsHorizontalScrollIndicator={false}>
                                 <Chip style={[styles.chip, styles.chipActive]} label="Burgers" labelStyle={[styles.chipLabel, styles.chipActiveLabel]} />
