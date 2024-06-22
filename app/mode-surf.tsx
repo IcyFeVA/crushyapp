@@ -1,6 +1,6 @@
 import { Image, View, StyleSheet, Text, Pressable, StatusBar, ScrollView, ActivityIndicator, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
+import { Link, router } from 'expo-router';
 import { Colors } from '@/constants/Colors';
 import { Button, Chip, Fader } from 'react-native-ui-lib';
 import { Ionicons } from '@expo/vector-icons';
@@ -9,6 +9,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
 import { useFocusEffect } from '@react-navigation/native';
 import { defaultStyles } from '@/constants/Styles';
+import Spacer from '@/components/Spacer';
 
 
 
@@ -17,6 +18,7 @@ export default function Modal() {
     const [limit, setLimit] = useState<number | null>(null);
     const [users, setUsers] = useState<any[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
+    const [noMoreData, setNoMoreData] = useState<boolean>(false);
 
     useEffect(() => {
         setLimit(0);
@@ -39,6 +41,7 @@ export default function Modal() {
             setImageUrl(supabase.storage.from('avatars').getPublicUrl(data[0].avatar_url).data.publicUrl);
         } else if (data && data.length === 0) {
             console.log("no more data")
+            setNoMoreData(true)
         }
         setLoading(false)
     }
@@ -61,41 +64,58 @@ export default function Modal() {
                         <Text style={styles.buttonFilterText}>Search Filters <Text style={{ fontFamily: 'BodySemiBold' }}>(4)</Text></Text>
                     </Button>
                 </View>
-                <View style={styles.personContainer}>
-                    {loading ? <ActivityIndicator size="large" color={Colors.light.primary} /> : <Image source={{ uri: imageUrl }} style={styles.person} />}
-                    <Fader visible position={Fader.position.BOTTOM} tintColor={'#282828'} size={100} />
-                    <View style={styles.personInfo}>
-                        <Text style={styles.personName} numberOfLines={2} ellipsizeMode='tail' >{users.length > 0 ? users[0].name + " " : 'loading '}<Text style={styles.personAge}>{users.length > 0 ? 2024 - parseInt(users[0].age) : 0}</Text></Text>
+
+                {noMoreData ? (
+                    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                        <Ionicons name="albums-outline" size={64} color={Colors.light.primary} />
+                        <Text style={{ fontFamily: 'HeadingBold', fontSize: 24, color: Colors.light.text }}>You've reached the end</Text>
+                        <Text style={{ fontFamily: 'BodyRegular', fontSize: 16, color: Colors.light.text, lineHeight: 22 }}>No more potential matches to show.</Text>
+                        <Text style={{ fontFamily: 'BodyRegular', fontSize: 16, color: Colors.light.text, lineHeight: 22 }}>Try changing your search filter.</Text>
+                        <Spacer height={64} />
+                        <Link href="../">
+                            <Text style={{ fontFamily: 'BodySemiBold', fontSize: 18, color: Colors.light.accent }}>Back to Home</Text>
+                        </Link>
                     </View>
-                    <ScrollView horizontal style={styles.chipsContainer} contentContainerStyle={styles.scrollContainer} showsHorizontalScrollIndicator={false}>
-                        <Chip style={[styles.chip, styles.chipActive]} label="Burgers" labelStyle={[styles.chipLabel, styles.chipActiveLabel]} />
-                        <Chip style={[styles.chip, styles.chipActive]} label="Basketball" labelStyle={[styles.chipLabel, styles.chipActiveLabel]} />
-                        <Chip style={styles.chip} label="Tennis" labelStyle={styles.chipLabel} />
-                        <Chip style={styles.chip} label="Videogames" labelStyle={styles.chipLabel} />
-                        <Chip style={styles.chip} label="Movies" labelStyle={styles.chipLabel} />
-                        <Chip style={styles.chip} label="Dancing" labelStyle={styles.chipLabel} />
-                        <Chip style={styles.chip} label="Diving" labelStyle={styles.chipLabel} />
-                        <Chip style={styles.chip} label="Skiing" labelStyle={styles.chipLabel} />
-                        <Chip style={styles.chip} label="Hiking" labelStyle={styles.chipLabel} />
-                    </ScrollView>
-                    <Pressable onPress={() => router.push('../')} style={[styles.buttonClose, defaultStyles.buttonShadow]}  >
-                        <Ionicons name="close" size={24} color={Colors.light.accent} />
-                    </Pressable>
-                    <Pressable onPress={() => { }} style={[styles.buttonExpand, defaultStyles.buttonShadow]} >
-                        <Ionicons name="chevron-down" size={24} color={Colors.light.accent} />
-                    </Pressable>
-                </View>
-                <View style={styles.buttonsMatching}>
-                    <Pressable onPress={() => { }}>
-                        <Image source={require('@/assets/images/buttons/buttonMatchingDislike.png')} style={styles.buttonsMatchingSecondary} />
-                    </Pressable>
-                    <Pressable onPress={likeUser}>
-                        <Image source={require('@/assets/images/buttons/buttonMatchingLike.png')} style={styles.buttonsMatchingPrimary} />
-                    </Pressable>
-                    <Pressable onPress={() => { }}>
-                        <Image source={require('@/assets/images/buttons/buttonMatchingChat.png')} style={styles.buttonsMatchingSecondary} />
-                    </Pressable>
-                </View>
+                ) : (
+                    <>
+                        <View style={styles.personContainer}>
+                            {loading ? <ActivityIndicator size="large" color={Colors.light.primary} /> : <Image source={{ uri: imageUrl }} style={styles.person} />}
+                            <Fader visible position={Fader.position.BOTTOM} tintColor={'#282828'} size={100} />
+                            <View style={styles.personInfo}>
+                                <Text style={styles.personName} numberOfLines={2} ellipsizeMode='tail' >{users.length > 0 ? users[0].name + " " : 'loading '}<Text style={styles.personAge}>{users.length > 0 ? 2024 - parseInt(users[0].age) : 0}</Text></Text>
+                            </View>
+                            <ScrollView horizontal style={styles.chipsContainer} contentContainerStyle={styles.scrollContainer} showsHorizontalScrollIndicator={false}>
+                                <Chip style={[styles.chip, styles.chipActive]} label="Burgers" labelStyle={[styles.chipLabel, styles.chipActiveLabel]} />
+                                <Chip style={[styles.chip, styles.chipActive]} label="Basketball" labelStyle={[styles.chipLabel, styles.chipActiveLabel]} />
+                                <Chip style={styles.chip} label="Tennis" labelStyle={styles.chipLabel} />
+                                <Chip style={styles.chip} label="Videogames" labelStyle={styles.chipLabel} />
+                                <Chip style={styles.chip} label="Movies" labelStyle={styles.chipLabel} />
+                                <Chip style={styles.chip} label="Dancing" labelStyle={styles.chipLabel} />
+                                <Chip style={styles.chip} label="Diving" labelStyle={styles.chipLabel} />
+                                <Chip style={styles.chip} label="Skiing" labelStyle={styles.chipLabel} />
+                                <Chip style={styles.chip} label="Hiking" labelStyle={styles.chipLabel} />
+                            </ScrollView>
+                            <Pressable onPress={() => router.push('../')} style={[styles.buttonClose, defaultStyles.buttonShadow]}  >
+                                <Ionicons name="close" size={24} color={Colors.light.accent} />
+                            </Pressable>
+                            <Pressable onPress={() => { }} style={[styles.buttonExpand, defaultStyles.buttonShadow]} >
+                                <Ionicons name="chevron-down" size={24} color={Colors.light.accent} />
+                            </Pressable>
+                        </View>
+                        <View style={styles.buttonsMatching}>
+                            <Pressable onPress={() => { }}>
+                                <Image source={require('@/assets/images/buttons/buttonMatchingDislike.png')} style={styles.buttonsMatchingSecondary} />
+                            </Pressable>
+                            <Pressable onPress={likeUser}>
+                                <Image source={require('@/assets/images/buttons/buttonMatchingLike.png')} style={styles.buttonsMatchingPrimary} />
+                            </Pressable>
+                            <Pressable onPress={() => { }}>
+                                <Image source={require('@/assets/images/buttons/buttonMatchingChat.png')} style={styles.buttonsMatchingSecondary} />
+                            </Pressable>
+                        </View>
+                    </>
+                )
+                }
             </View>
         </SafeAreaView >
     );
