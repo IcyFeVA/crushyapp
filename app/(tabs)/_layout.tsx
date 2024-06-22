@@ -7,7 +7,9 @@ import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import * as NavigationBar from 'expo-navigation-bar';
 
-NavigationBar.setBackgroundColorAsync('white');
+if (Platform.OS != 'ios') {
+  NavigationBar.setBackgroundColorAsync('white');
+}
 export default function TabLayout() {
   const colorScheme = useColorScheme();
 

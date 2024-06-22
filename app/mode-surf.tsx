@@ -13,60 +13,46 @@ import { defaultStyles } from '@/constants/Styles';
 
 
 export default function Modal() {
-    const session = useAuth();
     const [imageUrl, setImageUrl] = useState<string | null>(null);
-    const [userObj, setUserObj] = useState<any>(null);
+    const [limit, setLimit] = useState<number | null>(null);
+    const [users, setUsers] = useState<any[]>([]);
+    const [loading, setLoading] = useState<boolean>(false);
 
-    const getData = async (table: string, fields: string, setFunction: any): Promise<any> => {
-        let { data, error } = await supabase
-            .from(table)
-            .select(fields)
-            .eq('id', session?.user.id);
-
-        if (data && data.length > 0) {
-            setFunction(data[0]);
-            return data[0]
-        }
-        return null;
-    };
-
+    useEffect(() => {
+        setLimit(0);
+    }, []);
 
     useEffect(() => {
         fetchUsers();
-    }, []);
+    }, [limit]);
+
 
     const fetchUsers = async () => {
-        const { data, error } = await supabase
+        setLoading(true)
+        const { data } = await supabase
             .from('profiles')
             .select('*')
-            .eq('gender_preference', 2)
-            .range(0, 1)
+            .range(limit, limit)
 
-        if (data) {
-            for (let i = 0; i < data.length; i++) {
-                console.log(data[i].name, data[i].age, data[i].avatar_url)
-            }
+        if (data && data.length > 0) {
+            setUsers(data);
+            setImageUrl(supabase.storage.from('avatars').getPublicUrl(data[0].avatar_url).data.publicUrl);
+        } else if (data && data.length === 0) {
+            console.log("no more data")
         }
+        setLoading(false)
     }
 
-    useFocusEffect(
-        useCallback(() => {
-            if (session) {
-                const fetchImage = async () => {
-                    const data = await getData('profiles', '*', setUserObj);
-                    if (data && data.avatar_url) {
-                        setImageUrl(supabase.storage.from('avatars').getPublicUrl(data.avatar_url).data.publicUrl);
-                    }
-                };
-
-                fetchImage();
-            }
-        }, [session])
-    );
+    const likeUser = () => {
+        setLimit(limit + 1);
+    }
 
 
-    return ( //<Link href="../">Dismiss</Link>
-        <SafeAreaView style={{ flex: 1 }}>
+
+
+
+    return (
+        <SafeAreaView style={{ flex: 1, backgroundColor: Colors.light.background }}>
             <View style={styles.innerContainer}>
                 <View style={styles.header}>
                     <Image source={require('@/assets/images/logo/logo_crushy.png')} style={styles.logo} />
@@ -76,11 +62,10 @@ export default function Modal() {
                     </Button>
                 </View>
                 <View style={styles.personContainer}>
-                    {imageUrl ? <Image source={{ uri: imageUrl }} style={styles.person} /> : <ActivityIndicator size="large" color={Colors.light.accent} />}
+                    {loading ? <ActivityIndicator size="large" color={Colors.light.primary} /> : <Image source={{ uri: imageUrl }} style={styles.person} />}
                     <Fader visible position={Fader.position.BOTTOM} tintColor={'#282828'} size={100} />
                     <View style={styles.personInfo}>
-                        <Text style={styles.personName} numberOfLines={2} ellipsizeMode='tail' >{userObj?.name && userObj.name}</Text>
-                        <Text style={styles.personAge}>{userObj?.age && 2024 - parseInt(userObj.age)}</Text>
+                        <Text style={styles.personName} numberOfLines={2} ellipsizeMode='tail' >{users.length > 0 ? users[0].name + " " : 'loading '}<Text style={styles.personAge}>{users.length > 0 ? 2024 - parseInt(users[0].age) : 0}</Text></Text>
                     </View>
                     <ScrollView horizontal style={styles.chipsContainer} contentContainerStyle={styles.scrollContainer} showsHorizontalScrollIndicator={false}>
                         <Chip style={[styles.chip, styles.chipActive]} label="Burgers" labelStyle={[styles.chipLabel, styles.chipActiveLabel]} />
@@ -104,7 +89,7 @@ export default function Modal() {
                     <Pressable onPress={() => { }}>
                         <Image source={require('@/assets/images/buttons/buttonMatchingDislike.png')} style={styles.buttonsMatchingSecondary} />
                     </Pressable>
-                    <Pressable onPress={() => { }}>
+                    <Pressable onPress={likeUser}>
                         <Image source={require('@/assets/images/buttons/buttonMatchingLike.png')} style={styles.buttonsMatchingPrimary} />
                     </Pressable>
                     <Pressable onPress={() => { }}>
