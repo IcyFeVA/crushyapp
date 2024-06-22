@@ -12,7 +12,7 @@ import TypewriterEffect from '@/components/TypewriterEffect';
 
 
 
-export default function Modal() {
+export default function Surf() {
     const [imageUrl, setImageUrl] = useState<string | null>(null);
     const [limit, setLimit] = useState<number | null>(0);
     const [user, setUser] = useState<any[]>([]);
@@ -56,7 +56,7 @@ export default function Modal() {
             <View style={styles.innerContainer}>
                 <View style={styles.header}>
                     <Image source={require('@/assets/images/logo/logo_crushy.png')} style={styles.logo} />
-                    <Button style={[styles.buttonFilter, defaultStyles.buttonShadow]} onPress={() => { }}>
+                    <Button style={[styles.buttonFilter, defaultStyles.buttonShadow]} onPress={() => { router.push('filters') }}>
                         <Ionicons name="search" size={12} color={Colors.light.text} style={{ marginTop: 3 }} />
                         <Text style={styles.buttonFilterText}>Search Filters <Text style={{ fontFamily: 'BodySemiBold' }}>(4)</Text></Text>
                     </Button>
@@ -265,3 +265,4 @@ const styles = StyleSheet.create({
         marginLeft: 16,
     },
 });
+

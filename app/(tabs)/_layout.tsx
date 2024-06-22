@@ -16,7 +16,7 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
+        tabBarActiveTintColor: Colors.light.background,
         headerShown: false,
         tabBarShowLabel: false,
         tabBarStyle: { height: Platform.OS === 'ios' ? 80 : 64 },
@@ -44,7 +44,7 @@ export default function TabLayout() {
         options={{
           title: 'Explore',
           tabBarIcon: ({ color, focused }) => (
-            <Pressable style={{ marginTop: Platform.OS === 'ios' ? 0 : 8 }} onPress={() => router.push('/mode-surf')}>
+            <Pressable style={{ marginTop: Platform.OS === 'ios' ? 0 : 8 }} onPress={() => router.push('/(mode-surf)/surf')}>
               <Image source={require('@/assets/images/icons/tab-explore.png')} />
             </Pressable>
           ),
