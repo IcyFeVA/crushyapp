@@ -4,10 +4,8 @@ import { Link, router } from 'expo-router';
 import { Colors } from '@/constants/Colors';
 import { Button, Chip, Fader } from 'react-native-ui-lib';
 import { Ionicons } from '@expo/vector-icons';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { useAuth } from '@/hooks/useAuth';
-import { useFocusEffect } from '@react-navigation/native';
 import { defaultStyles } from '@/constants/Styles';
 import Spacer from '@/components/Spacer';
 
@@ -15,21 +13,20 @@ import Spacer from '@/components/Spacer';
 
 export default function Modal() {
     const [imageUrl, setImageUrl] = useState<string | null>(null);
-    const [limit, setLimit] = useState<number | null>(null);
+    const [limit, setLimit] = useState<number | null>(0);
     const [users, setUsers] = useState<any[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
     const [noMoreData, setNoMoreData] = useState<boolean>(false);
 
     useEffect(() => {
-        setLimit(0);
+        fetchNextUser();
     }, []);
 
     useEffect(() => {
-        fetchUsers();
+        fetchNextUser();
     }, [limit]);
 
-
-    const fetchUsers = async () => {
+    const fetchNextUser = async () => {
         setLoading(true)
         const { data } = await supabase
             .from('profiles')
@@ -40,7 +37,6 @@ export default function Modal() {
             setUsers(data);
             setImageUrl(supabase.storage.from('avatars').getPublicUrl(data[0].avatar_url).data.publicUrl);
         } else if (data && data.length === 0) {
-            console.log("no more data")
             setNoMoreData(true)
         }
         setLoading(false)
@@ -49,8 +45,6 @@ export default function Modal() {
     const likeUser = () => {
         setLimit(limit + 1);
     }
-
-
 
 
 
@@ -130,7 +124,7 @@ const styles = StyleSheet.create({
     },
     person: {
         flex: 1,
-        backgroundColor: Colors.light.tertiary,
+        backgroundColor: Colors.light.backgroundSecondary,
     },
     personInfo: {
         display: 'flex',
@@ -155,15 +149,12 @@ const styles = StyleSheet.create({
     },
     container: {
         flex: 1,
-        // paddingTop: StatusBar.currentHeight + 24,
         padding: 16,
         backgroundColor: Colors.light.background,
     },
     innerContainer: {
         flex: 1,
         padding: 16,
-        // justifyContent: 'space-between',
-        // alignItems: 'center',
     },
     header: {
         width: '100%',
