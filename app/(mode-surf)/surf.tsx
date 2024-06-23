@@ -1,6 +1,6 @@
-import { Image, View, StyleSheet, Text, Pressable, StatusBar, ScrollView, ActivityIndicator, Platform, Alert } from 'react-native';
+import { Image, View, StyleSheet, Text, Pressable, StatusBar, ScrollView, ActivityIndicator, Platform, Alert, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Link, router } from 'expo-router';
+import { Link, router, useNavigation } from 'expo-router';
 import { Colors } from '@/constants/Colors';
 import { Button, Chip, Fader } from 'react-native-ui-lib';
 import { Ionicons } from '@expo/vector-icons';
@@ -27,6 +27,7 @@ export default function Surf() {
     // const [interests, setInterests] = useMMKVString('app.interests')
     // let interestsObject: string[] = []
 
+    const navigation = useNavigation();
 
     useEffect(() => {
         // interestsObject = JSON.parse(interests)
@@ -109,8 +110,20 @@ export default function Surf() {
                 ) : (
                     <>
                         <View style={styles.personContainer}>
-                            <Image source={{ uri: imageUrl }} style={styles.person} />
+                            {user.length > 0 && (
+                                // <Link href={`/detail/${user[0].id}`}>
+
+                                // </Link>
+                                <>
+                                    <Pressable onPress={() => { router.push(`/detail/${user[0].id}`) }}>
+                                        <Image source={{ uri: imageUrl }} style={styles.person} />
+                                    </Pressable>
+                                </>
+
+                            )}
+
                             {loading && <ActivityIndicator size="large" color={Colors.light.primary} style={{ position: 'absolute', top: 32, left: 32 }} />}
+
                             <Fader visible position={Fader.position.BOTTOM} tintColor={'#282828'} size={100} />
                             <View style={styles.personInfo}>
                                 {!loading && <TypewriterEffect styling={styles.personName} text={user.length > 0 ? user[0].name + " " : ' '} speed={10} />}
@@ -207,7 +220,9 @@ const styles = StyleSheet.create({
         height: '100%',
     },
     person: {
-        flex: 1,
+        width: '100%',
+        height: '100%',
+        resizeMode: 'cover',
         backgroundColor: Colors.light.backgroundSecondary,
     },
     personInfo: {
