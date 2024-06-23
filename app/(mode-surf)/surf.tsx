@@ -117,44 +117,62 @@ export default function Surf() {
                                 {!loading && <TypewriterEffect styling={styles.personAge} text={user.length > 0 ? (2024 - parseInt(user[0].age)).toString() : ''} speed={150} />}
                             </View>
                             <ScrollView horizontal style={styles.chipsContainer} showsHorizontalScrollIndicator={false}>
+                                {user.length > 0 && myData.interests && (() => {
+                                    // Sort function (to make matching interests appear first)
+                                    const sortInterests = (a, b) => {
+                                        const aObject = findObjectByValue(interestsList, a.toString());
+                                        const bObject = findObjectByValue(interestsList, b.toString());
 
-                                {user.length > 0 && myData.interests && user[0].interests.map((interest: string, index: number) => {
-                                    if (interestsList.length === 0) return (<Text key={index}>No interests found</Text>);
+                                        const aIncluded = myData.interests.includes(parseInt(aObject?.value));
+                                        const bIncluded = myData.interests.includes(parseInt(bObject?.value));
 
-                                    const interestObject = findObjectByValue(interestsList, interest.toString());
+                                        if (aIncluded && !bIncluded) return -1;
+                                        if (!aIncluded && bIncluded) return 1;
+                                        return 0;
+                                    };
 
-                                    if (!interestObject) {
-                                        console.error(`No label found for interest: ${interest}`);
-                                        return (
-                                            <Chip
-                                                key={index}
-                                                label="Unknown"
-                                                labelStyle={styles.chipLabel}
-                                                containerStyle={[styles.chip, { backgroundColor: Colors.light.white }]}
-                                            />
-                                        );
-                                    }
-                                    if (myData.interests.includes(parseInt(interestObject.value))) {
-                                        return (
-                                            <Chip
-                                                key={index}
-                                                label={interestObject.label}
-                                                labelStyle={[styles.chipLabel, styles.chipActiveLabel]}
-                                                style={[styles.chip, styles.chipActive, index === user[0].interests.length - 1 ? { marginRight: 32 } : {}]}
-                                            />
-                                        )
-                                    } else {
-                                        return (
-                                            <Chip
-                                                key={index}
-                                                label={interestObject.label}
-                                                labelStyle={styles.chipLabel}
-                                                style={[styles.chip, index === user[0].interests.length - 1 ? { marginRight: 32 } : {}]}
-                                            />
-                                        )
-                                    }
+                                    // Sort the interests array
+                                    const sortedInterests = [...user[0].interests].sort(sortInterests);
 
-                                })}
+                                    return sortedInterests.map((interest: string, index: number) => {
+                                        if (interestsList.length === 0) return (<Text key={index}>No interests found</Text>);
+
+                                        const interestObject = findObjectByValue(interestsList, interest.toString());
+
+                                        // this should never happen, but if it does, we know something's wrong 
+                                        if (!interestObject) {
+                                            console.error(`No label found for interest: ${interest}`);
+                                            return (
+                                                <Chip
+                                                    key={index}
+                                                    label="Unknown"
+                                                    labelStyle={styles.chipLabel}
+                                                    containerStyle={[styles.chip, { backgroundColor: Colors.light.white }]}
+                                                />
+                                            );
+                                        }
+
+                                        if (myData.interests.includes(parseInt(interestObject.value))) {
+                                            return (
+                                                <Chip
+                                                    key={index}
+                                                    label={interestObject.label}
+                                                    labelStyle={[styles.chipLabel, styles.chipActiveLabel]}
+                                                    style={[styles.chip, styles.chipActive, { flex: 1 }, index === sortedInterests.length - 1 ? { marginRight: 32 } : {}]}
+                                                />
+                                            )
+                                        } else {
+                                            return (
+                                                <Chip
+                                                    key={index}
+                                                    label={interestObject.label}
+                                                    labelStyle={styles.chipLabel}
+                                                    style={[styles.chip, index === sortedInterests.length - 1 ? { marginRight: 32 } : {}]}
+                                                />
+                                            )
+                                        }
+                                    });
+                                })()}
                             </ScrollView>
                             <Pressable onPress={() => router.push('../')} style={[styles.buttonClose, defaultStyles.buttonShadow]}  >
                                 <Ionicons name="close" size={24} color={Colors.light.accent} />
@@ -299,6 +317,7 @@ const styles = StyleSheet.create({
         right: 16,
     },
     chipsContainer: {
+        flex: 1,
         position: 'absolute',
         bottom: 16,
         paddingHorizontal: 16,
