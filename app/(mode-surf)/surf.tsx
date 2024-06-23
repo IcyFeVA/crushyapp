@@ -1,4 +1,4 @@
-import { Image, View, StyleSheet, Text, Pressable, StatusBar, ScrollView, ActivityIndicator, Platform } from 'react-native';
+import { Image, View, StyleSheet, Text, Pressable, StatusBar, ScrollView, ActivityIndicator, Platform, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Link, router } from 'expo-router';
 import { Colors } from '@/constants/Colors';
@@ -69,6 +69,10 @@ export default function Surf() {
     }
 
     const likeUser = () => {
+        setLimit(limit + 1);
+    }
+
+    const dislikeUser = () => {
         setLimit(limit + 1);
     }
 
@@ -151,8 +155,6 @@ export default function Surf() {
                                     }
 
                                 })}
-                                {/* <Chip style={[styles.chip, styles.chipActive]} label="Burgers" labelStyle={[styles.chipLabel, styles.chipActiveLabel]} /> */}
-                                {/* <Chip style={styles.chip} label="Tennis" labelStyle={styles.chipLabel} /> */}
                             </ScrollView>
                             <Pressable onPress={() => router.push('../')} style={[styles.buttonClose, defaultStyles.buttonShadow]}  >
                                 <Ionicons name="close" size={24} color={Colors.light.accent} />
@@ -162,13 +164,13 @@ export default function Surf() {
                             </Pressable>
                         </View>
                         <View style={styles.buttonsMatching}>
-                            <Pressable onPress={() => { }}>
+                            <Pressable onPress={dislikeUser}>
                                 <Image source={require('@/assets/images/buttons/buttonMatchingDislike.png')} style={styles.buttonsMatchingSecondary} />
                             </Pressable>
                             <Pressable onPress={likeUser}>
                                 <Image source={require('@/assets/images/buttons/buttonMatchingLike.png')} style={styles.buttonsMatchingPrimary} />
                             </Pressable>
-                            <Pressable onPress={() => { }}>
+                            <Pressable onPress={() => { alert("This feature will be available in the future.") }}>
                                 <Image source={require('@/assets/images/buttons/buttonMatchingChat.png')} style={styles.buttonsMatchingSecondary} />
                             </Pressable>
                         </View>
