@@ -116,7 +116,7 @@ export default function Surf() {
                                 {!loading && <TypewriterEffect styling={styles.personName} text={user.length > 0 ? user[0].name + " " : ' '} speed={10} />}
                                 {!loading && <TypewriterEffect styling={styles.personAge} text={user.length > 0 ? (2024 - parseInt(user[0].age)).toString() : ''} speed={150} />}
                             </View>
-                            <ScrollView horizontal style={styles.chipsContainer} contentContainerStyle={styles.scrollContainer} showsHorizontalScrollIndicator={false}>
+                            <ScrollView horizontal style={styles.chipsContainer} showsHorizontalScrollIndicator={false}>
 
                                 {user.length > 0 && myData.interests && user[0].interests.map((interest: string, index: number) => {
                                     if (interestsList.length === 0) return (<Text key={index}>No interests found</Text>);
@@ -140,7 +140,7 @@ export default function Surf() {
                                                 key={index}
                                                 label={interestObject.label}
                                                 labelStyle={[styles.chipLabel, styles.chipActiveLabel]}
-                                                style={[styles.chip, styles.chipActive]}
+                                                style={[styles.chip, styles.chipActive, index === user[0].interests.length - 1 ? { marginRight: 32 } : {}]}
                                             />
                                         )
                                     } else {
@@ -149,7 +149,7 @@ export default function Surf() {
                                                 key={index}
                                                 label={interestObject.label}
                                                 labelStyle={styles.chipLabel}
-                                                style={styles.chip}
+                                                style={[styles.chip, index === user[0].interests.length - 1 ? { marginRight: 32 } : {}]}
                                             />
                                         )
                                     }
@@ -175,8 +175,7 @@ export default function Surf() {
                             </Pressable>
                         </View>
                     </>
-                )
-                }
+                )}
             </View>
         </SafeAreaView >
     );
@@ -302,6 +301,7 @@ const styles = StyleSheet.create({
     chipsContainer: {
         position: 'absolute',
         bottom: 16,
+        paddingHorizontal: 16,
     },
     chip: {
         backgroundColor: Colors.light.white,
