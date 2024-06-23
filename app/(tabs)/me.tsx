@@ -1,20 +1,20 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { StyleSheet, View, Alert } from 'react-native'
+import { StyleSheet, View, Alert, ScrollView, KeyboardAvoidingView, Platform } from 'react-native'
 import { Button, Input } from '@rneui/themed'
-import { Session } from '@supabase/supabase-js'
+import { useAuth } from '@/hooks/useAuth';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Avatar from '@/components/Avatar'
 
 
-export default function Account({ session }: { session: Session }) {
+export default function Account() {
+    const session = useAuth();
     const [loading, setLoading] = useState(true)
-    const [username, setUsername] = useState('')
-    const [website, setWebsite] = useState('')
+    const [name, setName] = useState('')
     const [avatarUrl, setAvatarUrl] = useState('')
 
     useEffect(() => {
-        if (session) getProfile()
+        if (session?.user) getProfile()
     }, [session])
 
     async function getProfile() {
@@ -25,16 +25,15 @@ export default function Account({ session }: { session: Session }) {
 
             const { data, error, status } = await supabase
                 .from('profiles')
-                .select(`username, website, avatar_url`)
+                .select('*')
                 .eq('id', session?.user.id)
                 .single()
             if (error && status !== 406) {
                 throw error
             }
-
+            console.log("🚀 ~ getProfile ~ data:", data)
             if (data) {
-                setUsername(data.username)
-                setWebsite(data.website)
+                setName(data.name)
                 setAvatarUrl(data.avatar_url)
             }
         } catch (error) {
@@ -47,12 +46,10 @@ export default function Account({ session }: { session: Session }) {
     }
 
     async function updateProfile({
-        username,
-        website,
+        name,
         avatar_url,
     }: {
-        username: string
-        website: string
+        name: string
         avatar_url: string
     }) {
         try {
@@ -61,8 +58,7 @@ export default function Account({ session }: { session: Session }) {
 
             const updates = {
                 id: session?.user.id,
-                username,
-                website,
+                name,
                 avatar_url,
                 updated_at: new Date(),
             }
@@ -83,45 +79,50 @@ export default function Account({ session }: { session: Session }) {
 
     return (
         <SafeAreaView style={{ flex: 1 }}>
-            <View style={styles.container}>
-                <View>
-                    <Avatar
-                        size={200}
-                        url={avatarUrl}
-                        onUpload={(url: string) => {
-                            setAvatarUrl(url)
-                            updateProfile({ username, website, avatar_url: url })
-                        }}
-                    />
+            <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.container}>
+                <View style={styles.inner}>
+                    <ScrollView style={styles.container}>
+                        <View>
+                            <Avatar
+                                size={80}
+                                url={avatarUrl}
+                                onUpload={(url: string) => {
+                                    setAvatarUrl(url)
+                                    updateProfile({ name, avatar_url: url })
+                                }}
+                            />
+                        </View>
+                        <View style={[styles.verticallySpaced, styles.mt20]}>
+                            <Input label="Email" value={session?.user?.email} disabled />
+                        </View>
+                        <View style={styles.verticallySpaced}>
+                            <Input label="Name" value={name || ''} onChangeText={(text) => setName(text)} />
+                        </View>
+                        <View style={[styles.verticallySpaced, styles.mt20]}>
+                            <Button
+                                title={loading ? 'Loading ...' : 'Update'}
+                                onPress={() => updateProfile({ name, avatar_url: avatarUrl })}
+                                disabled={loading}
+                            />
+                        </View>
+                        <View style={styles.verticallySpaced}>
+                            <Button title="Sign Out" onPress={() => supabase.auth.signOut()} />
+                        </View>
+                    </ScrollView>
                 </View>
-                <View style={[styles.verticallySpaced, styles.mt20]}>
-                    <Input label="Email" value={session?.user?.email} disabled />
-                </View>
-                <View style={styles.verticallySpaced}>
-                    <Input label="Username" value={username || ''} onChangeText={(text) => setUsername(text)} />
-                </View>
-                <View style={styles.verticallySpaced}>
-                    <Input label="Website" value={website || ''} onChangeText={(text) => setWebsite(text)} />
-                </View>
-                <View style={[styles.verticallySpaced, styles.mt20]}>
-                    <Button
-                        title={loading ? 'Loading ...' : 'Update'}
-                        onPress={() => updateProfile({ username, website, avatar_url: avatarUrl })}
-                        disabled={loading}
-                    />
-                </View>
-                <View style={styles.verticallySpaced}>
-                    <Button title="Sign Out" onPress={() => supabase.auth.signOut()} />
-                </View>
-            </View>
+            </KeyboardAvoidingView>
         </SafeAreaView>
     )
 }
 
 const styles = StyleSheet.create({
     container: {
-        marginTop: 40,
-        padding: 12,
+        flex: 1,
+    },
+    inner: {
+        flex: 1,
+        justifyContent: 'flex-end',
+        padding: 16,
     },
     verticallySpaced: {
         paddingTop: 4,
