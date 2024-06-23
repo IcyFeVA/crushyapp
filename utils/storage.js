@@ -2,6 +2,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // usage:
 /*
+    import { getData, storeData } from '@/utils/storage';
+
     storeData('user', session);
 
     getData('user').then(user => {
