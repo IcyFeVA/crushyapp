@@ -112,7 +112,7 @@ export default function Surf() {
                         <View style={styles.personContainer}>
                             {user.length > 0 && (
                                 <>
-                                    <Pressable onPress={() => { router.push(`/detail/${user[0].id}`) }}>
+                                    <Pressable onPress={() => { router.push(`/detail/${user[0].id}?imageUrl=${imageUrl}`) }}>
                                         <Image source={{ uri: imageUrl }} style={styles.person} />
                                     </Pressable>
                                 </>
@@ -186,7 +186,7 @@ export default function Surf() {
                             <Pressable onPress={() => router.push('../')} style={[styles.buttonClose, defaultStyles.buttonShadow]}  >
                                 <Ionicons name="close" size={24} color={Colors.light.accent} />
                             </Pressable>
-                            <Pressable onPress={() => { }} style={[styles.buttonExpand, defaultStyles.buttonShadow]} >
+                            <Pressable onPress={() => { router.push(`/detail/${user[0].id}?imageUrl=${imageUrl}`) }} style={[styles.buttonExpand, defaultStyles.buttonShadow]} >
                                 <Ionicons name="chevron-down" size={24} color={Colors.light.accent} />
                             </Pressable>
                         </View>

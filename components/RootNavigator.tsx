@@ -8,10 +8,6 @@ export default function RootNavigator({ session, showOnboarding, setShowOnboardi
     if (session) {
         storeData('user', session);
 
-        getData('user').then(user => {
-            console.log(user);
-        });
-
         return (
             <Stack initialRouteName={showOnboarding ? 'onboarding' : '(tabs)'} screenOptions={{ headerShown: false, ...TransitionPresets.RevealFromBottomAndroid }} >
                 <Stack.Screen name="onboarding" options={{ headerShown: false }} />

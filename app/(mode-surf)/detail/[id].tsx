@@ -1,33 +1,79 @@
 import { Colors } from '@/constants/Colors';
-import { Link, useLocalSearchParams } from 'expo-router';
-import { Image, View, Text, StyleSheet } from 'react-native';
+import { defaultStyles } from '@/constants/Styles';
+import { Ionicons } from '@expo/vector-icons';
+import { router, useLocalSearchParams } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { Image, View, Text, StyleSheet, ScrollView, Pressable, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { supabase } from '@/lib/supabase';
 
 export default function DetailsScreen() {
-    const { id } = useLocalSearchParams();
+    const { id, imageUrl } = useLocalSearchParams();
+    const [loading, setLoading] = useState<boolean>(false);
+    const [user, setUser] = useState<any[]>([]);
+
+    useEffect(() => {
+        fetchUser();
+    }, [])
+
+    const fetchUser = async () => {
+        setLoading(true)
+        const { data } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', id)
+
+        if (data[0] && data.length > 0) {
+            console.log("🚀 ~ fetchUser ~ data:", data)
+            setUser(data[0]);
+        }
+
+        setLoading(false)
+    }
 
     return (
         <SafeAreaView style={{ flex: 1, backgroundColor: Colors.light.background }}>
-            <View style={styles.innerContainer}>
-                <>
-                    <View style={styles.personContainer}>
-                        {/* <Image source={{ uri: imageUrl }} style={styles.person} /> */}
+            <ScrollView style={styles.innerContainer}>
+                {loading && <ActivityIndicator size="large" color={Colors.light.accent} style={{ position: 'absolute', top: 32, left: 32, zIndex: 2 }} />}
+                <View style={styles.imageContainer}>
+                    <Image source={{ uri: imageUrl }} style={styles.image} />
+                    <Pressable onPress={() => { router.dismiss(1) }} style={[styles.buttonCollapse, defaultStyles.buttonShadow]} >
+                        <Ionicons name="chevron-up" size={24} color={Colors.light.accent} />
+                    </Pressable>
+                </View>
+                <View style={{ padding: 16 }}>
+                    <View style={styles.personInfo}>
+                        <Text style={styles.personName}>{user.name}<Text style={styles.personAge}>, {(2024 - parseInt(user.age)).toString()}</Text></Text>
                     </View>
-                </>
-            </View>
+                    <Text style={{ fontFamily: 'HeadingBold', fontSize: 24, color: Colors.light.text, marginTop: 16 }}>Bio</Text>
+                    <Text style={{ fontFamily: 'BodyRegular', fontSize: 18, lineHeight: 26 }}>I’m looking for a new partner, perhaps a partner for life. I never used a dating app before, but I heard good things about this one.
+
+                        I’m a great listener, and a fantastic cook. I love walking along the beach, and deep conversations.
+                        Talking is important to me. I need to be able to talk about anything with you.
+
+                        I also love dogs and cats, though I don’t have any pets at the moment. But please keep away snakes, spiders and any kind of insects! I’m afraid I will get a heart attack with those.
+
+                        Videogames is also something that is important to me. I play mostly online, to not feel alone all the time. I enjoy board games as well, and TCG’s.
+
+                        When it comes to music, I like most pop bands and dance music. My favorite are Christina Aguilera, Taylor Swift, and the Woodys.
+
+                        Let me know what  you like and let’s get connected here on this cool platform!</Text>
+                </View>
+
+            </ScrollView>
         </SafeAreaView >
     );
 }
 
 const styles = StyleSheet.create({
-    personContainer: {
+    innerContainer: {
         flex: 1,
-        borderRadius: 20,
-        overflow: 'hidden',
-        width: '100%',
-        height: '100%',
     },
-    person: {
+    imageContainer: {
+        width: '100%',
+        aspectRatio: 3 / 4,
+    },
+    image: {
         width: '100%',
         height: '100%',
         resizeMode: 'cover',
@@ -38,78 +84,19 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'flex-end',
         gap: 8,
-        position: 'absolute',
-        bottom: 56,
-        left: 16,
-        width: '78%',
     },
     personName: {
         fontFamily: 'HeadingBold',
         fontSize: 32,
-        color: Colors.light.white,
+        color: Colors.light.text,
     },
     personAge: {
         fontFamily: 'HeadingBold',
         fontSize: 32,
-        color: Colors.light.white,
+        color: Colors.light.text,
         opacity: 0.7
     },
-    container: {
-        flex: 1,
-        padding: 16,
-        backgroundColor: Colors.light.background,
-    },
-    innerContainer: {
-        flex: 1,
-        padding: 16,
-    },
-    header: {
-        width: '100%',
-        marginBottom: 16,
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-    },
-    logo: {
-        width: 96,
-        resizeMode: 'contain'
-    },
-    buttonFilter: {
-        backgroundColor: Colors.light.white,
-        paddingVertical: 2,
-        paddingHorizontal: 12,
-        paddingBottom: 6,
-        borderRadius: 99,
-        borderWidth: 1,
-        borderColor: Colors.light.tertiary,
-        display: 'flex',
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 4,
-    },
-    buttonFilterText: {
-        fontSize: 14,
-        fontFamily: 'BodyRegular',
-        color: Colors.light.text,
-    },
-    buttonsMatching: {
-        flexDirection: 'row',
-        width: '100%',
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginTop: 16,
-    },
-    buttonsMatchingPrimary: {
-        maxWidth: 90,
-        maxHeight: 90,
-    },
-    buttonsMatchingSecondary: {
-        maxWidth: 80,
-        maxHeight: 80,
-        marginHorizontal: 16,
-    },
-    buttonClose: {
+    buttonCollapse: {
         backgroundColor: Colors.light.white,
         width: 32,
         height: 32,
@@ -121,22 +108,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         shadowColor: Colors.light.black,
         position: 'absolute',
-        top: 16,
-        right: 16,
-    },
-    buttonExpand: {
-        backgroundColor: Colors.light.white,
-        width: 32,
-        height: 32,
-        borderWidth: 1,
-        borderColor: Colors.light.tertiary,
-        borderRadius: 99,
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        shadowColor: Colors.light.black,
-        position: 'absolute',
-        bottom: 64,
+        bottom: 16,
         right: 16,
     },
     chipsContainer: {
