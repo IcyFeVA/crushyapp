@@ -111,11 +111,7 @@ export default function Surf() {
                     <>
                         <View style={styles.personContainer}>
                             {user.length > 0 && (
-                                <>
-                                    <Pressable onPress={() => { router.push(`/detail/${user[0].id}?imageUrl=${imageUrl}`) }}>
-                                        <Image source={{ uri: imageUrl }} style={styles.person} />
-                                    </Pressable>
-                                </>
+                                <Image source={{ uri: imageUrl }} style={styles.person} />
                             )}
 
                             {loading && <ActivityIndicator size="large" color={Colors.light.primary} style={{ position: 'absolute', top: 32, left: 32 }} />}
