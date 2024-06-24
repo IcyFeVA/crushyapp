@@ -1,4 +1,6 @@
-// app/_layout.tsx
+import 'react-native-gesture-handler';
+// check if crashes in production https://reactnavigation.org/docs/stack-navigator/
+
 import { Slot, SplashScreen } from 'expo-router';
 import RootNavigator from '@/components/RootNavigator';
 import { useAuth } from '@/hooks/useAuth';
