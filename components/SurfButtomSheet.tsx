@@ -2,30 +2,62 @@ import { Text, StyleSheet, FlatList, View } from 'react-native';
 import BottomSheet, { BottomSheetScrollView } from "@gorhom/bottom-sheet";
 import { Card, ListItem, RadioButton } from "react-native-ui-lib";
 import Spacer from "./Spacer";
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useLayoutEffect } from 'react';
 import { Colors } from '@/constants/Colors';
 import { defaultStyles } from '@/constants/Styles';
 import { router } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
+import { getData } from '@/utils/storage';
 
 
-export default function SurfButtomSheet({ open, closeAction }) {
+export default function SurfButtomSheet({ closeAction }) {
 
     const bottomSheetRef = useRef<BottomSheet>(null);
-    const [view, setView] = useState('default');
+    const [genderPreferenceKey, setGenderPreferenceKey] = useState(null);
+    const [genderPreferenceValue, setGenderPreferenceValue] = useState(null);
+    const [isLayoutReady, setIsLayoutReady] = useState(false);
+    const [isMounted, setIsMounted] = useState(false);
+
+    useLayoutEffect(() => {
+        console.log('useLayoutEffect called');
+        setTimeout(() => {
+            bottomSheetRef.current?.expand();
+        }, 100);
+    }, []);
+
+    // useEffect(() => {
+    //     setIsMounted(true);
+    // }, []);
+
+    // useEffect(() => {
+    //     if (isMounted && bottomSheetRef && open === true) {
+    //         bottomSheetRef.current?.expand();
+    //     }
+    // }, [isMounted, open, bottomSheetRef]);
 
     useEffect(() => {
-        if (open === true) {
-            bottomSheetRef.current?.expand();
-        }
-    }, [open]);
+        console.log('genderPreferenceKey state changed:', genderPreferenceKey);
+    }, [genderPreferenceKey]);
+
+    useEffect(() => {
+        console.log('genderPreferenceValue state changed:', genderPreferenceValue);
+    }, [genderPreferenceValue]);
+
 
     useFocusEffect(() => {
-        console.log('focused');
+        console.log('useFocusEffect called');
+        getData('genderPreference').then(genderPreferenceObj => {
+            setGenderPreferenceKey(genderPreferenceObj.key)
+            setGenderPreferenceValue(genderPreferenceObj.value)
+            console.log('genderPreference', genderPreferenceObj.value)
+        });
     });
 
+
     const onChangeHandler = (index) => {
-        if (index === -1) closeAction(false);
+        if (index === -1) {
+            closeAction(false);
+        }
     }
 
     return (
@@ -37,10 +69,11 @@ export default function SurfButtomSheet({ open, closeAction }) {
             handleIndicatorStyle={{ backgroundColor: Colors.light.accent }}
             backgroundStyle={{ backgroundColor: Colors.light.backgroundSecondary }}
             onChange={onChangeHandler}
+
         >
             <BottomSheetScrollView contentContainerStyle={styles.bottomSheet} >
 
-                <>
+                <View>
                     <Card flex center onPress={() => console.log('pressed me')} enableShadow={false} style={{ backgroundColor: 'transparent' }}>
                         <Text style={{ fontFamily: 'HeadingBold', fontSize: 20 }}>Search Filters (4)</Text>
                     </Card>
@@ -50,7 +83,7 @@ export default function SurfButtomSheet({ open, closeAction }) {
                     <ListItem onPress={() => router.push('(modals)/setGenderPreference')} style={[styles.bottomSheetListItem, styles.firstItem]}>
                         <ListItem.Part containerStyle={styles.bottomSheetListItemInner}>
                             <Text style={styles.listItemLabel}>Gender</Text>
-                            <Text style={[styles.listItemLabel, styles.active]}>Male</Text>
+                            <Text style={[styles.listItemLabel, styles.active]}>{genderPreferenceValue}</Text>
                         </ListItem.Part>
                     </ListItem>
 
@@ -150,7 +183,7 @@ export default function SurfButtomSheet({ open, closeAction }) {
                             <Text style={[styles.listItemLabel, styles.active]}>-</Text>
                         </ListItem.Part>
                     </ListItem>
-                </>
+                </View>
 
 
             </BottomSheetScrollView>

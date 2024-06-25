@@ -15,9 +15,9 @@ export default function setGenderPreference() {
 
     const [selectedValue, setSelectedValue] = useState('');
 
-    const handlePress = (value: string) => {
-        setSelectedValue(value);
-        storeData('genderPreference', value);
+    const handlePress = (key: string, value: string) => {
+        setSelectedValue(key);
+        storeData('genderPreference', { key, value });
         console.log('Gender:', value);
         return router.dismiss();
     };
@@ -59,7 +59,7 @@ export default function setGenderPreference() {
                             containerStyle={[defaultStyles.radioButton, { borderColor: selectedValue === item.key ? Colors.light.text : Colors.light.tertiary }]}
                             labelStyle={defaultStyles.radioButtonLabel}
                             selected={selectedValue === item.key}
-                            onPress={() => handlePress(item.key)}
+                            onPress={() => handlePress(item.key, item.title)}
                         />
                     )}
                     keyExtractor={item => item.key}

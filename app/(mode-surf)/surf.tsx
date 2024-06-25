@@ -37,11 +37,6 @@ export default function Surf() {
     // const [interests, setInterests] = useMMKVString('app.interests')
     // let interestsObject: string[] = []
 
-    useEffect(() => {
-        //setBottomSheetOpen(false)
-    }, [bottomSheetOpen]);
-
-    const navigation = useNavigation();
 
     useEffect(() => {
         // interestsObject = JSON.parse(interests)
@@ -201,9 +196,11 @@ export default function Surf() {
                                     });
                                 })()}
                             </ScrollView>
-                            <Pressable onPress={() => router.push('../')} style={[styles.buttonClose, defaultStyles.buttonShadow]}  >
-                                <Ionicons name="close" size={24} color={Colors.light.accent} />
-                            </Pressable>
+                            {!bottomSheetOpen && (
+                                <Pressable onPress={() => router.push('../')} style={[styles.buttonClose, defaultStyles.buttonShadow]}  >
+                                    <Ionicons name="close" size={24} color={Colors.light.accent} />
+                                </Pressable>
+                            )}
                             <Pressable onPress={() => { router.push(`/detail/${user[0].id}?imageUrl=${imageUrl}`) }} style={[styles.buttonExpand, defaultStyles.buttonShadow]} >
                                 <Ionicons name="chevron-down" size={24} color={Colors.light.accent} />
                             </Pressable>
@@ -220,7 +217,7 @@ export default function Surf() {
                             </Pressable>
                         </View>
 
-                        <SurfButtomSheet open={bottomSheetOpen} closeAction={setBottomSheetOpen} />
+                        {bottomSheetOpen ? <SurfButtomSheet closeAction={setBottomSheetOpen} /> : null}
 
                     </>
                 )}
