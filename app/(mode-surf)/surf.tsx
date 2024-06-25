@@ -38,7 +38,7 @@ export default function Surf() {
     // let interestsObject: string[] = []
 
     useEffect(() => {
-        setBottomSheetOpen(false)
+        //setBottomSheetOpen(false)
     }, [bottomSheetOpen]);
 
     const navigation = useNavigation();
@@ -220,7 +220,7 @@ export default function Surf() {
                             </Pressable>
                         </View>
 
-                        <SurfButtomSheet open={bottomSheetOpen} />
+                        <SurfButtomSheet open={bottomSheetOpen} closeAction={setBottomSheetOpen} />
 
                     </>
                 )}
