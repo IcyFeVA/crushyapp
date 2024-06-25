@@ -1,10 +1,10 @@
-import { Image, View, StyleSheet, Text, Pressable, StatusBar, ScrollView, ActivityIndicator, Platform, Alert, TouchableOpacity } from 'react-native';
+import { Image, View, StyleSheet, Text, Pressable, StatusBar, ScrollView, ActivityIndicator, Platform, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Link, router, useNavigation } from 'expo-router';
 import { Colors } from '@/constants/Colors';
-import { Button, Chip, Fader } from 'react-native-ui-lib';
+import { Button, Card, Chip, Fader, ListItem } from 'react-native-ui-lib';
 import { Ionicons } from '@expo/vector-icons';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { defaultStyles } from '@/constants/Styles';
 import Spacer from '@/components/Spacer';
@@ -12,6 +12,15 @@ import TypewriterEffect from '@/components/TypewriterEffect';
 import { MMKV, useMMKVString } from 'react-native-mmkv'
 import hobbiesInterests from '@/constants/Interests'
 import { useAuth } from '@/hooks/useAuth';
+import BottomSheet, {
+    BottomSheetModal,
+    BottomSheetView,
+    BottomSheetModalProvider,
+    useBottomSheet,
+    BottomSheetScrollView,
+} from '@gorhom/bottom-sheet';
+import { act } from 'react-test-renderer';
+
 
 
 
@@ -85,12 +94,21 @@ export default function Surf() {
         return arr.find(item => item.value === targetValue);
     }
 
+
+
+    const bottomSheetRef = useRef<BottomSheet>(null);
+    const handleExpandPress = () => bottomSheetRef.current.expand()
+
+
+
     return (
         <SafeAreaView style={{ flex: 1, backgroundColor: Colors.light.background }}>
+
             <View style={styles.innerContainer}>
+
                 <View style={styles.header}>
                     <Image source={require('@/assets/images/logo/logo_crushy.png')} style={styles.logo} />
-                    <Button style={[styles.buttonFilter, defaultStyles.buttonShadow]} onPress={() => { router.push('filters') }}>
+                    <Button style={[styles.buttonFilter, defaultStyles.buttonShadow]} onPress={handleExpandPress}>
                         <Ionicons name="search" size={12} color={Colors.light.text} style={{ marginTop: 3 }} />
                         <Text style={styles.buttonFilterText}>Search Filters <Text style={{ fontFamily: 'BodySemiBold' }}>(4)</Text></Text>
                     </Button>
@@ -197,6 +215,129 @@ export default function Surf() {
                                 <Image source={require('@/assets/images/buttons/buttonMatchingChat.png')} style={styles.buttonsMatchingSecondary} />
                             </Pressable>
                         </View>
+
+                        <BottomSheet
+                            ref={bottomSheetRef}
+                            index={-1}
+                            snapPoints={['88%']}
+                            enablePanDownToClose={true}
+                            handleIndicatorStyle={{ backgroundColor: Colors.light.accent }}
+                            backgroundStyle={{ backgroundColor: Colors.light.backgroundSecondary }}
+                        >
+                            <BottomSheetScrollView contentContainerStyle={styles.bottomSheet}>
+
+                                <Card flex center onPress={() => console.log('pressed me')} enableShadow={false} style={{ backgroundColor: 'transparent' }}>
+                                    <Text style={{ fontFamily: 'HeadingBold', fontSize: 20 }}>Search Filters (4)</Text>
+                                </Card>
+
+                                <Spacer height={24} />
+
+                                <ListItem onPress={() => console.log('pressed')} style={[styles.bottomSheetListItem, styles.firstItem]}>
+                                    <ListItem.Part containerStyle={styles.bottomSheetListItemInner}>
+                                        <Text style={styles.listItemLabel}>Gender</Text>
+                                        <Text style={[styles.listItemLabel, styles.active]}>Gender</Text>
+                                    </ListItem.Part>
+                                </ListItem>
+
+                                <ListItem onPress={() => console.log('pressed')} style={[styles.bottomSheetListItem]}>
+                                    <ListItem.Part containerStyle={styles.bottomSheetListItemInner}>
+                                        <Text style={styles.listItemLabel}>Age</Text>
+                                        <Text style={[styles.listItemLabel, styles.active]}>30-40</Text>
+                                    </ListItem.Part>
+                                </ListItem>
+
+                                <ListItem onPress={() => console.log('pressed')} style={[styles.bottomSheetListItem, styles.lastItem]}>
+                                    <ListItem.Part containerStyle={styles.bottomSheetListItemInner}>
+                                        <Text style={styles.listItemLabel}>Distance</Text>
+                                        <Text style={[styles.listItemLabel, styles.active]}>60 km</Text>
+                                    </ListItem.Part>
+                                </ListItem>
+
+                                <Spacer height={32} />
+
+                                <Text style={{ fontFamily: 'BodyBold', fontSize: 14, lineHeight: 22, color: Colors.light.textSecondary, textAlign: 'center' }}>MORE ABOUT YOUR IDEAL MATCH</Text>
+
+                                <Spacer height={8} />
+
+                                <ListItem onPress={() => console.log('pressed')} style={[styles.bottomSheetListItem, styles.firstItem]}>
+                                    <ListItem.Part containerStyle={styles.bottomSheetListItemInner}>
+                                        <Text style={styles.listItemLabel}>Interests</Text>
+                                        <Text style={[styles.listItemLabel, styles.active]}>Basketball +2</Text>
+                                    </ListItem.Part>
+                                </ListItem>
+
+                                <ListItem onPress={() => console.log('pressed')} style={[styles.bottomSheetListItem]}>
+                                    <ListItem.Part containerStyle={styles.bottomSheetListItemInner}>
+                                        <Text style={styles.listItemLabel}>Has a bio</Text>
+                                        <Text style={[styles.listItemLabel, styles.active]}>-</Text>
+                                    </ListItem.Part>
+                                </ListItem>
+
+                                <ListItem onPress={() => console.log('pressed')} style={[styles.bottomSheetListItem]}>
+                                    <ListItem.Part containerStyle={styles.bottomSheetListItemInner}>
+                                        <Text style={styles.listItemLabel}>Pronounce</Text>
+                                        <Text style={[styles.listItemLabel, styles.active]}>-</Text>
+                                    </ListItem.Part>
+                                </ListItem>
+
+                                <ListItem onPress={() => console.log('pressed')} style={[styles.bottomSheetListItem]}>
+                                    <ListItem.Part containerStyle={styles.bottomSheetListItemInner}>
+                                        <Text style={styles.listItemLabel}>Sexual Orientation</Text>
+                                        <Text style={[styles.listItemLabel, styles.active]}>-</Text>
+                                    </ListItem.Part>
+                                </ListItem>
+
+                                <ListItem onPress={() => console.log('pressed')} style={[styles.bottomSheetListItem]}>
+                                    <ListItem.Part containerStyle={styles.bottomSheetListItemInner}>
+                                        <Text style={styles.listItemLabel}>Starsign</Text>
+                                        <Text style={[styles.listItemLabel, styles.active]}>-</Text>
+                                    </ListItem.Part>
+                                </ListItem>
+
+                                <ListItem onPress={() => console.log('pressed')} style={[styles.bottomSheetListItem]}>
+                                    <ListItem.Part containerStyle={styles.bottomSheetListItemInner}>
+                                        <Text style={styles.listItemLabel}>Accendant</Text>
+                                        <Text style={[styles.listItemLabel, styles.active]}>-</Text>
+                                    </ListItem.Part>
+                                </ListItem>
+
+                                <ListItem onPress={() => console.log('pressed')} style={[styles.bottomSheetListItem]}>
+                                    <ListItem.Part containerStyle={styles.bottomSheetListItemInner}>
+                                        <Text style={styles.listItemLabel}>Some more here</Text>
+                                        <Text style={[styles.listItemLabel, styles.active]}>-</Text>
+                                    </ListItem.Part>
+                                </ListItem>
+
+                                <ListItem onPress={() => console.log('pressed')} style={[styles.bottomSheetListItem]}>
+                                    <ListItem.Part containerStyle={styles.bottomSheetListItemInner}>
+                                        <Text style={styles.listItemLabel}>And there</Text>
+                                        <Text style={[styles.listItemLabel, styles.active]}>-</Text>
+                                    </ListItem.Part>
+                                </ListItem>
+
+                                <ListItem onPress={() => console.log('pressed')} style={[styles.bottomSheetListItem]}>
+                                    <ListItem.Part containerStyle={styles.bottomSheetListItemInner}>
+                                        <Text style={styles.listItemLabel}>Everywhere</Text>
+                                        <Text style={[styles.listItemLabel, styles.active]}>-</Text>
+                                    </ListItem.Part>
+                                </ListItem>
+
+                                <ListItem onPress={() => console.log('pressed')} style={[styles.bottomSheetListItem]}>
+                                    <ListItem.Part containerStyle={styles.bottomSheetListItemInner}>
+                                        <Text style={styles.listItemLabel}>All at</Text>
+                                        <Text style={[styles.listItemLabel, styles.active]}>-</Text>
+                                    </ListItem.Part>
+                                </ListItem>
+
+                                <ListItem onPress={() => console.log('pressed')} style={[styles.bottomSheetListItem, styles.lastItem]}>
+                                    <ListItem.Part containerStyle={styles.bottomSheetListItemInner}>
+                                        <Text style={styles.listItemLabel}>Once</Text>
+                                        <Text style={[styles.listItemLabel, styles.active]}>-</Text>
+                                    </ListItem.Part>
+                                </ListItem>
+
+                            </BottomSheetScrollView>
+                        </BottomSheet>
                     </>
                 )}
             </View>
@@ -204,6 +345,49 @@ export default function Surf() {
     );
 }
 const styles = StyleSheet.create({
+    bottomSheet: {
+        padding: 16,
+    },
+    bottomSheetListItem: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderColor: Colors.light.tertiary,
+        borderWidth: 1,
+        borderRadius: 0,
+        borderTopWidth: 0,
+        backgroundColor: Colors.light.background,
+    },
+    bottomSheetListItemInner: {
+        flex: 1,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+    },
+    listItemLabel: {
+        fontFamily: 'BodySemiBold',
+        fontSize: 16,
+        paddingHorizontal: 16,
+    },
+    firstItem: {
+        borderTopLeftRadius: 16,
+        borderTopRightRadius: 16,
+        borderTopWidth: 1,
+
+    },
+    lastItem: {
+        borderBottomLeftRadius: 16,
+        borderBottomRightRadius: 16,
+        borderTopWidth: 0,
+    },
+    active: {
+        color: Colors.light.primary,
+    },
+    container: {
+        flex: 1,
+        padding: 24,
+        backgroundColor: 'grey',
+    },
+
     personContainer: {
         flex: 1,
         borderRadius: 20,

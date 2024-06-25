@@ -12,6 +12,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Platform } from 'react-native';
 import { MMKV } from 'react-native-mmkv'
 import hobbiesInterests from '@/constants/Interests'
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 // export const storage = new MMKV()
 
 // const interests = hobbiesInterests
@@ -66,12 +67,14 @@ export default function RootLayout() {
     }
 
     return (
-        <SafeAreaProvider>
-            <RootNavigator
-                session={session}
-                showOnboarding={showOnboarding}
-                setShowOnboarding={setShowOnboarding}
-            />
-        </SafeAreaProvider>
+        <GestureHandlerRootView style={{ flex: 1 }}>
+            <SafeAreaProvider>
+                <RootNavigator
+                    session={session}
+                    showOnboarding={showOnboarding}
+                    setShowOnboarding={setShowOnboarding}
+                />
+            </SafeAreaProvider>
+        </GestureHandlerRootView>
     );
 }
