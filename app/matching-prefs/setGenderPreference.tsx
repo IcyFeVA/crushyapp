@@ -13,17 +13,16 @@ import { storeData } from '@/utils/storage';
 
 export default function setGenderPreference() {
 
-    //TODO: make it work again
-    // const [selectedValue, setSelectedValue] = useState('');
+    const [selectedId, setSelectedId] = useState<string>('');
 
-    // const handlePress = (key: string, value: string) => {
-    //     setSelectedValue(key);
-    //     storeData('genderPreference', { key, value });
-    //     console.log('Gender:', value);
-    //     setTimeout(() => {
-    //         return router.dismiss();
-    //     }, 250);
-    // };
+    const handlePress = (key: string, value: string) => {
+        setSelectedId(key);
+        storeData('genderPreference', { key, value });
+        console.log('genderPreference:', value);
+        setTimeout(() => {
+            return router.dismiss();
+        }, 250);
+    };
 
 
     type ItemData = {
@@ -43,7 +42,7 @@ export default function setGenderPreference() {
         textColor: string;
     };
 
-    const [selectedId, setSelectedId] = useState<string>('');
+
 
     const Item = ({ item, onPress, textColor }: ItemProps) => (
         <RadioButton
@@ -65,7 +64,7 @@ export default function setGenderPreference() {
         return (
             <Item
                 item={item}
-                onPress={() => setSelectedId(item.id)}
+                onPress={() => handlePress(item.id, item.title)}
                 textColor={color}
             />
         );

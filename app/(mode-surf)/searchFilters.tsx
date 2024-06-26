@@ -9,7 +9,7 @@ import { defaultStyles } from '@/constants/Styles'
 
 export default function searchFilters() {
     const [genderPreferenceKey, setGenderPreferenceKey] = useState(null);
-    const [genderPreferenceValue, setGenderPreferenceValue] = useState(null);
+    const [genderPreferenceValue, setGenderPreferenceValue] = useState('-');
 
 
 
@@ -24,7 +24,7 @@ export default function searchFilters() {
 
                 <Button onPress={() => router.push('matching-prefs/setGenderPreference')} style={[defaultStyles.button, defaultStyles.noRadius, styles.firstItem]}>
                     <Text style={defaultStyles.buttonLabel}>Gender</Text>
-                    <Text style={[defaultStyles.buttonLabel, styles.active]}>-</Text>
+                    <Text style={[defaultStyles.buttonLabel, styles.active]}>{genderPreferenceValue}</Text>
                 </Button>
 
                 <Button onPress={() => console.log('pressed')} style={[defaultStyles.button, defaultStyles.noRadius]}>
