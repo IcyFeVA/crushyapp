@@ -42,6 +42,7 @@ export const defaultStyles = StyleSheet.create({
         flex: 1,
         backgroundColor: Colors.light.primary,
         justifyContent: 'center',
+        alignItems: 'center',
         borderWidth: 1,
         borderBlockColor: 'transparent',
         padding: 16,
@@ -51,13 +52,14 @@ export const defaultStyles = StyleSheet.create({
     },
     buttonLabel: {
         fontSize: 16,
-        fontFamily: 'BodySemiBold',
+        fontFamily: 'BodyBold',
         color: Colors.light.textInverted
     },
     buttonSecondary: {
         flex: 1,
         backgroundColor: Colors.light.background,
         justifyContent: 'center',
+        alignItems: 'center',
         borderWidth: 2,
         borderColor: Colors.light.tertiary,
         padding: 16,
@@ -67,7 +69,7 @@ export const defaultStyles = StyleSheet.create({
     },
     buttonSecondaryLabel: {
         fontSize: 16,
-        fontFamily: 'BodySemiBold',
+        fontFamily: 'BodyBold',
         color: Colors.light.primary
     },
     settingListButton: {

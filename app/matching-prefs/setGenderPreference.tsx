@@ -33,7 +33,7 @@ export default function setGenderPreference() {
     const DATA: ItemData[] = [
         { id: '1', title: 'Male' },
         { id: '2', title: 'Female' },
-        { id: '3', title: 'Both' },
+        { id: '3', title: 'All' },
     ]
 
     type ItemProps = {
@@ -75,9 +75,11 @@ export default function setGenderPreference() {
             <View className='p-6 w-screen'>
 
                 <Text style={defaultStyles.h2}>Gender preference</Text>
+
                 <Spacer height={8} />
+
                 <View>
-                    <Text style={defaultStyles.body}>In the future you will be able to choose more than one option.</Text>
+                    <Text style={defaultStyles.body}>In the future, you will be able to choose more specific genders.</Text>
                 </View>
 
                 <Spacer height={48} />

@@ -10,9 +10,9 @@ import { getData, resetUserSearchFilters } from '@/utils/storage'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 
 export default function searchFilters() {
-    const [genderPreference, setGenderPreference] = useState<{ key: string; value: string }>({ key: '', value: '-' });
-    const [ageRange, setAgeRange] = useState<{ key: string; value: string }>({ key: '', value: '-' });
-    const [distance, setDistance] = useState<{ key: string; value: string }>({ key: '40', value: '40' });
+    const [genderPreference, setGenderPreference] = useState<{ key: string; value: string }>({ key: '', value: '' });
+    const [ageRange, setAgeRange] = useState<{ key: string; value: string }>({ key: '', value: '' });
+    const [distance, setDistance] = useState<{ key: string; value: string }>({ key: '', value: '' });
 
     const getMultiple = async () => {
 
@@ -56,8 +56,6 @@ export default function searchFilters() {
                 <Card onPress={() => console.log('pressed me')} enableShadow={false} style={{ display: 'flex', height: 60, alignItems: 'center', backgroundColor: 'transparent' }}>
                     <Text style={{ fontFamily: 'HeadingBold', fontSize: 20 }}>Search Filters (4)</Text>
                 </Card>
-
-                <Spacer height={8} />
 
                 <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
                     <Button onPress={() => router.push('matching-prefs/setGenderPreference')} style={[defaultStyles.settingListButton, defaultStyles.noRadius, styles.firstItem]}>
