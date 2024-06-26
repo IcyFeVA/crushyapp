@@ -4,9 +4,7 @@ import { Session } from '@supabase/supabase-js';
 import { Pageview } from '@/components/ui/Containers';
 import Spacer from '@/components/Spacer';
 import { FlatList } from 'react-native';
-import { PrimaryButton, PrimaryButtonText, SecondaryButton, SecondaryButtonText } from '@/components/ui/Buttons';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { View, Card, CardProps, Text, RadioButton, Checkbox } from 'react-native-ui-lib';
+import { View, Card, CardProps, Text, RadioButton, Checkbox, Button } from 'react-native-ui-lib';
 import { Textfield } from '@/components/ui/Textfields';
 import { Colors } from '@/constants/Colors';
 import { defaultStyles } from '@/constants/Styles';
@@ -19,6 +17,7 @@ import { supabase } from '@/lib/supabase';
 import { router } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import Avatar from '@/components/Avatar';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -254,22 +253,21 @@ const Onboarding = ({ setShowOnboarding }: { setShowOnboarding: any }) => {
                         />
                         <View style={styles.buttonContainer}>
                             {currentStep > 0 ? (
-                                <SecondaryButton onPress={handleBack} style={defaultStyles.buttonShadow}>
-                                    <SecondaryButtonText>Back</SecondaryButtonText>
-                                </SecondaryButton>
+
+                                <Button onPress={handleBack} style={[defaultStyles.buttonSecondary, defaultStyles.buttonShadow]}>
+                                    <Text style={defaultStyles.buttonSecondaryLabel}>Back</Text>
+                                </Button>
                             ) : (
-                                <SecondaryButton disabled className=' bg-gray-100 border-gray-100'>
-                                    <SecondaryButtonText className='text-gray-400'>Back</SecondaryButtonText>
-                                </SecondaryButton>
+                                <View style={{ width: 16 }}></View>
                             )}
                             {currentStep < steps.length - 1 ? (
-                                <PrimaryButton onPress={handleNext} style={defaultStyles.buttonShadow}>
-                                    <PrimaryButtonText>Next</PrimaryButtonText>
-                                </PrimaryButton>
+                                <Button onPress={handleNext} style={[defaultStyles.button, defaultStyles.buttonShadow]}>
+                                    <Text style={defaultStyles.buttonLabel}>Next</Text>
+                                </Button>
                             ) : (
-                                <PrimaryButton onPress={handleNext} style={defaultStyles.buttonShadow}>
-                                    <PrimaryButtonText>Finish</PrimaryButtonText>
-                                </PrimaryButton>
+                                <Button onPress={handleNext} style={[defaultStyles.button, defaultStyles.buttonShadow]}>
+                                    <Text style={defaultStyles.buttonLabel}>Next</Text>
+                                </Button>
                             )}
                         </View>
                     </View>
@@ -859,9 +857,9 @@ const StepFinal = () => {
                 <Pagination count={finalSlidesContent.length} />
             </View>
             <View className='p-6'>
-                <PrimaryButton onPress={handleDone} style={defaultStyles.buttonShadow}>
-                    <PrimaryButtonText>Got it</PrimaryButtonText>
-                </PrimaryButton>
+                <Button onPress={handleDone} style={[defaultStyles.button, defaultStyles.buttonShadow]}>
+                    <Text style={defaultStyles.buttonLabel}>Got it</Text>
+                </Button>
             </View>
         </View>
     );
@@ -899,7 +897,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         gap: 8,
-        width: screenWidth * 0.5 - 20,
+        minWidth: screenWidth * 0.5 - 20,
         marginHorizontal: 16,
         marginBottom: 16,
     },

@@ -54,7 +54,7 @@ export default function searchFilters() {
         <SafeAreaView style={{ flex: 1, backgroundColor: Colors.light.background }}>
             <View style={styles.innerContainer}>
                 <Card onPress={() => console.log('pressed me')} enableShadow={false} style={{ display: 'flex', height: 60, alignItems: 'center', backgroundColor: 'transparent' }}>
-                    <Text style={{ fontFamily: 'HeadingBold', fontSize: 20 }}>Search Filters (4)</Text>
+                    <Text style={{ fontFamily: 'HeadingBold', fontSize: 20 }}>Search Filters</Text>
                 </Card>
 
                 <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
@@ -122,10 +122,10 @@ export default function searchFilters() {
                 <Spacer height={16} />
 
                 <View style={{ display: 'flex', justifyContent: 'space-between', flexDirection: 'row', gap: 8 }}>
-                    <Button onPress={() => resetSettings()} style={[defaultStyles.buttonSecondary]}>
+                    <Button onPress={() => resetSettings()} style={[defaultStyles.buttonSecondary, defaultStyles.buttonShadow]}>
                         <Text style={defaultStyles.buttonSecondaryLabel}>Reset</Text>
                     </Button>
-                    <Button onPress={() => router.dismiss()} style={[defaultStyles.button]}>
+                    <Button className={'border-primary-400'} onPress={() => router.dismiss()} style={[defaultStyles.button, defaultStyles.buttonShadow]}>
                         <Text style={defaultStyles.buttonLabel}>Save</Text>
                     </Button>
                 </View>

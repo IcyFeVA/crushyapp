@@ -15,7 +15,6 @@ export const defaultStyles = StyleSheet.create({
         lineHeight: 24
     },
     buttonShadow: {
-        shadowColor: Colors.light.black,
         ...Platform.select({
             ios: {
                 shadowColor: "#ccc",
@@ -39,41 +38,43 @@ export const defaultStyles = StyleSheet.create({
         color: Colors.light.text
     },
     button: {
-        flex: 1,
+        display: 'flex',
         backgroundColor: Colors.light.primary,
         justifyContent: 'center',
         alignItems: 'center',
-        borderWidth: 1,
-        borderBlockColor: 'transparent',
+        borderWidth: 2,
+        borderColor: Colors.light.primaryLight,
         padding: 16,
+        paddingHorizontal: 32,
         borderRadius: 8,
-        height: 48,
-        maxHeight: 48,
+        minHeight: 48,
     },
     buttonLabel: {
-        fontSize: 16,
+        fontSize: 14,
         fontFamily: 'BodyBold',
-        color: Colors.light.textInverted
+        color: Colors.light.textInverted,
+        textTransform: 'uppercase'
     },
     buttonSecondary: {
-        flex: 1,
+        display: 'flex',
         backgroundColor: Colors.light.background,
         justifyContent: 'center',
         alignItems: 'center',
-        borderWidth: 2,
+        borderWidth: 1,
         borderColor: Colors.light.tertiary,
         padding: 16,
+        paddingHorizontal: 32,
         borderRadius: 8,
-        height: 48,
-        maxHeight: 48,
+        minHeight: 48,
     },
     buttonSecondaryLabel: {
-        fontSize: 16,
+        fontSize: 14,
         fontFamily: 'BodyBold',
-        color: Colors.light.primary
+        color: Colors.light.primary,
+        textTransform: 'uppercase'
     },
     settingListButton: {
-        flex: 1,
+        display: 'flex',
         backgroundColor: Colors.light.background,
         justifyContent: 'space-between',
         borderWidth: 1,

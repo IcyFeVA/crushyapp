@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { Alert, StyleSheet, View, TouchableOpacity, Keyboard, StatusBar } from 'react-native'
 import { supabase } from '@/lib/supabase'
-import { Text } from 'react-native-ui-lib';
+import { Button, Text } from 'react-native-ui-lib';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Spacer from './Spacer';
@@ -213,9 +213,9 @@ export default function Auth({ onboarding }: any) {
 
                         <Spacer height={64} />
 
-                        <PrimaryButton onPress={() => signInWithEmail()} style={defaultStyles.buttonShadow}>
-                            <PrimaryButtonText>Sign in</PrimaryButtonText>
-                        </PrimaryButton>
+                        <Button onPress={() => signInWithEmail()} style={[defaultStyles.button, defaultStyles.buttonShadow]}>
+                            <Text style={defaultStyles.buttonLabel}>Sign in</Text>
+                        </Button>
 
                         <Spacer height={32} />
 
@@ -286,9 +286,9 @@ export default function Auth({ onboarding }: any) {
 
                         <Spacer height={48} />
 
-                        <PrimaryButton onPress={() => signUpWithEmail()} style={defaultStyles.buttonShadow}>
-                            <PrimaryButtonText>Sign up</PrimaryButtonText>
-                        </PrimaryButton>
+                        <Button onPress={() => signUpWithEmail()} style={[defaultStyles.button, defaultStyles.buttonShadow]}>
+                            <Text style={defaultStyles.buttonLabel}>Sign up</Text>
+                        </Button>
 
                         <Spacer height={16} />
 
@@ -319,7 +319,7 @@ export default function Auth({ onboarding }: any) {
 
             {mode === 'welcome' && (
                 <View className='flex h-full justify-between'>
-                    <View className='flex-1/0.7'>
+                    <View className='flex'>
                         <Spacer height={16} />
                         <Image source={require('@/assets/images/logo/logo_crushy.png')} className='m-auto' />
                         <FlatList
@@ -336,17 +336,21 @@ export default function Auth({ onboarding }: any) {
                             )}
                         />
                         <Pagination count={onboardingContent.length} />
+                        <Spacer height={64} />
                     </View>
-                    <View className='flex-1/0.3 p-6'>
-                        <PrimaryButton onPress={() => setMode('signup')} style={defaultStyles.buttonShadow}>
-                            <PrimaryButtonText>Create account</PrimaryButtonText>
-                        </PrimaryButton>
+                    <View className='flex p-6'>
+                        <Button onPress={() => setMode('signup')} style={[defaultStyles.button, defaultStyles.buttonShadow]}>
+                            <Text style={defaultStyles.buttonLabel}>Create account</Text>
+                        </Button>
+
                         <Spacer height={16} />
-                        <SecondaryButton onPress={() => setMode('signin')} style={defaultStyles.buttonShadow}>
-                            <SecondaryButtonText>Sign in</SecondaryButtonText>
-                        </SecondaryButton>
-                        <Spacer height={16} />
+
+                        <Button onPress={() => setMode('signin')} style={[defaultStyles.buttonSecondary, defaultStyles.buttonShadow]}>
+                            <Text style={defaultStyles.buttonSecondaryLabel}>Sign in</Text>
+                        </Button>
+
                     </View>
+                    <Spacer height={40} />
                 </View>
             )}
         </SafeAreaView >

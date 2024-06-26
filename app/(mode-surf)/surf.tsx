@@ -108,8 +108,8 @@ export default function Surf() {
                 <View style={styles.header}>
                     <Image source={require('@/assets/images/logo/logo_crushy.png')} style={styles.logo} />
                     <Button style={[styles.buttonFilter, defaultStyles.buttonShadow]} onPress={() => { router.push('searchFilters') }}>
-                        <Ionicons name="search" size={12} color={Colors.light.text} style={{ marginTop: 3 }} />
-                        <Text style={styles.buttonFilterText}>Search Filters <Text style={{ fontFamily: 'BodySemiBold' }}>(4)</Text></Text>
+                        <Ionicons name="search" size={12} color={Colors.light.text} />
+                        <Text style={styles.buttonFilterText}>Search Filters</Text>
                     </Button>
                 </View>
 
@@ -285,7 +285,6 @@ const styles = StyleSheet.create({
         backgroundColor: Colors.light.white,
         paddingVertical: 2,
         paddingHorizontal: 12,
-        paddingBottom: 6,
         borderRadius: 99,
         borderWidth: 1,
         borderColor: Colors.light.tertiary,
@@ -293,6 +292,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
+        minHeight: 32,
         gap: 4,
     },
     buttonFilterText: {
