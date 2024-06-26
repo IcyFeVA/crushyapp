@@ -40,6 +40,38 @@ export const defaultStyles = StyleSheet.create({
     },
     button: {
         flex: 1,
+        backgroundColor: Colors.light.primary,
+        justifyContent: 'center',
+        borderWidth: 1,
+        borderBlockColor: 'transparent',
+        padding: 16,
+        borderRadius: 8,
+        height: 48,
+        maxHeight: 48,
+    },
+    buttonLabel: {
+        fontSize: 16,
+        fontFamily: 'BodySemiBold',
+        color: Colors.light.textInverted
+    },
+    buttonSecondary: {
+        flex: 1,
+        backgroundColor: Colors.light.background,
+        justifyContent: 'center',
+        borderWidth: 2,
+        borderColor: Colors.light.tertiary,
+        padding: 16,
+        borderRadius: 8,
+        height: 48,
+        maxHeight: 48,
+    },
+    buttonSecondaryLabel: {
+        fontSize: 16,
+        fontFamily: 'BodySemiBold',
+        color: Colors.light.primary
+    },
+    settingListButton: {
+        flex: 1,
         backgroundColor: Colors.light.background,
         justifyContent: 'space-between',
         borderWidth: 1,
@@ -47,9 +79,10 @@ export const defaultStyles = StyleSheet.create({
         padding: 16,
         borderRadius: 8,
         height: 64,
+        maxHeight: 64,
         borderTopWidth: 0,
     },
-    buttonLabel: {
+    settingListButtonLabel: {
         fontSize: 16,
         fontFamily: 'BodySemiBold',
         color: Colors.light.text

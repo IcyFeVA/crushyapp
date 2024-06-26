@@ -13,6 +13,7 @@ import { Platform } from 'react-native';
 import { MMKV } from 'react-native-mmkv'
 import hobbiesInterests from '@/constants/Interests'
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { clearAllStorage, getData, resetUserSearchFilters } from '@/utils/storage';
 // export const storage = new MMKV()
 
 // const interests = hobbiesInterests
@@ -59,6 +60,15 @@ export default function RootLayout() {
     useEffect(() => {
         if (loaded) {
             SplashScreen.hideAsync();
+
+            //clearAllStorage()
+
+            getData('genderPreference').then(genderPreference => {
+                if (genderPreference === undefined) {
+                    console.log('no search preferences found, resetting')
+                    resetUserSearchFilters()
+                }
+            })
         }
     }, [loaded]);
 
