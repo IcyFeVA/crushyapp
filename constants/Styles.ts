@@ -38,14 +38,32 @@ export const defaultStyles = StyleSheet.create({
         fontFamily: 'BodySemiBold',
         color: Colors.light.text
     },
-    radioButton: {
+    button: {
         flex: 1,
+        backgroundColor: Colors.light.background,
         justifyContent: 'space-between',
         borderWidth: 1,
         borderColor: Colors.light.tertiary,
         padding: 16,
         borderRadius: 8,
-        marginBottom: 16
+        height: 64,
+        borderTopWidth: 0,
+    },
+    buttonLabel: {
+        fontSize: 16,
+        fontFamily: 'BodySemiBold',
+        color: Colors.light.text
+    },
+    radioButton: {
+        flex: 1,
+        backgroundColor: Colors.light.background,
+        justifyContent: 'space-between',
+        borderWidth: 1,
+        borderColor: Colors.light.tertiary,
+        padding: 16,
+        borderRadius: 8,
+        marginBottom: 16,
+        height: 64,
     },
     radioButtonLabel: {
         fontSize: 16,
@@ -59,10 +77,14 @@ export const defaultStyles = StyleSheet.create({
         padding: 16,
         borderRadius: 8,
         marginBottom: 16,
+        height: 64,
     },
     checkboxButtonLabel: {
         fontSize: 16,
         fontFamily: 'BodySemiBold',
         color: Colors.light.text
+    },
+    noRadius: {
+        borderRadius: 0
     },
 });

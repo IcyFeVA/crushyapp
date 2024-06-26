@@ -1,4 +1,4 @@
-import { Text, StyleSheet, FlatList, View } from 'react-native';
+import { Text, StyleSheet, FlatList, View, TouchableOpacity } from 'react-native';
 import BottomSheet, { BottomSheetScrollView } from "@gorhom/bottom-sheet";
 import { Card, ListItem, RadioButton } from "react-native-ui-lib";
 import Spacer from "@/components/Spacer";
@@ -13,16 +13,63 @@ import { storeData } from '@/utils/storage';
 
 export default function setGenderPreference() {
 
-    const [selectedValue, setSelectedValue] = useState('');
+    //TODO: make it work again
+    // const [selectedValue, setSelectedValue] = useState('');
 
-    const handlePress = (key: string, value: string) => {
-        setSelectedValue(key);
-        storeData('genderPreference', { key, value });
-        console.log('Gender:', value);
-        return router.dismiss();
+    // const handlePress = (key: string, value: string) => {
+    //     setSelectedValue(key);
+    //     storeData('genderPreference', { key, value });
+    //     console.log('Gender:', value);
+    //     setTimeout(() => {
+    //         return router.dismiss();
+    //     }, 250);
+    // };
+
+
+    type ItemData = {
+        id: string;
+        title: string;
     };
 
+    const DATA: ItemData[] = [
+        { id: '1', title: 'Male' },
+        { id: '2', title: 'Female' },
+        { id: '3', title: 'Both' },
+    ]
 
+    type ItemProps = {
+        item: ItemData;
+        onPress: () => void;
+        textColor: string;
+    };
+
+    const [selectedId, setSelectedId] = useState<string>('');
+
+    const Item = ({ item, onPress, textColor }: ItemProps) => (
+        <RadioButton
+            label={item.title}
+            size={20}
+            color={textColor}
+            contentOnLeft
+            containerStyle={[defaultStyles.radioButton, { borderColor: selectedId === item.id ? Colors.light.text : Colors.light.tertiary }]}
+            labelStyle={defaultStyles.radioButtonLabel}
+            selected={selectedId === item.id}
+            onPress={onPress}
+        />
+    );
+
+
+    const renderItem = ({ item }: { item: ItemData }) => {
+        const color = item.id === selectedId ? Colors.light.text : Colors.light.tertiary
+
+        return (
+            <Item
+                item={item}
+                onPress={() => setSelectedId(item.id)}
+                textColor={color}
+            />
+        );
+    };
 
     return (
         <SafeAreaView style={{ flex: 1, backgroundColor: Colors.light.background }}>
@@ -38,33 +85,12 @@ export default function setGenderPreference() {
 
                 <FlatList
                     className='py-4'
-                    data={[
-                        { key: '1', title: 'Male' },
-                        { key: '2', title: 'Female' },
-                        { key: '3', title: 'Male (Transgender)' },
-                        { key: '4', title: 'Female (Transgender)' },
-                        { key: '5', title: 'Non-binary' },
-                        { key: '6', title: 'Genderqueer' },
-                        { key: '7', title: 'Genderfluid' },
-                        { key: '8', title: 'Agender' },
-                        { key: '9', title: 'Two-Spirit' },
-                    ]}
+                    data={DATA}
+                    renderItem={renderItem}
+                    keyExtractor={item => item.id}
+                    extraData={selectedId}
                     showsHorizontalScrollIndicator={false}
-                    renderItem={({ item }) => (
-                        <RadioButton
-                            label={item.title}
-                            size={20}
-                            color={selectedValue === item.key ? Colors.light.text : Colors.light.tertiary}
-                            contentOnLeft
-                            containerStyle={[defaultStyles.radioButton, { borderColor: selectedValue === item.key ? Colors.light.text : Colors.light.tertiary }]}
-                            labelStyle={defaultStyles.radioButtonLabel}
-                            selected={selectedValue === item.key}
-                            onPress={() => handlePress(item.key, item.title)}
-                        />
-                    )}
-                    keyExtractor={item => item.key}
                     showsVerticalScrollIndicator={false}
-                    bounces={false}
                 />
             </View >
         </SafeAreaView>

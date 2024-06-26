@@ -107,7 +107,7 @@ export default function Surf() {
 
                 <View style={styles.header}>
                     <Image source={require('@/assets/images/logo/logo_crushy.png')} style={styles.logo} />
-                    <Button style={[styles.buttonFilter, defaultStyles.buttonShadow]} onPress={() => { setBottomSheetOpen(true) }}>
+                    <Button style={[styles.buttonFilter, defaultStyles.buttonShadow]} onPress={() => { router.push('searchFilters') }}>
                         <Ionicons name="search" size={12} color={Colors.light.text} style={{ marginTop: 3 }} />
                         <Text style={styles.buttonFilterText}>Search Filters <Text style={{ fontFamily: 'BodySemiBold' }}>(4)</Text></Text>
                     </Button>
@@ -216,9 +216,6 @@ export default function Surf() {
                                 <Image source={require('@/assets/images/buttons/buttonMatchingChat.png')} style={styles.buttonsMatchingSecondary} />
                             </Pressable>
                         </View>
-
-                        {bottomSheetOpen ? <SurfButtomSheet closeAction={setBottomSheetOpen} /> : null}
-
                     </>
                 )}
             </View>
