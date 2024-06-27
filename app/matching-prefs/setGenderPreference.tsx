@@ -33,7 +33,13 @@ export default function setGenderPreference() {
     const DATA: ItemData[] = [
         { id: '1', title: 'Male' },
         { id: '2', title: 'Female' },
-        { id: '3', title: 'All' },
+        { id: '3', title: 'Male (Transgender)' },
+        { id: '4', title: 'Female (Transgender)' },
+        { id: '5', title: 'Non-binary' },
+        { id: '6', title: 'Genderqueer' },
+        { id: '7', title: 'Genderfluid' },
+        { id: '8', title: 'Agender' },
+        { id: '9', title: 'Two-Spirit' },
     ]
 
     type ItemProps = {
@@ -72,7 +78,7 @@ export default function setGenderPreference() {
 
     return (
         <SafeAreaView style={{ flex: 1, backgroundColor: Colors.light.background }}>
-            <View className='p-6 w-screen'>
+            <View className='flex-1 p-6 w-screen'>
 
                 <Text style={defaultStyles.h2}>Gender preference</Text>
 
