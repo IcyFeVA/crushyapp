@@ -33,68 +33,95 @@ export default function Surf() {
     const [user, setUser] = useState<any[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
     const [noMoreData, setNoMoreData] = useState<boolean>(false);
-    const [interestsList, setInterestsList] = useState<string[]>([]);
-    const [myData, setMyData] = useState<any[]>([]);
+    const [myData, setMyData] = useState<any>({});
     const [bottomSheetOpen, setBottomSheetOpen] = useState<boolean>(false);
-    // const [interests, setInterests] = useMMKVString('app.interests')
-    // let interestsObject: string[] = []
 
+    const interestsList = useMemo(() => flattenArray(hobbiesInterests), []);
 
     useEffect(() => {
-        // interestsObject = JSON.parse(interests)
-        // console.log(interestsObject)
         const fetchMe = async () => {
             const { data } = await supabase
                 .from('profiles')
                 .select('*')
-                .eq('id', session?.user.id);
-            if (data) setMyData(data[0])
+                .eq('id', session?.user.id)
+                .single();
+            if (data) setMyData(data);
         }
 
         fetchMe();
     }, [session]);
 
     useEffect(() => {
-        setInterestsList(flattenArray(hobbiesInterests))
         fetchNextUser();
     }, [limit]);
 
     const fetchNextUser = async () => {
-        setLoading(true)
+        setLoading(true);
         const { data } = await supabase
             .from('profiles')
             .select('*')
-            .range(limit, limit)
+            .range(limit, limit);
 
         if (data && data.length > 0) {
             if (data[0].id === session?.user.id) {
-                console.log('Skipping self')
-                setLimit(limit + 1)
+                console.log('Skipping self');
+                setLimit(prev => prev + 1);
+                setLoading(false);
                 return;
             }
             setUser(data);
             setImageUrl(supabase.storage.from('avatars').getPublicUrl(data[0].avatar_url).data.publicUrl);
         } else if (data && data.length === 0) {
-            setNoMoreData(true)
+            setNoMoreData(true);
         }
-        setLoading(false)
+        setLoading(false);
     }
 
-    const likeUser = () => {
-        setLimit(limit + 1);
-    }
+    const likeUser = () => setLimit(prev => prev + 1);
+    const dislikeUser = () => setLimit(prev => prev + 1);
 
-    const dislikeUser = () => {
-        setLimit(limit + 1);
-    }
-
-
-    function flattenArray(arr) {
+    function flattenArray(arr: any[]): any[] {
         return arr.flat();
     }
-    function findObjectByValue(arr, targetValue) {
-        return arr.find(item => item.value === targetValue);
-    }
+
+    const sortInterests = (a: string, b: string) => {
+        const aIncluded = myData.interests?.includes(parseInt(a));
+        const bIncluded = myData.interests?.includes(parseInt(b));
+        if (aIncluded && !bIncluded) return -1;
+        if (!aIncluded && bIncluded) return 1;
+        return 0;
+    };
+
+    const renderInterestChips = () => {
+        if (!user.length || !myData.interests) return null;
+
+        const sortedInterests = [...user[0].interests].sort(sortInterests);
+
+        return sortedInterests.map((interest: string, index: number) => {
+            const interestObject = interestsList.find(item => item.value === interest.toString());
+
+            if (!interestObject) {
+                console.error(`No label found for interest: ${interest}`);
+                return null;
+            }
+
+            const isActive = myData.interests.includes(parseInt(interestObject.value));
+            const isLast = index === sortedInterests.length - 1;
+
+            return (
+                <Chip
+                    key={interest}
+                    label={interestObject.label}
+                    labelStyle={[styles.chipLabel, isActive && styles.chipActiveLabel]}
+                    containerStyle={[
+                        styles.chip,
+                        isActive && styles.chipActive,
+                        isLast && { marginRight: 32 }
+                    ]}
+                />
+            );
+        });
+    };
 
 
 
@@ -146,62 +173,7 @@ export default function Surf() {
                                 {!loading && <TypewriterEffect styling={styles.personAge} text={user.length > 0 ? (2024 - parseInt(user[0].age)).toString() : ''} speed={150} />}
                             </View>
                             <ScrollView horizontal style={styles.chipsContainer} showsHorizontalScrollIndicator={false}>
-                                {user.length > 0 && myData.interests && (() => {
-                                    // Sort function (to make matching interests appear first)
-                                    const sortInterests = (a, b) => {
-                                        const aObject = findObjectByValue(interestsList, a.toString());
-                                        const bObject = findObjectByValue(interestsList, b.toString());
-
-                                        const aIncluded = myData.interests.includes(parseInt(aObject?.value));
-                                        const bIncluded = myData.interests.includes(parseInt(bObject?.value));
-
-                                        if (aIncluded && !bIncluded) return -1;
-                                        if (!aIncluded && bIncluded) return 1;
-                                        return 0;
-                                    };
-
-                                    // Sort the interests array
-                                    const sortedInterests = [...user[0].interests].sort(sortInterests);
-
-                                    return sortedInterests.map((interest: string, index: number) => {
-                                        if (interestsList.length === 0) return (<Text key={index}>No interests found</Text>);
-
-                                        const interestObject = findObjectByValue(interestsList, interest.toString());
-
-                                        // this should never happen, but if it does, we know something's wrong 
-                                        if (!interestObject) {
-                                            console.error(`No label found for interest: ${interest}`);
-                                            return (
-                                                <Chip
-                                                    key={index}
-                                                    label="Unknown"
-                                                    labelStyle={styles.chipLabel}
-                                                    containerStyle={[styles.chip, { backgroundColor: Colors.light.white }]}
-                                                />
-                                            );
-                                        }
-
-                                        if (myData.interests.includes(parseInt(interestObject.value))) {
-                                            return (
-                                                <Chip
-                                                    key={index}
-                                                    label={interestObject.label}
-                                                    labelStyle={[styles.chipLabel, styles.chipActiveLabel]}
-                                                    style={[styles.chip, styles.chipActive, { flex: 1 }, index === sortedInterests.length - 1 ? { marginRight: 32 } : {}]}
-                                                />
-                                            )
-                                        } else {
-                                            return (
-                                                <Chip
-                                                    key={index}
-                                                    label={interestObject.label}
-                                                    labelStyle={styles.chipLabel}
-                                                    style={[styles.chip, index === sortedInterests.length - 1 ? { marginRight: 32 } : {}]}
-                                                />
-                                            )
-                                        }
-                                    });
-                                })()}
+                                {renderInterestChips()}
                             </ScrollView>
                             {!bottomSheetOpen && (
                                 <Pressable onPress={() => router.push('../')} style={[styles.buttonClose, defaultStyles.buttonShadow]}  >
