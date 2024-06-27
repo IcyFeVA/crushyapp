@@ -67,6 +67,8 @@ export default function RootLayout() {
                 if (genderPreference === undefined) {
                     console.log('no search preferences found, resetting')
                     resetUserSearchFilters()
+                } else {
+                    console.log('search preferences found', genderPreference)
                 }
             })
         }

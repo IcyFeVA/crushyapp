@@ -122,10 +122,10 @@ export default function searchFilters() {
                 <Spacer height={16} />
 
                 <View style={{ display: 'flex', justifyContent: 'space-between', flexDirection: 'row', gap: 8 }}>
-                    <Button onPress={() => resetSettings()} style={[defaultStyles.buttonSecondary, defaultStyles.buttonShadow]}>
-                        <Text style={defaultStyles.buttonSecondaryLabel}>Reset</Text>
+                    <Button onPress={() => resetSettings()} style={[defaultStyles.button, defaultStyles.buttonShadow]}>
+                        <Text style={defaultStyles.buttonLabel}>Reset</Text>
                     </Button>
-                    <Button className={'border-primary-400'} onPress={() => router.dismiss()} style={[defaultStyles.button, defaultStyles.buttonShadow]}>
+                    <Button onPress={() => router.dismiss()} style={[defaultStyles.button, defaultStyles.buttonShadow]}>
                         <Text style={defaultStyles.buttonLabel}>Save</Text>
                     </Button>
                 </View>

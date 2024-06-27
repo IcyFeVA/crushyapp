@@ -350,7 +350,7 @@ export default function Auth({ onboarding }: any) {
                         </Button>
 
                     </View>
-                    <Spacer height={40} />
+                    <Spacer height={24} />
                 </View>
             )}
         </SafeAreaView >
