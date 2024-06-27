@@ -1,4 +1,4 @@
-import { Image, View, StyleSheet, Text, Pressable, StatusBar, ScrollView, ActivityIndicator, Platform, Alert } from 'react-native';
+import { Image, View, StyleSheet, Text, Pressable, StatusBar, ScrollView, ActivityIndicator, Platform, Alert, Touchable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Link, router, useNavigation } from 'expo-router';
 import { Colors } from '@/constants/Colors';
@@ -20,6 +20,8 @@ import BottomSheet, {
     BottomSheetScrollView,
 } from '@gorhom/bottom-sheet';
 import SurfButtomSheet from '@/components/SurfButtomSheet';
+import { getBackgroundColor } from 'react-native-ui-lib/src/helpers/AvatarHelper';
+import { TouchableOpacity } from 'react-native-gesture-handler';
 
 
 
@@ -131,7 +133,12 @@ export default function Surf() {
                                 <Image source={{ uri: imageUrl }} style={styles.person} />
                             )}
 
-                            {loading && <ActivityIndicator size="large" color={Colors.light.primary} style={{ position: 'absolute', top: 32, left: 32 }} />}
+                            <Pressable onPress={() => { router.push(`/detail/${user[0].id}?imageUrl=${imageUrl}`) }} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'absolute', left: 0, top: 0, width: '100%', height: '100%' }}>
+                                < View style={{ width: '100%', height: '66%' }} >
+                                </View>
+                            </Pressable>
+
+                            {loading && <ActivityIndicator size="large" color={Colors.light.primary} style={{ position: 'absolute', top: 32, left: 32, zIndex: 5 }} />}
 
                             <Fader visible position={Fader.position.BOTTOM} tintColor={'#282828'} size={100} />
                             <View style={styles.personInfo}>
@@ -217,8 +224,9 @@ export default function Surf() {
                             </Pressable>
                         </View>
                     </>
-                )}
-            </View>
+                )
+                }
+            </View >
         </SafeAreaView >
     );
 }

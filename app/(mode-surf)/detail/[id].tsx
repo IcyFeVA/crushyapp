@@ -46,7 +46,7 @@ export default function DetailsScreen() {
                         <Text style={styles.personName}>{user.name}<Text style={styles.personAge}>, {(2024 - parseInt(user.age)).toString()}</Text></Text>
                     </View>
                     <Text style={{ fontFamily: 'HeadingBold', fontSize: 24, color: Colors.light.text, marginTop: 16 }}>Bio</Text>
-                    <Text style={{ fontFamily: 'BodyRegular', fontSize: 18, lineHeight: 26 }}>I’m looking for a new partner, perhaps a partner for life. I never used a dating app before, but I heard good things about this one.
+                    <Text style={{ fontFamily: 'BodyRegular', fontSize: 16, lineHeight: 26 }}>I’m looking for a new partner, perhaps a partner for life. I never used a dating app before, but I heard good things about this one.
 
                         I’m a great listener, and a fantastic cook. I love walking along the beach, and deep conversations.
                         Talking is important to me. I need to be able to talk about anything with you.
