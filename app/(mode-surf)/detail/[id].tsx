@@ -31,6 +31,19 @@ export default function DetailsScreen() {
         setLoading(false)
     }
 
+    const bioText = `I\’m looking for a new partner, perhaps a partner for life. I never used a dating app before, but I heard good things about this one.
+
+I\’m a great listener, and a fantastic cook. I love walking along the beach, and deep conversations.
+\nTalking is important to me. I need to be able to talk about anything with you.
+
+I also love dogs and cats, though I don’t have any pets at the moment. But please keep away snakes, spiders and any kind of insects! I\’m afraid I will get a heart attack with those.
+
+Videogames is also something that is important to me. I play mostly online, to not feel alone all the time. I enjoy board games as well, and TCG\’s.
+
+When it comes to music, I like most pop bands and dance music. My favorite are Christina Aguilera, Taylor Swift, and the Woodys.
+
+Let me know what  you like and let’s get connected here on this cool platform!`
+
     return (
         <SafeAreaView style={{ flex: 1, backgroundColor: Colors.light.background }}>
             <ScrollView style={styles.innerContainer}>
@@ -46,18 +59,7 @@ export default function DetailsScreen() {
                         <Text style={styles.personName}>{user.name}<Text style={styles.personAge}>, {(2024 - parseInt(user.age)).toString()}</Text></Text>
                     </View>
                     <Text style={{ fontFamily: 'HeadingBold', fontSize: 24, color: Colors.light.text, marginTop: 16 }}>Bio</Text>
-                    <Text style={{ fontFamily: 'BodyRegular', fontSize: 16, lineHeight: 26 }}>I’m looking for a new partner, perhaps a partner for life. I never used a dating app before, but I heard good things about this one.
-
-                        I’m a great listener, and a fantastic cook. I love walking along the beach, and deep conversations.
-                        Talking is important to me. I need to be able to talk about anything with you.
-
-                        I also love dogs and cats, though I don’t have any pets at the moment. But please keep away snakes, spiders and any kind of insects! I’m afraid I will get a heart attack with those.
-
-                        Videogames is also something that is important to me. I play mostly online, to not feel alone all the time. I enjoy board games as well, and TCG’s.
-
-                        When it comes to music, I like most pop bands and dance music. My favorite are Christina Aguilera, Taylor Swift, and the Woodys.
-
-                        Let me know what  you like and let’s get connected here on this cool platform!</Text>
+                    <Text style={{ fontFamily: 'BodyRegular', fontSize: 18, lineHeight: 26 }}>{bioText}</Text>
                 </View>
 
             </ScrollView>
