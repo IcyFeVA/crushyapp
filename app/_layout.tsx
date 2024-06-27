@@ -41,7 +41,6 @@ export default function RootLayout() {
     const [showOnboarding, setShowOnboarding] = useState(useProfile(session));
 
     const [loaded, error] = useFonts({
-        SpaceMono: require('@/assets/fonts/SpaceMono-Regular.ttf'),
         HeadingBold: require('@/assets/fonts/RobotoSlab-Bold.ttf'),
         HeadingRegular: require('@/assets/fonts/RobotoSlab-Regular.ttf'),
         HeadingMedium: require('@/assets/fonts/RobotoSlab-Medium.ttf'),
@@ -51,6 +50,9 @@ export default function RootLayout() {
         BodyRegular: require('@/assets/fonts/PlusJakartaSans-Regular.ttf'),
         BodyMedium: require('@/assets/fonts/PlusJakartaSans-Medium.ttf'),
         BodyLight: require('@/assets/fonts/PlusJakartaSans-Light.ttf'),
+        CopperBook: require('@/assets/fonts/Copernicus-Book.ttf'),
+        CopperBold: require('@/assets/fonts/Copernicus-Bold.ttf'),
+        CopperExtraBold: require('@/assets/fonts/Copernicus-Extrabold.ttf'),
     });
 
     useEffect(() => {
