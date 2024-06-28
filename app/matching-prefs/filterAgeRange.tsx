@@ -6,8 +6,7 @@ import { storeData } from '@/utils/storage';
 import { Colors } from '@/constants/Colors';
 import { defaultStyles } from '@/constants/Styles';
 import Spacer from "@/components/Spacer";
-import { Button } from 'react-native-ui-lib';
-import Slider from '@react-native-community/slider';
+import { Button, Slider } from 'react-native-ui-lib';
 import { useAppContext } from '@/providers/AppProvider';
 
 const MIN_AGE = 18;
@@ -27,14 +26,11 @@ export default function SetAgeRange() {
         }
     }, [searchFilters]);
 
-    const handleSliderChange = useCallback((type: 'min' | 'max', value: number) => {
-        if (type === 'min') {
-            const validMinAge = Math.min(Math.max(value, MIN_AGE), localMaxAge);
-            setLocalMinAge(validMinAge);
-        } else {
-            const validMaxAge = Math.max(Math.min(value, MAX_AGE), localMinAge);
-            setLocalMaxAge(validMaxAge);
-        }
+    const handleSliderChange = useCallback((value: any) => {
+        const validMinAge = Math.min(Math.max(value.min, MIN_AGE), localMaxAge);
+        const validMaxAge = Math.max(Math.min(value.max, MAX_AGE), localMinAge);
+        setLocalMinAge(validMinAge);
+        setLocalMaxAge(validMaxAge);
     }, [localMinAge, localMaxAge]);
 
     const handleSliderComplete = useCallback(() => {
@@ -60,31 +56,20 @@ export default function SetAgeRange() {
     return (
         <SafeAreaView style={styles.container}>
             <View style={styles.innerContainer}>
-                <Text style={defaultStyles.h2}>Age Range Preference</Text>
+                <Text style={defaultStyles.h2}>Age Range</Text>
                 <Spacer height={8} />
                 <Text style={defaultStyles.body}>Set your preferred age range for potential matches.</Text>
                 <Spacer height={48} />
 
-                <Text style={styles.label}>Minimum Age: {Math.round(localMinAge)}</Text>
+                <Text style={styles.label}>Age Range: {Math.round(localMinAge)} - {Math.round(localMaxAge)}</Text>
                 <Slider
+                    useRange
                     value={localMinAge}
+                    initialMinimumValue={localMinAge}
+                    initialMaximumValue={localMaxAge}
                     minimumValue={MIN_AGE}
-                    maximumValue={localMaxAge}
-                    onValueChange={(value) => handleSliderChange('min', Math.round(value))}
-                    onSlidingComplete={handleSliderComplete}
-                    step={1}
-                    style={styles.slider}
-                />
-
-                <Spacer height={24} />
-
-                <Text style={styles.label}>Maximum Age: {Math.round(localMaxAge)}</Text>
-                <Slider
-                    value={localMaxAge}
-                    minimumValue={localMinAge}
                     maximumValue={MAX_AGE}
-                    onValueChange={(value) => handleSliderChange('max', Math.round(value))}
-                    onSlidingComplete={handleSliderComplete}
+                    onRangeChange={(value) => handleSliderChange(value)}
                     step={1}
                     style={styles.slider}
                 />
