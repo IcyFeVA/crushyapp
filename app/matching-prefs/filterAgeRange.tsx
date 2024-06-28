@@ -64,7 +64,7 @@ export default function SetAgeRange() {
                     minimumValue={MIN_AGE}
                     maximumValue={MAX_AGE}
                     onRangeChange={(value) => handleSliderChange(value)}
-                    step={1}
+                    step={2}
                     style={styles.slider}
                 />
 
