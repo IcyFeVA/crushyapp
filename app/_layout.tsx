@@ -14,16 +14,7 @@ import { MMKV } from 'react-native-mmkv'
 import hobbiesInterests from '@/constants/Interests'
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { clearAllStorage, getData, resetUserSearchFilters } from '@/utils/storage';
-// export const storage = new MMKV()
-
-// const interests = hobbiesInterests
-
-// const hasInterests = storage.contains('app.interests')
-// if (!hasInterests) {
-//     console.log('storing interests')
-//     storage.set('app.interests', JSON.stringify(interests))
-// }
-
+import { AppProvider } from '@/providers/AppProvider';
 
 
 
@@ -81,14 +72,16 @@ export default function RootLayout() {
     }
 
     return (
-        <GestureHandlerRootView style={{ flex: 1 }}>
-            <SafeAreaProvider>
-                <RootNavigator
-                    session={session}
-                    showOnboarding={showOnboarding}
-                    setShowOnboarding={setShowOnboarding}
-                />
-            </SafeAreaProvider>
-        </GestureHandlerRootView>
+        <AppProvider>
+            <GestureHandlerRootView style={{ flex: 1 }}>
+                <SafeAreaProvider>
+                    <RootNavigator
+                        session={session}
+                        showOnboarding={showOnboarding}
+                        setShowOnboarding={setShowOnboarding}
+                    />
+                </SafeAreaProvider>
+            </GestureHandlerRootView>
+        </AppProvider>
     );
 }
