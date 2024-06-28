@@ -2,34 +2,64 @@ import { Colors } from '@/constants/Colors';
 import { defaultStyles } from '@/constants/Styles';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Image, View, Text, StyleSheet, ScrollView, Pressable, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '@/lib/supabase';
+import hobbiesInterests from '@/constants/Interests'
+import { Chip } from 'react-native-ui-lib';
+import { useAuth } from '@/hooks/useAuth';
+import Spacer from '@/components/Spacer';
 
 export default function DetailsScreen() {
+    const session = useAuth();
     const { id, imageUrl } = useLocalSearchParams();
     const [loading, setLoading] = useState<boolean>(false);
-    const [user, setUser] = useState<any[]>([]);
+    const [user, setUser] = useState<any[]>({ name: '', age: '0', interests: [] });
+    const interestsList = useMemo(() => flattenArray(hobbiesInterests), []);
+    const [myData, setMyData] = useState<any>({});
 
     useEffect(() => {
-        fetchUser();
-    }, [])
+        const fetchMe = async () => {
 
-    const fetchUser = async () => {
-        setLoading(true)
-        const { data } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', id)
+            setLoading(true)
 
-        if (data[0] && data.length > 0) {
-            console.log("🚀 ~ fetchUser ~ data:", data)
-            setUser(data[0]);
+            const { data } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', session?.user.id);
+            if (data) {
+                setMyData(data[0])
+                setLoading(false)
+            }
         }
 
-        setLoading(false)
-    }
+        fetchMe();
+
+    }, [session]);
+
+
+    useEffect(() => {
+
+        const fetchUser = async () => {
+
+            setLoading(true)
+
+            const { data } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', id)
+            if (data) {
+                setUser(data[0]);
+                setLoading(false)
+            }
+
+        }
+
+        fetchUser();
+
+    }, [id]);
+
 
     const bioText = `I\’m looking for a new partner, perhaps a partner for life. I never used a dating app before, but I heard good things about this one.
 
@@ -44,8 +74,53 @@ When it comes to music, I like most pop bands and dance music. My favorite are C
 
 Let me know what  you like and let’s get connected here on this cool platform!`
 
+    function flattenArray(arr: any[]): any[] {
+        return arr.flat();
+    }
+
+    const sortInterests = (a: string, b: string) => {
+        const aIncluded = myData.interests?.includes(parseInt(a));
+        const bIncluded = myData.interests?.includes(parseInt(b));
+        if (aIncluded && !bIncluded) return -1;
+        if (!aIncluded && bIncluded) return 1;
+        return 0;
+    };
+
+    const renderInterestChips = () => {
+
+        if (!user.interests || !myData.interests) return null;
+
+        const sortedInterests = [...user.interests].sort(sortInterests);
+
+        return sortedInterests.map((interest: string, index: number) => {
+
+            const interestObject = interestsList.find(item => item.value === interest.toString());
+
+            if (!interestObject) {
+                console.error(`No label found for interest: ${interest}`);
+                return null;
+            }
+
+            const isActive = myData.interests.includes(parseInt(interestObject.value));
+            const isLast = index === sortedInterests.length - 1;
+
+            return (
+                <Chip
+                    key={interest}
+                    label={interestObject.label}
+                    labelStyle={[styles.chipLabel, isActive && styles.chipActiveLabel]}
+                    containerStyle={[styles.chip, isActive && styles.chipActive, isLast && { marginRight: 0 }
+                    ]}
+                />
+            );
+        });
+    };
+
+
     return (
-        <SafeAreaView style={{ flex: 1, backgroundColor: Colors.light.background }}>
+
+        < SafeAreaView style={{ flex: 1, backgroundColor: Colors.light.background }
+        }>
             <ScrollView style={styles.innerContainer}>
                 {loading && <ActivityIndicator size="large" color={Colors.light.accent} style={{ position: 'absolute', top: 32, left: 32, zIndex: 2 }} />}
                 <View style={styles.imageContainer}>
@@ -56,9 +131,19 @@ Let me know what  you like and let’s get connected here on this cool platform!
                 </View>
                 <View style={{ padding: 16 }}>
                     <View style={styles.personInfo}>
-                        <Text style={styles.personName}>{user.name}<Text style={styles.personAge}>, {(2024 - parseInt(user.age)).toString()}</Text></Text>
+                        {user.name && <Text style={styles.personName}>{user.name}<Text style={styles.personAge}>, {(2024 - parseInt(user.age)).toString()}</Text></Text>}
                     </View>
-                    <Text style={{ fontFamily: 'HeadingBold', fontSize: 24, color: Colors.light.text, marginTop: 16 }}>Bio</Text>
+
+                    <Spacer height={32} />
+
+                    <Text style={{ fontFamily: 'HeadingBold', fontSize: 22, color: Colors.light.text, marginTop: 16 }}>Hobbies & Interests</Text>
+                    <View style={styles.chipsContainer}>
+                        {renderInterestChips()}
+                    </View>
+
+                    <Spacer height={32} />
+
+                    <Text style={{ fontFamily: 'HeadingBold', fontSize: 22, color: Colors.light.text, marginTop: 16 }}>Bio</Text>
                     <Text style={{ fontFamily: 'BodyRegular', fontSize: 18, lineHeight: 26 }}>{bioText}</Text>
                 </View>
 
@@ -114,10 +199,13 @@ const styles = StyleSheet.create({
         right: 16,
     },
     chipsContainer: {
+        display: 'flex',
         flex: 1,
-        position: 'absolute',
-        bottom: 16,
-        paddingHorizontal: 16,
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        marginTop: 16,
+        rowGap: 8,
+
     },
     chip: {
         backgroundColor: Colors.light.white,

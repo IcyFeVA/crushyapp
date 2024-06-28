@@ -64,9 +64,8 @@ export default function Surf() {
 
         if (data && data.length > 0) {
             if (data[0].id === session?.user.id) {
-                console.log('Skipping self');
+                console.log('Skipping self', session?.user.id);
                 setLimit(prev => prev + 1);
-                setLoading(false);
                 return;
             }
             setUser(data);
