@@ -7,6 +7,7 @@ export default function SurfLayout() {
     return (
         <Stack screenOptions={{ headerShown: false, ...TransitionPresets.RevealFromBottomAndroid }}>
             <Stack.Screen name="filterGenderPreference" options={{ headerShown: false, animation: 'slide_from_bottom' }} />
+            <Stack.Screen name="filterStarsign" options={{ headerShown: false, animation: 'slide_from_bottom' }} />
             <Stack.Screen name="filterAgeRange" options={{ headerShown: false, animation: 'slide_from_bottom' }} />
         </Stack>
     );

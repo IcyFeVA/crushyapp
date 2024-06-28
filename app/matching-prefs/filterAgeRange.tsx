@@ -49,8 +49,8 @@ export default function SetAgeRange() {
     }, [localMinAge, localMaxAge]);
 
     return (
-        <SafeAreaView style={styles.container}>
-            <View style={styles.innerContainer}>
+        <SafeAreaView style={defaultStyles.SafeAreaView}>
+            <View style={defaultStyles.innerContainer}>
                 <Text style={defaultStyles.h2}>Age Range</Text>
                 <Spacer height={8} />
                 <Text style={defaultStyles.body}>Set your preferred age range for potential matches.</Text>
@@ -82,15 +82,6 @@ export default function SetAgeRange() {
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        padding: 16,
-        backgroundColor: Colors.light.background,
-    },
-    innerContainer: {
-        flex: 1,
-        padding: 16,
-    },
     label: {
         ...defaultStyles.body,
         marginBottom: 8,

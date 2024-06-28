@@ -15,13 +15,14 @@ export default function searchFilters() {
 
     const getMultiple = async () => {
         try {
-            const values = await AsyncStorage.multiGet(['genderPreference', 'ageRange', 'distance'])
+            const values = await AsyncStorage.multiGet(['genderPreference', 'ageRange', 'distance', 'starSignPreference'])
             const newFilters = { ...searchFilters };
             values.forEach(([key, value]) => {
                 if (value) {
                     newFilters[key] = JSON.parse(value);
                 }
             });
+            console.log('newFilters', newFilters);
             setSearchFilters(newFilters);
         } catch (e) {
             console.error('Error reading values', e);
@@ -41,8 +42,8 @@ export default function searchFilters() {
     );
 
     return (
-        <SafeAreaView style={{ flex: 1, backgroundColor: Colors.light.background }}>
-            <View style={styles.innerContainer}>
+        <SafeAreaView style={defaultStyles.SafeAreaView}>
+            <View style={defaultStyles.innerContainer}>
                 <Card onPress={() => console.log('pressed me')} enableShadow={false} style={{ display: 'flex', height: 60, alignItems: 'center', backgroundColor: 'transparent' }}>
                     <Text style={{ fontFamily: 'HeadingBold', fontSize: 20 }}>Search Filters</Text>
                 </Card>
@@ -50,7 +51,13 @@ export default function searchFilters() {
                 <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
                     <Button onPress={() => router.push('matching-prefs/filterGenderPreference')} style={[defaultStyles.settingListButton, defaultStyles.noRadius, styles.firstItem]}>
                         <Text style={defaultStyles.settingListButtonLabel}>Gender</Text>
-                        <Text style={[defaultStyles.settingListButtonLabel, styles.active]}>{searchFilters.genderPreference.value}</Text>
+                        <Text style={[defaultStyles.settingListButtonLabel, styles.active]}>
+                            {
+                                searchFilters.genderPreference.value.length === 0 ? '-' :
+                                    searchFilters.genderPreference.value.length === 1 ? searchFilters.genderPreference.value[0] :
+                                        searchFilters.genderPreference.value[0] + ' +' + (searchFilters.genderPreference.value.length - 1)
+                            }
+                        </Text>
                     </Button>
                     <Button onPress={() => router.push('matching-prefs/filterAgeRange')} style={[defaultStyles.settingListButton, defaultStyles.noRadius]}>
                         <Text style={defaultStyles.settingListButtonLabel}>Age Range</Text>
@@ -79,9 +86,9 @@ export default function searchFilters() {
                         <Text style={defaultStyles.settingListButtonLabel}>Sexual Orientation</Text>
                         <Text style={[defaultStyles.settingListButtonLabel, styles.active]}>-</Text>
                     </Button>
-                    <Button onPress={() => console.log('pressed')} style={[defaultStyles.settingListButton, defaultStyles.noRadius]}>
+                    <Button onPress={() => router.push('matching-prefs/filterStarsign')} style={[defaultStyles.settingListButton, defaultStyles.noRadius]}>
                         <Text style={defaultStyles.settingListButtonLabel}>Starsign</Text>
-                        <Text style={[defaultStyles.settingListButtonLabel, styles.active]}>-</Text>
+                        <Text style={[defaultStyles.settingListButtonLabel, styles.active]}>{searchFilters.starSignPreference.value}</Text>
                     </Button>
                     <Button onPress={() => console.log('pressed')} style={[defaultStyles.settingListButton, defaultStyles.noRadius]}>
                         <Text style={defaultStyles.settingListButtonLabel}>Accendant</Text>

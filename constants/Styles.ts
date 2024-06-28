@@ -2,6 +2,14 @@ import { Colors } from '@/constants/Colors';
 import { Platform, StyleSheet } from 'react-native';
 
 export const defaultStyles = StyleSheet.create({
+    SafeAreaView: {
+        flex: 1,
+        padding: 16,
+        backgroundColor: Colors.light.background,
+    },
+    innerContainer: {
+        flex: 1,
+    },
     body: {
         fontFamily: 'BodyRegular',
         color: Colors.light.text,
@@ -114,6 +122,7 @@ export const defaultStyles = StyleSheet.create({
         borderRadius: 8,
         marginBottom: 16,
         height: 64,
+        backgroundColor: Colors.light.background,
     },
     checkboxButtonLabel: {
         fontSize: 16,

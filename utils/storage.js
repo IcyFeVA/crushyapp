@@ -30,11 +30,12 @@ const getData = async (key) => {
 };
 
 const resetUserSearchFilters = async () => {
-    const genderPreferencesSet = ['genderPreference', JSON.stringify({ key: '', value: '-' })]
+    const genderPreferencesSet = ['genderPreference', JSON.stringify({ key: '', value: [] })]
     const ageRangeSet = ['ageRange', JSON.stringify({ key: '', value: '18-30' })]
     const distanceSet = ['distance', JSON.stringify({ key: '40', value: '40' })]
+    const starSignPreference = ['starSignPreference', JSON.stringify({ key: '', value: '-' })]
     try {
-        await AsyncStorage.multiSet([genderPreferencesSet, ageRangeSet, distanceSet])
+        await AsyncStorage.multiSet([genderPreferencesSet, ageRangeSet, distanceSet, starSignPreference])
     } catch (e) {
         //save error
     }

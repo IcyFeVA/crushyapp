@@ -1,9 +1,9 @@
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import { Text, View, FlatList, StyleSheet } from 'react-native';
-import { RadioButton } from "react-native-ui-lib";
+import { Button, Checkbox } from "react-native-ui-lib";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { storeData } from '@/utils/storage';
+import { storeData, getData } from '@/utils/storage';
 import { Colors } from '@/constants/Colors';
 import { defaultStyles } from '@/constants/Styles';
 import Spacer from "@/components/Spacer";
@@ -28,51 +28,80 @@ const DATA: ItemData[] = [
 
 export default function filterGenderPreference() {
     const { searchFilters, setSearchFilters } = useAppContext();
+    const [selectedItems, setSelectedItems] = useState<string[]>([]);
 
-    const handlePress = useCallback((key: string, value: string) => {
+    useEffect(() => {
+        const getSelectedItems = async () => {
+            const storedPreference = await getData('genderPreference');
+            if (storedPreference && storedPreference.value) {
+                setSelectedItems(storedPreference.value);
+            }
+        };
+        getSelectedItems();
+    }, []);
+
+    const handlePress = useCallback((itemTitle: string) => {
+        setSelectedItems(prevSelectedItems => {
+            if (prevSelectedItems.includes(itemTitle)) {
+                return prevSelectedItems.filter(title => title !== itemTitle);
+            } else {
+                return [...prevSelectedItems, itemTitle];
+            }
+        });
+    }, []);
+
+    const handleSave = useCallback(() => {
         setSearchFilters(prevFilters => ({
             ...prevFilters,
-            genderPreference: { key, value }
+            genderPreference: { key: '', value: selectedItems }
         }));
-        storeData('genderPreference', { key, value })
+        storeData('genderPreference', { key: '', value: selectedItems })
             .then(() => {
-                console.log('genderPreference:', value);
+                console.log('genderPreference:', selectedItems);
                 setTimeout(() => router.dismiss(), 250);
             })
             .catch(error => console.error('Failed to save gender preference:', error));
-    }, [setSearchFilters]);
+    }, [selectedItems, setSearchFilters]);
 
     const renderItem = useCallback(({ item }: { item: typeof DATA[0] }) => {
-        const color = item.id === searchFilters.genderPreference.key ? Colors.light.text : Colors.light.tertiary;
+        const isSelected = selectedItems.includes(item.title);
+        const color = isSelected ? Colors.light.text : Colors.light.tertiary;
 
         return (
-            <RadioButton
+            <Checkbox
                 label={item.title}
-                size={20}
+                size={24}
                 color={color}
                 contentOnLeft
-                containerStyle={[defaultStyles.radioButton, { borderColor: color }]}
-                labelStyle={defaultStyles.radioButtonLabel}
-                selected={searchFilters.genderPreference.key === item.id}
-                onPress={() => handlePress(item.id, item.title)}
+                containerStyle={[defaultStyles.checkboxButton, { borderColor: color }]}
+                labelStyle={defaultStyles.checkboxButtonLabel}
+                value={isSelected}
+                onValueChange={() => handlePress(item.title)}
                 accessibilityLabel={`Select ${item.title}`}
             />
         );
-    }, [searchFilters.genderPreference, handlePress]);
+    }, [selectedItems, handlePress]);
 
     return (
-        <SafeAreaView style={styles.container}>
-            <View style={styles.innerContainer}>
+        <SafeAreaView style={defaultStyles.SafeAreaView}>
+            <View style={defaultStyles.innerContainer}>
                 <Text style={defaultStyles.h2}>Gender preference</Text>
                 <Spacer height={8} />
-                <Text style={defaultStyles.body}>In the future, you will be able to choose more specific genders.</Text>
+                <Text style={defaultStyles.body}>Select one or more gender preferences.</Text>
                 <Spacer height={48} />
                 <FlatList
                     data={DATA}
                     renderItem={renderItem}
                     keyExtractor={item => item.id}
-                    extraData={searchFilters.genderPreference}
+                    extraData={selectedItems}
                     showsVerticalScrollIndicator={false}
+                />
+                <Spacer height={48} />
+                <Button
+                    label="Save"
+                    onPress={handleSave}
+                    style={[defaultStyles.button, defaultStyles.buttonShadow]}
+                    labelStyle={defaultStyles.buttonLabel}
                 />
             </View>
         </SafeAreaView>
@@ -80,7 +109,6 @@ export default function filterGenderPreference() {
 }
 
 // ... styles remain the same ...
-
 const styles = StyleSheet.create({
     bottomSheet: {
         padding: 16,
@@ -91,8 +119,9 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         borderColor: Colors.light.tertiary,
         borderWidth: 1,
-        borderRadius: 0,
         borderTopWidth: 0,
+        padding: 16,
+        borderRadius: 8,
         backgroundColor: Colors.light.background,
     },
     bottomSheetListItemInner: {
@@ -106,14 +135,14 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
     },
     firstItem: {
-        borderTopLeftRadius: 16,
-        borderTopRightRadius: 16,
+        borderTopLeftRadius: 8,
+        borderTopRightRadius: 8,
         borderTopWidth: 1,
 
     },
     lastItem: {
-        borderBottomLeftRadius: 16,
-        borderBottomRightRadius: 16,
+        borderBottomLeftRadius: 8,
+        borderBottomRightRadius: 8,
         borderTopWidth: 0,
     },
     active: {
@@ -121,13 +150,13 @@ const styles = StyleSheet.create({
     },
     container: {
         flex: 1,
-        padding: 16,
-        backgroundColor: Colors.light.background,
+        padding: 24,
+        backgroundColor: 'grey',
     },
-    innerContainer: {
-        flex: 1,
-        padding: 16,
-    },
+
 
 
 });
+
+
+
