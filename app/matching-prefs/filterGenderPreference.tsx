@@ -1,17 +1,13 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { Text, View, FlatList, StyleSheet } from 'react-native';
 import { RadioButton } from "react-native-ui-lib";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { storeData, getData } from '@/utils/storage';
+import { storeData } from '@/utils/storage';
 import { Colors } from '@/constants/Colors';
 import { defaultStyles } from '@/constants/Styles';
 import Spacer from "@/components/Spacer";
-
-interface GenderPreference {
-    key: string;
-    value: string;
-}
+import { useAppContext } from '@/providers/AppProvider';
 
 type ItemData = {
     id: string;
@@ -28,41 +24,26 @@ const DATA: ItemData[] = [
     { id: '7', title: 'Genderfluid' },
     { id: '8', title: 'Agender' },
     { id: '9', title: 'Two-Spirit' },
-]
+];
 
-
-
-
-export default function SetGenderPreference() {
-    const [selectedId, setSelectedId] = useState<string>('');
-
-    useEffect(() => {
-        const loadStoredPreference = async () => {
-            try {
-                const storedPreference = await getData('genderPreference') as GenderPreference | null;
-                if (storedPreference) {
-                    setSelectedId(storedPreference.key);
-                }
-            } catch (error) {
-                console.error('Failed to load stored gender preference:', error);
-            }
-        };
-
-        loadStoredPreference();
-    }, []);
+export default function filterGenderPreference() {
+    const { searchFilters, setSearchFilters } = useAppContext();
 
     const handlePress = useCallback((key: string, value: string) => {
-        setSelectedId(key);
+        setSearchFilters(prevFilters => ({
+            ...prevFilters,
+            genderPreference: { key, value }
+        }));
         storeData('genderPreference', { key, value })
             .then(() => {
                 console.log('genderPreference:', value);
                 setTimeout(() => router.dismiss(), 250);
             })
             .catch(error => console.error('Failed to save gender preference:', error));
-    }, []);
+    }, [setSearchFilters]);
 
     const renderItem = useCallback(({ item }: { item: typeof DATA[0] }) => {
-        const color = item.id === selectedId ? Colors.light.text : Colors.light.tertiary;
+        const color = item.id === searchFilters.genderPreference.key ? Colors.light.text : Colors.light.tertiary;
 
         return (
             <RadioButton
@@ -72,12 +53,12 @@ export default function SetGenderPreference() {
                 contentOnLeft
                 containerStyle={[defaultStyles.radioButton, { borderColor: color }]}
                 labelStyle={defaultStyles.radioButtonLabel}
-                selected={selectedId === item.id}
+                selected={searchFilters.genderPreference.key === item.id}
                 onPress={() => handlePress(item.id, item.title)}
                 accessibilityLabel={`Select ${item.title}`}
             />
         );
-    }, [selectedId, handlePress]);
+    }, [searchFilters.genderPreference, handlePress]);
 
     return (
         <SafeAreaView style={styles.container}>
@@ -90,13 +71,15 @@ export default function SetGenderPreference() {
                     data={DATA}
                     renderItem={renderItem}
                     keyExtractor={item => item.id}
-                    extraData={selectedId}
+                    extraData={searchFilters.genderPreference}
                     showsVerticalScrollIndicator={false}
                 />
             </View>
         </SafeAreaView>
     );
 }
+
+// ... styles remain the same ...
 
 const styles = StyleSheet.create({
     bottomSheet: {

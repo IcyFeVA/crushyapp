@@ -8,45 +8,35 @@ import { router, useFocusEffect } from 'expo-router'
 import { defaultStyles } from '@/constants/Styles'
 import { getData, resetUserSearchFilters } from '@/utils/storage'
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import { useAppContext } from '@/providers/AppProvider'
 
 export default function searchFilters() {
-    const [genderPreference, setGenderPreference] = useState<{ key: string; value: string }>({ key: '', value: '' });
-    const [ageRange, setAgeRange] = useState<{ key: string; value: string }>({ key: '', value: '' });
-    const [distance, setDistance] = useState<{ key: string; value: string }>({ key: '', value: '' });
+    const { searchFilters, setSearchFilters, resetFilters } = useAppContext();
 
     const getMultiple = async () => {
-
-        let values
         try {
-            values = await AsyncStorage.multiGet(['genderPreference', 'ageRange', 'distance'])
+            const values = await AsyncStorage.multiGet(['genderPreference', 'ageRange', 'distance'])
+            const newFilters = { ...searchFilters };
+            values.forEach(([key, value]) => {
+                if (value) {
+                    newFilters[key] = JSON.parse(value);
+                }
+            });
+            setSearchFilters(newFilters);
         } catch (e) {
-            // read error
+            console.error('Error reading values', e);
         }
-        values?.map((result, i, store) => {
-            let key = store[i][0]
-            let value = store[i][1]
-            if (key == 'genderPreference') {
-                setGenderPreference(JSON.parse(value))
-            }
-            if (key == 'ageRange') {
-                setAgeRange(JSON.parse(value))
-            }
-            if (key == 'distance') {
-                setDistance(JSON.parse(value))
-            }
-        })
     }
 
     const resetSettings = async () => {
         await resetUserSearchFilters()
-        getMultiple()
+        resetFilters();
+        getMultiple();
     }
 
     useFocusEffect(
         useCallback(() => {
-
             getMultiple()
-
         }, [])
     );
 
@@ -58,17 +48,17 @@ export default function searchFilters() {
                 </Card>
 
                 <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
-                    <Button onPress={() => router.push('matching-prefs/setGenderPreference')} style={[defaultStyles.settingListButton, defaultStyles.noRadius, styles.firstItem]}>
+                    <Button onPress={() => router.push('matching-prefs/filterGenderPreference')} style={[defaultStyles.settingListButton, defaultStyles.noRadius, styles.firstItem]}>
                         <Text style={defaultStyles.settingListButtonLabel}>Gender</Text>
-                        <Text style={[defaultStyles.settingListButtonLabel, styles.active]}>{genderPreference.value}</Text>
+                        <Text style={[defaultStyles.settingListButtonLabel, styles.active]}>{searchFilters.genderPreference.value}</Text>
                     </Button>
-                    <Button onPress={() => console.log('pressed')} style={[defaultStyles.settingListButton, defaultStyles.noRadius]}>
-                        <Text style={defaultStyles.settingListButtonLabel}>Age</Text>
-                        <Text style={[defaultStyles.settingListButtonLabel, styles.active]}>{ageRange.value}</Text>
+                    <Button onPress={() => router.push('matching-prefs/filterAgeRange')} style={[defaultStyles.settingListButton, defaultStyles.noRadius]}>
+                        <Text style={defaultStyles.settingListButtonLabel}>Age Range</Text>
+                        <Text style={[defaultStyles.settingListButtonLabel, styles.active]}>{searchFilters.ageRange.min}-{searchFilters.ageRange.max}</Text>
                     </Button>
                     <Button onPress={() => console.log('pressed')} style={[defaultStyles.settingListButton, defaultStyles.noRadius, styles.lastItem]}>
                         <Text style={defaultStyles.settingListButtonLabel}>Distance</Text>
-                        <Text style={[defaultStyles.settingListButtonLabel, styles.active]}>{distance.value} km</Text>
+                        <Text style={[defaultStyles.settingListButtonLabel, styles.active]}>{searchFilters.distance.value} km</Text>
                     </Button>
                     <Spacer height={32} />
                     <Text style={{ fontFamily: 'BodyBold', fontSize: 14, lineHeight: 22, color: Colors.light.textSecondary, textAlign: 'center' }}>MORE ABOUT YOUR IDEAL MATCH</Text>
