@@ -33,16 +33,6 @@ export default function SetAgeRange() {
         setLocalMaxAge(validMaxAge);
     }, [localMinAge, localMaxAge]);
 
-    const handleSliderComplete = useCallback(() => {
-        setSearchFilters(prevFilters => ({
-            ...prevFilters,
-            ageRange: {
-                min: localMinAge,
-                max: localMaxAge
-            }
-        }));
-    }, [localMinAge, localMaxAge, setSearchFilters]);
-
     const handleSave = useCallback(() => {
         const ageRangeValue = `${localMinAge}-${localMaxAge}`;
         storeData('ageRange', { min: localMinAge, max: localMaxAge })
