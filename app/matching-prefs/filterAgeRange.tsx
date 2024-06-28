@@ -27,10 +27,15 @@ export default function SetAgeRange() {
     }, [searchFilters]);
 
     const handleSliderChange = useCallback((value: any) => {
-        const validMinAge = Math.min(Math.max(value.min, MIN_AGE), localMaxAge);
-        const validMaxAge = Math.max(Math.min(value.max, MAX_AGE), localMinAge);
-        setLocalMinAge(validMinAge);
-        setLocalMaxAge(validMaxAge);
+        setLocalMinAge(value.min);
+        setLocalMaxAge(value.max);
+        setSearchFilters(prevFilters => ({
+            ...prevFilters,
+            ageRange: {
+                min: value.min,
+                max: value.max
+            }
+        }));
     }, [localMinAge, localMaxAge]);
 
     const handleSave = useCallback(() => {
@@ -54,7 +59,6 @@ export default function SetAgeRange() {
                 <Text style={styles.label}>Age Range: {Math.round(localMinAge)} - {Math.round(localMaxAge)}</Text>
                 <Slider
                     useRange
-                    value={localMinAge}
                     initialMinimumValue={localMinAge}
                     initialMaximumValue={localMaxAge}
                     minimumValue={MIN_AGE}
