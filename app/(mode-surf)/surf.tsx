@@ -79,7 +79,8 @@ const MatchingView: React.FC = () => {
 
         if (processedMatches.length > 0) {
             if (processedMatches[0].avatar_url) {
-                setImageUrl(supabase.storage.from('avatars').getPublicUrl(processedMatches[0].avatar_url).data.publicUrl);
+                setImageUrl(processedMatches[0].avatar_url);
+                // setImageUrl(supabase.storage.from('avatars').getPublicUrl(processedMatches[0].avatar_url).data.publicUrl);
             }
         }
 
@@ -176,7 +177,9 @@ const MatchingView: React.FC = () => {
 
         if (currentMatchIndex < potentialMatches.length - 1) {
             setCurrentMatchIndex(currentMatchIndex + 1);
-            setImageUrl(supabase.storage.from('avatars').getPublicUrl(potentialMatches[currentMatchIndex + 1].avatar_url).data.publicUrl);
+            setImageUrl(potentialMatches[currentMatchIndex + 1].avatar_url);
+            console.log(potentialMatches[currentMatchIndex + 1].avatar_url)
+            // setImageUrl(supabase.storage.from('avatars').getPublicUrl(potentialMatches[currentMatchIndex + 1].avatar_url).data.publicUrl);
         } else {
             fetchUserAndPotentialMatches();
             setCurrentMatchIndex(0);

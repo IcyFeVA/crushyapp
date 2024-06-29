@@ -20,16 +20,14 @@ async function createFakeUser() {
     const gender = faker.helpers.arrayElement(genders);
     const user = {
         id: faker.string.uuid(),
-        name: faker.person.firstName(),
+        name: faker.internet.displayName(),
         age: faker.number.int({ min: 18, max: 80 }),
         gender: gender,
         pronouns: faker.helpers.arrayElements(pronouns, { min: 1, max: 2 }),
         looking_for: faker.helpers.arrayElement(relationshipTypes),
         gender_preference: faker.helpers.arrayElement(gender_preferences),
         interests: faker.helpers.arrayElements(interests, { min: 3, max: 8 }),
-        avatar_url: faker.image.avatar(),
-        // latitude: faker.location.latitude(),
-        // longitude: faker.location.longitude(),
+        avatar_url: faker.image.url(),
         last_active: faker.date.recent(),
     };
 
@@ -52,4 +50,4 @@ async function createFakeUsers(count) {
 }
 
 // Create 100 fake users
-createFakeUsers(199).then(() => process.exit());
+createFakeUsers(400).then(() => process.exit());
