@@ -9,7 +9,7 @@ import hobbiesInterests from '@/constants/Interests';
 import { defaultStyles } from '@/constants/Styles';
 import Spacer from '@/components/Spacer';
 import TypewriterEffect from '@/components/TypewriterEffect';
-import { Chip } from 'react-native-ui-lib';
+import { Chip, Fader } from 'react-native-ui-lib';
 import { router } from 'expo-router';
 
 interface Interest {
@@ -29,6 +29,7 @@ interface PotentialMatch {
 const MatchingView: React.FC = () => {
     const [potentialMatches, setPotentialMatches] = useState<PotentialMatch[]>([]);
     const [currentMatchIndex, setCurrentMatchIndex] = useState(0);
+    const [imageUrl, setImageUrl] = useState<string | null>(null);
     const [userInterests, setUserInterests] = useState<number[]>([]);
     const [loading, setLoading] = useState(false);
     const session = useAuth();
@@ -53,7 +54,7 @@ const MatchingView: React.FC = () => {
         setUserInterests(userData.interests);
 
         // Fetch potential matches
-        const { data, error } = await supabase.rpc('get_potential_matches', {
+        const { data, error } = await supabase.rpc('live_get_potential_matches', {
             user_id: session.user.id,
             limit_count: 10,
         });
@@ -72,7 +73,12 @@ const MatchingView: React.FC = () => {
                 isShared: userData.interests.includes(interest)
             }))
         }));
+
+
         setPotentialMatches(processedMatches);
+
+        setImageUrl(supabase.storage.from('avatars').getPublicUrl(processedMatches[0].avatar_url).data.publicUrl);
+
         setLoading(false);
     }, [session?.user.id]);
 
@@ -94,14 +100,17 @@ const MatchingView: React.FC = () => {
         setLoading(true);
         if (currentMatchIndex < potentialMatches.length - 1) {
             setCurrentMatchIndex(currentMatchIndex + 1);
+            setImageUrl(supabase.storage.from('avatars').getPublicUrl(potentialMatches[currentMatchIndex + 1].avatar_url).data.publicUrl);
             setLoading(false);
         } else {
             fetchUserAndPotentialMatches();
             setCurrentMatchIndex(0);
         }
+
     };
 
     const currentMatch = potentialMatches[currentMatchIndex];
+
 
     const renderInterestChips = () => {
         if (!currentMatch) return null;
@@ -161,7 +170,15 @@ const MatchingView: React.FC = () => {
                 </View>
 
                 <View style={styles.personContainer}>
-                    <Image source={{ uri: currentMatch.avatar_url }} style={styles.person} />
+                    {/* <Image source={{ uri: currentMatch.avatar_url }} style={styles.person} /> */}
+                    <Image source={{ uri: imageUrl }} style={styles.person} />
+
+                    <Pressable onPress={() => { router.push(`/detail/${currentMatch.id}?imageUrl=${imageUrl}`) }} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'absolute', left: 0, top: 0, width: '100%', height: '100%' }}>
+                        < View style={{ width: '100%', height: '66%' }} >
+                        </View>
+                    </Pressable>
+
+                    <Fader visible position={Fader.position.BOTTOM} tintColor={'#282828'} size={100} />
                     {loading && <ActivityIndicator size="large" color={Colors.light.primary} style={styles.loader} />}
                     <View style={styles.personInfo}>
                         {!loading && (
@@ -177,7 +194,7 @@ const MatchingView: React.FC = () => {
                     <Pressable onPress={() => router.push('../')} style={[styles.buttonClose, defaultStyles.buttonShadow]}>
                         <Ionicons name="close" size={24} color={Colors.light.accent} />
                     </Pressable>
-                    <Pressable onPress={() => { router.push(`/detail/${currentMatch.id}?imageUrl=${currentMatch.avatar_url}`) }} style={[styles.buttonExpand, defaultStyles.buttonShadow]}>
+                    <Pressable onPress={() => { router.push(`/detail/${currentMatch.id}?imageUrl=${imageUrl}`) }} style={[styles.buttonExpand, defaultStyles.buttonShadow]}>
                         <Ionicons name="chevron-down" size={24} color={Colors.light.accent} />
                     </Pressable>
                 </View>
@@ -286,6 +303,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 4,
         marginRight: 8,
         borderRadius: 99,
+        borderWidth: 0,
     },
     chipLabel: {
         color: Colors.light.text,
@@ -360,10 +378,10 @@ const styles = StyleSheet.create({
         color: Colors.light.accent,
     },
     sharedChip: {
-        backgroundColor: Colors.light.primary,
+        backgroundColor: Colors.light.accent,
     },
     sharedChipLabel: {
-        color: Colors.light.white,
+        color: Colors.light.textInverted,
     },
 });
 
