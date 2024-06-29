@@ -1,4 +1,5 @@
-import 'react-native-gesture-handler';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+// import 'react-native-gesture-handler';
 // check if crashes in production https://reactnavigation.org/docs/stack-navigator/
 
 import { Slot, SplashScreen } from 'expo-router';
@@ -12,7 +13,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Platform } from 'react-native';
 import { MMKV } from 'react-native-mmkv'
 import hobbiesInterests from '@/constants/Interests'
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
+
 import { clearAllStorage, getData, resetUserSearchFilters } from '@/utils/storage';
 import { AppProvider } from '@/providers/AppProvider';
 

@@ -8,9 +8,9 @@ import { Colors } from '@/constants/Colors';
 import hobbiesInterests from '@/constants/Interests';
 import { defaultStyles } from '@/constants/Styles';
 import Spacer from '@/components/Spacer';
-import TypewriterEffect from '@/components/TypewriterEffect';
 import { Chip, Fader } from 'react-native-ui-lib';
 import { router } from 'expo-router';
+import TypewriterEffect from '@/components/CrushyTypewriterEffect';
 
 interface Interest {
     id: number;
@@ -255,16 +255,21 @@ const MatchingView: React.FC = () => {
                         </View>
                     </Pressable>
 
-                    <Fader visible position={Fader.position.BOTTOM} tintColor={'#282828'} size={100} />
+                    <Fader visible position={Fader.position.BOTTOM} tintColor={'#282828'} size={150} />
                     {loading && <ActivityIndicator size="large" color={Colors.light.primary} style={styles.loader} />}
-                    <View style={styles.personInfo}>
-                        {!loading && (
-                            <>
-                                <Text style={styles.personName}>{currentMatch.name} </Text>
-                                <Text style={styles.personAge}>{(2024 - currentMatch.age).toString()}</Text>
-                            </>
-                        )}
-                    </View>
+
+                    {!loading && (
+                        <View style={{ width: '78%' }}>
+                            <View style={styles.personInfo}>
+                                <TypewriterEffect
+                                    text={currentMatch.name + ', ' + currentMatch.age.toString()}
+                                    style={styles.personName}
+                                    delay={12}
+                                />
+                            </View>
+                        </View>
+                    )}
+
                     <ScrollView horizontal style={styles.chipsContainer} showsHorizontalScrollIndicator={false}>
                         {renderInterestChips()}
                     </ScrollView>
@@ -342,6 +347,7 @@ const styles = StyleSheet.create({
         resizeMode: 'cover',
         backgroundColor: Colors.light.backgroundSecondary,
     },
+
     loader: {
         position: 'absolute',
         top: 32,
@@ -353,18 +359,17 @@ const styles = StyleSheet.create({
         alignItems: 'flex-end',
         gap: 8,
         position: 'absolute',
-        bottom: 56,
+        bottom: 64,
         left: 16,
-        width: '78%',
     },
     personName: {
         fontFamily: 'HeadingBold',
-        fontSize: 32,
+        fontSize: 24,
         color: Colors.light.white,
     },
     personAge: {
         fontFamily: 'HeadingBold',
-        fontSize: 32,
+        fontSize: 24,
         color: Colors.light.white,
         opacity: 0.7
     },
