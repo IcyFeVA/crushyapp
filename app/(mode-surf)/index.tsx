@@ -184,7 +184,7 @@ const MatchingView: React.FC = () => {
                         {!loading && (
                             <>
                                 <Text style={styles.personName}>{currentMatch.name} </Text>
-                                <Text style={styles.personAge}>{currentMatch.age}</Text>
+                                <Text style={styles.personAge}>{(2024 - currentMatch.age).toString()}</Text>
                             </>
                         )}
                     </View>
