@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { View, Text, Image, StyleSheet, Pressable, ScrollView, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -12,28 +12,47 @@ import TypewriterEffect from '@/components/TypewriterEffect';
 import { Chip } from 'react-native-ui-lib';
 import { router } from 'expo-router';
 
+interface Interest {
+    id: number;
+    isShared: boolean;
+}
+
 interface PotentialMatch {
     id: string;
     name: string;
     age: number;
     gender: number;
     avatar_url: string;
-    interests: number[];
+    interests: Interest[];
 }
 
 const MatchingView: React.FC = () => {
     const [potentialMatches, setPotentialMatches] = useState<PotentialMatch[]>([]);
     const [currentMatchIndex, setCurrentMatchIndex] = useState(0);
+    const [userInterests, setUserInterests] = useState<number[]>([]);
     const [loading, setLoading] = useState(false);
     const session = useAuth();
 
-    useEffect(() => {
-        fetchPotentialMatches();
-    }, []);
-
-    const fetchPotentialMatches = async () => {
+    const fetchUserAndPotentialMatches = useCallback(async () => {
         if (!session?.user.id) return;
         setLoading(true);
+
+        // Fetch user interests
+        const { data: userData, error: userError } = await supabase
+            .from('profiles')
+            .select('interests')
+            .eq('id', session.user.id)
+            .single();
+
+        if (userError) {
+            console.error('Error fetching user interests:', userError);
+            setLoading(false);
+            return;
+        }
+
+        setUserInterests(userData.interests);
+
+        // Fetch potential matches
         const { data, error } = await supabase.rpc('get_potential_matches', {
             user_id: session.user.id,
             limit_count: 10,
@@ -41,11 +60,25 @@ const MatchingView: React.FC = () => {
 
         if (error) {
             console.error('Error fetching potential matches:', error);
-        } else {
-            setPotentialMatches(data || []);
+            setLoading(false);
+            return;
         }
+
+        // Process matches to include shared interest information
+        const processedMatches = data.map((match: PotentialMatch) => ({
+            ...match,
+            interests: match.interests.map(interest => ({
+                id: interest,
+                isShared: userData.interests.includes(interest)
+            }))
+        }));
+        setPotentialMatches(processedMatches);
         setLoading(false);
-    };
+    }, [session?.user.id]);
+
+    useEffect(() => {
+        fetchUserAndPotentialMatches();
+    }, [fetchUserAndPotentialMatches]);
 
     const handleLike = () => {
         // TODO: Implement like functionality
@@ -61,11 +94,11 @@ const MatchingView: React.FC = () => {
         setLoading(true);
         if (currentMatchIndex < potentialMatches.length - 1) {
             setCurrentMatchIndex(currentMatchIndex + 1);
+            setLoading(false);
         } else {
-            fetchPotentialMatches();
+            fetchUserAndPotentialMatches();
             setCurrentMatchIndex(0);
         }
-        setLoading(false);
     };
 
     const currentMatch = potentialMatches[currentMatchIndex];
@@ -73,20 +106,27 @@ const MatchingView: React.FC = () => {
     const renderInterestChips = () => {
         if (!currentMatch) return null;
 
-        return currentMatch.interests.map((interestId) => {
-            const interestObject = hobbiesInterests.flat().find(item => item.value === interestId.toString());
+        // Sort interests: shared interests first, then non-shared
+        const sortedInterests = [...currentMatch.interests].sort((a, b) => {
+            if (a.isShared && !b.isShared) return -1;
+            if (!a.isShared && b.isShared) return 1;
+            return 0;
+        });
+
+        return sortedInterests.map((interest) => {
+            const interestObject = hobbiesInterests.flat().find(item => item.value === interest.id.toString());
 
             if (!interestObject) {
-                console.error(`No label found for interest: ${interestId}`);
+                console.error(`No label found for interest: ${interest.id}`);
                 return null;
             }
 
             return (
                 <Chip
-                    key={interestId}
+                    key={interest.id}
                     label={interestObject.label}
-                    labelStyle={styles.chipLabel}
-                    containerStyle={styles.chip}
+                    labelStyle={[styles.chipLabel, interest.isShared && styles.sharedChipLabel]}
+                    containerStyle={[styles.chip, interest.isShared && styles.sharedChip]}
                 />
             );
         });
@@ -101,7 +141,7 @@ const MatchingView: React.FC = () => {
                     <Text style={styles.noMatchesText}>No more potential matches to show.</Text>
                     <Text style={styles.noMatchesText}>Try changing your search filter.</Text>
                     <Spacer height={64} />
-                    <Pressable onPress={fetchPotentialMatches}>
+                    <Pressable onPress={fetchUserAndPotentialMatches}>
                         <Text style={styles.refreshText}>Refresh Matches</Text>
                     </Pressable>
                 </View>
@@ -318,6 +358,12 @@ const styles = StyleSheet.create({
         fontFamily: 'BodySemiBold',
         fontSize: 18,
         color: Colors.light.accent,
+    },
+    sharedChip: {
+        backgroundColor: Colors.light.primary,
+    },
+    sharedChipLabel: {
+        color: Colors.light.white,
     },
 });
 
