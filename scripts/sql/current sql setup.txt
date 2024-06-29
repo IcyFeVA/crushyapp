@@ -1,0 +1,31 @@
+CREATE OR REPLACE FUNCTION get_potential_matches(user_id UUID, limit_count INT) 
+RETURNS TABLE (
+    id UUID,
+    name TEXT,
+    age SMALLINT,
+    gender SMALLINT,
+    avatar_url TEXT,
+    interests SMALLINT[]
+) AS $$
+BEGIN
+    RETURN QUERY 
+    SELECT 
+        p.id,
+        p.name,
+        p.age,
+        p.gender,
+        p.avatar_url,
+        p.interests
+    FROM profiles_test p
+    WHERE p.id != get_potential_matches.user_id
+    -- AND p.gender = (SELECT gender_preference FROM profiles_test WHERE id = get_potential_matches.user_id)
+    -- AND NOT EXISTS (
+    --     SELECT 1 
+    --     FROM matches m 
+    --     WHERE (m.user1_id = get_potential_matches.user_id AND m.user2_id = p.id) 
+    --        OR (m.user2_id = get_potential_matches.user_id AND m.user1_id = p.id)
+    -- )
+    ORDER BY p.last_active DESC
+    LIMIT get_potential_matches.limit_count;
+END;
+$$ LANGUAGE plpgsql;
