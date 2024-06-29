@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { View, Text, Image, StyleSheet, Pressable, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, Image, StyleSheet, Pressable, ScrollView, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '@/lib/supabase';
@@ -34,8 +34,11 @@ const MatchingView: React.FC = () => {
     const [loading, setLoading] = useState(false);
     const session = useAuth();
 
+
+
     const fetchUserAndPotentialMatches = useCallback(async () => {
         if (!session?.user.id) return;
+        console.log('fetchUserAndPotentialMatches');
         setLoading(true);
 
         // Fetch user interests
@@ -47,21 +50,19 @@ const MatchingView: React.FC = () => {
 
         if (userError) {
             console.error('Error fetching user interests:', userError);
-            setLoading(false);
             return;
         }
 
         setUserInterests(userData.interests);
 
         // Fetch potential matches
-        const { data, error } = await supabase.rpc('live_get_potential_matches', {
+        const { data, error } = await supabase.rpc('get_potential_matches', {
             user_id: session.user.id,
             limit_count: 10,
         });
 
         if (error) {
             console.error('Error fetching potential matches:', error);
-            setLoading(false);
             return;
         }
 
@@ -74,10 +75,14 @@ const MatchingView: React.FC = () => {
             }))
         }));
 
-
         setPotentialMatches(processedMatches);
 
-        setImageUrl(supabase.storage.from('avatars').getPublicUrl(processedMatches[0].avatar_url).data.publicUrl);
+        if (processedMatches.length > 0) {
+            if (processedMatches[0].avatar_url) {
+                setImageUrl(supabase.storage.from('avatars').getPublicUrl(processedMatches[0].avatar_url).data.publicUrl);
+            }
+        }
+
 
         setLoading(false);
     }, [session?.user.id]);
@@ -86,22 +91,92 @@ const MatchingView: React.FC = () => {
         fetchUserAndPotentialMatches();
     }, [fetchUserAndPotentialMatches]);
 
-    const handleLike = () => {
-        // TODO: Implement like functionality
+
+
+
+    const handleAction = async (action: 'like' | 'dislike') => {
+        if (!session?.user.id || !currentMatch) return;
+
+
+
+        // Record the action in the matches table
+        const { error } = await supabase
+            .from('matches')
+            .insert({
+                user1_id: session.user.id,
+                user2_id: currentMatch.id,
+                user1_action: action === 'like' ? 1 : 0, // 1 for like, 0 for dislike
+            });
+
+        if (error) {
+            console.error(`Error recording ${action} action:`, error);
+        } else {
+            console.log(`${action} action recorded successfully`);
+        }
+
         moveToNextMatch();
+
+
     };
 
-    const handleDislike = () => {
-        // TODO: Implement dislike functionality
-        moveToNextMatch();
+
+
+
+
+
+    const checkForMatch = async (currentUserId: string, likedUserId: string) => {
+        const { data, error } = await supabase
+            .from('matches')
+            .select('*')
+            .eq('user1_id', likedUserId)
+            .eq('user2_id', currentUserId)
+            .eq('user1_action', 1);
+
+        if (error && error.code !== 'PGRST116') {
+            console.error('Error checking for match:', error);
+            return false;
+        }
+
+        return data && data.length > 0;
     };
+
+    const handleLike = async () => {
+        if (!session?.user.id || !currentMatch) return;
+
+        setLoading(true);
+
+        await handleAction('like');
+
+        const isMatch = await checkForMatch(session.user.id, currentMatch.id);
+        if (isMatch) {
+            // It's a match!
+            console.log("It's a match!");
+            // TODO: Implement match notification or navigation to chat
+            // For now, let's show an alert
+            Alert.alert(
+                "It's a Match!",
+                `You and ${currentMatch.name} have liked each other!`,
+                [
+                    { text: "OK", onPress: () => console.log("OK Pressed") }
+                ]
+            );
+        }
+
+        moveToNextMatch();
+
+        setLoading(false);
+    };
+
+
+    const handleDislike = () => handleAction('dislike');
+
+
 
     const moveToNextMatch = () => {
-        setLoading(true);
+
         if (currentMatchIndex < potentialMatches.length - 1) {
             setCurrentMatchIndex(currentMatchIndex + 1);
             setImageUrl(supabase.storage.from('avatars').getPublicUrl(potentialMatches[currentMatchIndex + 1].avatar_url).data.publicUrl);
-            setLoading(false);
         } else {
             fetchUserAndPotentialMatches();
             setCurrentMatchIndex(0);
@@ -148,7 +223,6 @@ const MatchingView: React.FC = () => {
                     <Ionicons name="albums-outline" size={64} color={Colors.light.primary} />
                     <Text style={styles.noMatchesTitle}>You've reached the end</Text>
                     <Text style={styles.noMatchesText}>No more potential matches to show.</Text>
-                    <Text style={styles.noMatchesText}>Try changing your search filter.</Text>
                     <Spacer height={64} />
                     <Pressable onPress={fetchUserAndPotentialMatches}>
                         <Text style={styles.refreshText}>Refresh Matches</Text>
@@ -199,10 +273,10 @@ const MatchingView: React.FC = () => {
                     </Pressable>
                 </View>
                 <View style={styles.buttonsMatching}>
-                    <Pressable onPress={handleDislike}>
+                    <Pressable onPress={handleDislike} disabled={loading}>
                         <Image source={require('@/assets/images/buttons/buttonMatchingDislike.png')} style={styles.buttonsMatchingSecondary} />
                     </Pressable>
-                    <Pressable onPress={handleLike}>
+                    <Pressable onPress={handleLike} disabled={loading}>
                         <Image source={require('@/assets/images/buttons/buttonMatchingLike.png')} style={styles.buttonsMatchingPrimary} />
                     </Pressable>
                     <Pressable onPress={() => { alert("This feature will be available in the future.") }}>
