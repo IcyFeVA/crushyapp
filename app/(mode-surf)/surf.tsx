@@ -1,248 +1,222 @@
-import { Image, View, StyleSheet, Text, Pressable, StatusBar, ScrollView, ActivityIndicator, Platform, Alert, Touchable } from 'react-native';
+import { useEffect, useState, useCallback } from 'react';
+import { View, Text, Image, StyleSheet, Pressable, ScrollView, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Link, router, useNavigation } from 'expo-router';
-import { Colors } from '@/constants/Colors';
-import { Button, Card, Chip, Fader, ListItem } from 'react-native-ui-lib';
 import { Ionicons } from '@expo/vector-icons';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/hooks/useAuth';
+import { Colors } from '@/constants/Colors';
+import hobbiesInterests from '@/constants/Interests';
 import { defaultStyles } from '@/constants/Styles';
 import Spacer from '@/components/Spacer';
 import TypewriterEffect from '@/components/TypewriterEffect';
-import { MMKV, useMMKVString } from 'react-native-mmkv'
-import hobbiesInterests from '@/constants/Interests'
-import { useAuth } from '@/hooks/useAuth';
-import BottomSheet, {
-    BottomSheetModal,
-    BottomSheetView,
-    BottomSheetModalProvider,
-    useBottomSheet,
-    BottomSheetScrollView,
-} from '@gorhom/bottom-sheet';
-import SurfButtomSheet from '@/components/SurfButtomSheet';
-import { getBackgroundColor } from 'react-native-ui-lib/src/helpers/AvatarHelper';
-import { TouchableOpacity } from 'react-native-gesture-handler';
+import { Chip, Fader } from 'react-native-ui-lib';
+import { router } from 'expo-router';
 
+interface Interest {
+    id: number;
+    isShared: boolean;
+}
 
+interface PotentialMatch {
+    id: string;
+    name: string;
+    age: number;
+    gender: number;
+    avatar_url: string;
+    interests: Interest[];
+}
 
-
-export default function Surf() {
-    const session = useAuth();
+const MatchingView: React.FC = () => {
+    const [potentialMatches, setPotentialMatches] = useState<PotentialMatch[]>([]);
+    const [currentMatchIndex, setCurrentMatchIndex] = useState(0);
     const [imageUrl, setImageUrl] = useState<string | null>(null);
-    const [limit, setLimit] = useState<number | null>(0);
-    const [user, setUser] = useState<any[]>([]);
-    const [loading, setLoading] = useState<boolean>(false);
-    const [noMoreData, setNoMoreData] = useState<boolean>(false);
-    const [myData, setMyData] = useState<any>({});
-    const [bottomSheetOpen, setBottomSheetOpen] = useState<boolean>(false);
+    const [userInterests, setUserInterests] = useState<number[]>([]);
+    const [loading, setLoading] = useState(false);
+    const session = useAuth();
 
-    const interestsList = useMemo(() => flattenArray(hobbiesInterests), []);
-
-    useEffect(() => {
-        const fetchMe = async () => {
-            const { data } = await supabase
-                .from('profiles')
-                .select('*')
-                .eq('id', session?.user.id)
-                .single();
-            if (data) setMyData(data);
-        }
-
-        fetchMe();
-    }, [session]);
-
-    useEffect(() => {
-        fetchNextUser();
-    }, [limit]);
-
-    const fetchNextUser = async () => {
+    const fetchUserAndPotentialMatches = useCallback(async () => {
+        if (!session?.user.id) return;
         setLoading(true);
-        const { data } = await supabase
+
+        // Fetch user interests
+        const { data: userData, error: userError } = await supabase
             .from('profiles')
-            .select('*')
-            .range(limit, limit);
+            .select('interests')
+            .eq('id', session.user.id)
+            .single();
 
-        if (data && data.length > 0) {
-            if (data[0].id === session?.user.id) {
-                console.log('Skipping self', session?.user.id);
-                setLimit(prev => prev + 1);
-                return;
-            }
-            setUser(data);
-            setImageUrl(supabase.storage.from('avatars').getPublicUrl(data[0].avatar_url).data.publicUrl);
-        } else if (data && data.length === 0) {
-            setNoMoreData(true);
+        if (userError) {
+            console.error('Error fetching user interests:', userError);
+            setLoading(false);
+            return;
         }
+
+        setUserInterests(userData.interests);
+
+        // Fetch potential matches
+        const { data, error } = await supabase.rpc('live_get_potential_matches', {
+            user_id: session.user.id,
+            limit_count: 10,
+        });
+
+        if (error) {
+            console.error('Error fetching potential matches:', error);
+            setLoading(false);
+            return;
+        }
+
+        // Process matches to include shared interest information
+        const processedMatches = data.map((match: PotentialMatch) => ({
+            ...match,
+            interests: match.interests.map(interest => ({
+                id: interest,
+                isShared: userData.interests.includes(interest)
+            }))
+        }));
+
+
+        setPotentialMatches(processedMatches);
+
+        setImageUrl(supabase.storage.from('avatars').getPublicUrl(processedMatches[0].avatar_url).data.publicUrl);
+
         setLoading(false);
-    }
+    }, [session?.user.id]);
 
-    const likeUser = () => setLimit(prev => prev + 1);
-    const dislikeUser = () => setLimit(prev => prev + 1);
+    useEffect(() => {
+        fetchUserAndPotentialMatches();
+    }, [fetchUserAndPotentialMatches]);
 
-    function flattenArray(arr: any[]): any[] {
-        return arr.flat();
-    }
-
-    const sortInterests = (a: string, b: string) => {
-        const aIncluded = myData.interests?.includes(parseInt(a));
-        const bIncluded = myData.interests?.includes(parseInt(b));
-        if (aIncluded && !bIncluded) return -1;
-        if (!aIncluded && bIncluded) return 1;
-        return 0;
+    const handleLike = () => {
+        // TODO: Implement like functionality
+        moveToNextMatch();
     };
 
+    const handleDislike = () => {
+        // TODO: Implement dislike functionality
+        moveToNextMatch();
+    };
+
+    const moveToNextMatch = () => {
+        setLoading(true);
+        if (currentMatchIndex < potentialMatches.length - 1) {
+            setCurrentMatchIndex(currentMatchIndex + 1);
+            setImageUrl(supabase.storage.from('avatars').getPublicUrl(potentialMatches[currentMatchIndex + 1].avatar_url).data.publicUrl);
+            setLoading(false);
+        } else {
+            fetchUserAndPotentialMatches();
+            setCurrentMatchIndex(0);
+        }
+
+    };
+
+    const currentMatch = potentialMatches[currentMatchIndex];
+
+
     const renderInterestChips = () => {
-        if (!user.length || !myData.interests) return null;
+        if (!currentMatch) return null;
 
-        const sortedInterests = [...user[0].interests].sort(sortInterests);
+        // Sort interests: shared interests first, then non-shared
+        const sortedInterests = [...currentMatch.interests].sort((a, b) => {
+            if (a.isShared && !b.isShared) return -1;
+            if (!a.isShared && b.isShared) return 1;
+            return 0;
+        });
 
-        return sortedInterests.map((interest: string, index: number) => {
-            const interestObject = interestsList.find(item => item.value === interest.toString());
+        return sortedInterests.map((interest) => {
+            const interestObject = hobbiesInterests.flat().find(item => item.value === interest.id.toString());
 
             if (!interestObject) {
-                console.error(`No label found for interest: ${interest}`);
+                console.error(`No label found for interest: ${interest.id}`);
                 return null;
             }
 
-            const isActive = myData.interests.includes(parseInt(interestObject.value));
-            const isLast = index === sortedInterests.length - 1;
-
             return (
                 <Chip
-                    key={interest}
+                    key={interest.id}
                     label={interestObject.label}
-                    labelStyle={[styles.chipLabel, isActive && styles.chipActiveLabel]}
-                    containerStyle={[
-                        styles.chip,
-                        isActive && styles.chipActive,
-                        isLast && { marginRight: 32 }
-                    ]}
+                    labelStyle={[styles.chipLabel, interest.isShared && styles.sharedChipLabel]}
+                    containerStyle={[styles.chip, interest.isShared && styles.sharedChip]}
                 />
             );
         });
     };
 
-
-
-
-
-
+    if (!currentMatch) {
+        return (
+            <SafeAreaView style={styles.container}>
+                <View style={styles.noMatchesContainer}>
+                    <Ionicons name="albums-outline" size={64} color={Colors.light.primary} />
+                    <Text style={styles.noMatchesTitle}>You've reached the end</Text>
+                    <Text style={styles.noMatchesText}>No more potential matches to show.</Text>
+                    <Text style={styles.noMatchesText}>Try changing your search filter.</Text>
+                    <Spacer height={64} />
+                    <Pressable onPress={fetchUserAndPotentialMatches}>
+                        <Text style={styles.refreshText}>Refresh Matches</Text>
+                    </Pressable>
+                </View>
+            </SafeAreaView>
+        );
+    }
 
     return (
-        <SafeAreaView style={{ flex: 1, backgroundColor: Colors.light.background }}>
-
+        <SafeAreaView style={styles.container}>
             <View style={styles.innerContainer}>
-
                 <View style={styles.header}>
                     <Image source={require('@/assets/images/logo/logo_crushy.png')} style={styles.logo} />
-                    <Button style={[styles.buttonFilter, defaultStyles.buttonShadow]} onPress={() => { router.push('searchFilters') }}>
+                    <Pressable style={[styles.buttonFilter, defaultStyles.buttonShadow]} onPress={() => { router.push('searchFilters') }}>
                         <Ionicons name="search" size={12} color={Colors.light.text} />
                         <Text style={styles.buttonFilterText}>Search Filters</Text>
-                    </Button>
+                    </Pressable>
                 </View>
 
-                {noMoreData ? (
-                    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-                        <Ionicons name="albums-outline" size={64} color={Colors.light.primary} />
-                        <Text style={{ fontFamily: 'HeadingBold', fontSize: 24, color: Colors.light.text }}>You've reached the end</Text>
-                        <Text style={{ fontFamily: 'BodyRegular', fontSize: 16, color: Colors.light.text, lineHeight: 22 }}>No more potential matches to show.</Text>
-                        <Text style={{ fontFamily: 'BodyRegular', fontSize: 16, color: Colors.light.text, lineHeight: 22 }}>Try changing your search filter.</Text>
-                        <Spacer height={64} />
-                        <Link href="../">
-                            <Text style={{ fontFamily: 'BodySemiBold', fontSize: 18, color: Colors.light.accent }}>Back to Home</Text>
-                        </Link>
+                <View style={styles.personContainer}>
+                    {/* <Image source={{ uri: currentMatch.avatar_url }} style={styles.person} /> */}
+                    <Image source={{ uri: imageUrl }} style={styles.person} />
+
+                    <Pressable onPress={() => { router.push(`/detail/${currentMatch.id}?imageUrl=${imageUrl}`) }} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'absolute', left: 0, top: 0, width: '100%', height: '100%' }}>
+                        < View style={{ width: '100%', height: '66%' }} >
+                        </View>
+                    </Pressable>
+
+                    <Fader visible position={Fader.position.BOTTOM} tintColor={'#282828'} size={100} />
+                    {loading && <ActivityIndicator size="large" color={Colors.light.primary} style={styles.loader} />}
+                    <View style={styles.personInfo}>
+                        {!loading && (
+                            <>
+                                <Text style={styles.personName}>{currentMatch.name} </Text>
+                                <Text style={styles.personAge}>{(2024 - currentMatch.age).toString()}</Text>
+                            </>
+                        )}
                     </View>
-                ) : (
-                    <>
-                        <View style={styles.personContainer}>
-                            {user.length > 0 && (
-                                <Image source={{ uri: imageUrl }} style={styles.person} />
-                            )}
-
-                            <Pressable onPress={() => { router.push(`/detail/${user[0].id}?imageUrl=${imageUrl}`) }} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'absolute', left: 0, top: 0, width: '100%', height: '100%' }}>
-                                < View style={{ width: '100%', height: '66%' }} >
-                                </View>
-                            </Pressable>
-
-                            {loading && <ActivityIndicator size="large" color={Colors.light.primary} style={{ position: 'absolute', top: 32, left: 32, zIndex: 5 }} />}
-
-                            <Fader visible position={Fader.position.BOTTOM} tintColor={'#282828'} size={100} />
-                            <View style={styles.personInfo}>
-                                {!loading && <TypewriterEffect styling={styles.personName} text={user.length > 0 ? user[0].name + " " : ' '} speed={10} />}
-                                {!loading && <TypewriterEffect styling={styles.personAge} text={user.length > 0 ? (2024 - parseInt(user[0].age)).toString() : ''} speed={150} />}
-                            </View>
-                            <ScrollView horizontal style={styles.chipsContainer} showsHorizontalScrollIndicator={false}>
-                                {renderInterestChips()}
-                            </ScrollView>
-                            {!bottomSheetOpen && (
-                                <Pressable onPress={() => router.push('../')} style={[styles.buttonClose, defaultStyles.buttonShadow]}  >
-                                    <Ionicons name="close" size={24} color={Colors.light.accent} />
-                                </Pressable>
-                            )}
-                            <Pressable onPress={() => { router.push(`/detail/${user[0].id}?imageUrl=${imageUrl}`) }} style={[styles.buttonExpand, defaultStyles.buttonShadow]} >
-                                <Ionicons name="chevron-down" size={24} color={Colors.light.accent} />
-                            </Pressable>
-                        </View>
-                        <View style={styles.buttonsMatching}>
-                            <Pressable onPress={dislikeUser}>
-                                <Image source={require('@/assets/images/buttons/buttonMatchingDislike.png')} style={styles.buttonsMatchingSecondary} />
-                            </Pressable>
-                            <Pressable onPress={likeUser}>
-                                <Image source={require('@/assets/images/buttons/buttonMatchingLike.png')} style={styles.buttonsMatchingPrimary} />
-                            </Pressable>
-                            <Pressable onPress={() => { alert("This feature will be available in the future.") }}>
-                                <Image source={require('@/assets/images/buttons/buttonMatchingChat.png')} style={styles.buttonsMatchingSecondary} />
-                            </Pressable>
-                        </View>
-                    </>
-                )
-                }
-            </View >
-        </SafeAreaView >
+                    <ScrollView horizontal style={styles.chipsContainer} showsHorizontalScrollIndicator={false}>
+                        {renderInterestChips()}
+                    </ScrollView>
+                    <Pressable onPress={() => router.push('../')} style={[styles.buttonClose, defaultStyles.buttonShadow]}>
+                        <Ionicons name="close" size={24} color={Colors.light.accent} />
+                    </Pressable>
+                    <Pressable onPress={() => { router.push(`/detail/${currentMatch.id}?imageUrl=${imageUrl}`) }} style={[styles.buttonExpand, defaultStyles.buttonShadow]}>
+                        <Ionicons name="chevron-down" size={24} color={Colors.light.accent} />
+                    </Pressable>
+                </View>
+                <View style={styles.buttonsMatching}>
+                    <Pressable onPress={handleDislike}>
+                        <Image source={require('@/assets/images/buttons/buttonMatchingDislike.png')} style={styles.buttonsMatchingSecondary} />
+                    </Pressable>
+                    <Pressable onPress={handleLike}>
+                        <Image source={require('@/assets/images/buttons/buttonMatchingLike.png')} style={styles.buttonsMatchingPrimary} />
+                    </Pressable>
+                    <Pressable onPress={() => { alert("This feature will be available in the future.") }}>
+                        <Image source={require('@/assets/images/buttons/buttonMatchingChat.png')} style={styles.buttonsMatchingSecondary} />
+                    </Pressable>
+                </View>
+            </View>
+        </SafeAreaView>
     );
-}
-
+};
 
 const styles = StyleSheet.create({
-
-
-    personContainer: {
-        flex: 1,
-        borderRadius: 20,
-        overflow: 'hidden',
-        width: '100%',
-        height: '100%',
-    },
-    person: {
-        width: '100%',
-        height: '100%',
-        resizeMode: 'cover',
-        backgroundColor: Colors.light.backgroundSecondary,
-    },
-    personInfo: {
-        display: 'flex',
-        flexDirection: 'row',
-        alignItems: 'flex-end',
-        gap: 8,
-        position: 'absolute',
-        bottom: 56,
-        left: 16,
-        width: '78%',
-    },
-    personName: {
-        fontFamily: 'HeadingBold',
-        fontSize: 32,
-        color: Colors.light.white,
-    },
-    personAge: {
-        fontFamily: 'HeadingBold',
-        fontSize: 32,
-        color: Colors.light.white,
-        opacity: 0.7
-    },
     container: {
         flex: 1,
-        padding: 16,
         backgroundColor: Colors.light.background,
     },
     innerContainer: {
@@ -267,7 +241,6 @@ const styles = StyleSheet.create({
         borderRadius: 99,
         borderWidth: 1,
         borderColor: Colors.light.tertiary,
-        display: 'flex',
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
@@ -278,6 +251,92 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontFamily: 'BodyRegular',
         color: Colors.light.text,
+    },
+    personContainer: {
+        flex: 1,
+        borderRadius: 20,
+        overflow: 'hidden',
+        width: '100%',
+        height: '100%',
+    },
+    person: {
+        width: '100%',
+        height: '100%',
+        resizeMode: 'cover',
+        backgroundColor: Colors.light.backgroundSecondary,
+    },
+    loader: {
+        position: 'absolute',
+        top: 32,
+        left: 32,
+        zIndex: 5,
+    },
+    personInfo: {
+        flexDirection: 'row',
+        alignItems: 'flex-end',
+        gap: 8,
+        position: 'absolute',
+        bottom: 56,
+        left: 16,
+        width: '78%',
+    },
+    personName: {
+        fontFamily: 'HeadingBold',
+        fontSize: 32,
+        color: Colors.light.white,
+    },
+    personAge: {
+        fontFamily: 'HeadingBold',
+        fontSize: 32,
+        color: Colors.light.white,
+        opacity: 0.7
+    },
+    chipsContainer: {
+        flex: 1,
+        position: 'absolute',
+        bottom: 16,
+        paddingHorizontal: 16,
+    },
+    chip: {
+        backgroundColor: Colors.light.white,
+        paddingVertical: 8,
+        paddingHorizontal: 4,
+        marginRight: 8,
+        borderRadius: 99,
+        borderWidth: 0,
+    },
+    chipLabel: {
+        color: Colors.light.text,
+        fontSize: 13,
+        fontFamily: 'BodyRegular',
+    },
+    buttonClose: {
+        backgroundColor: Colors.light.white,
+        width: 32,
+        height: 32,
+        borderWidth: 1,
+        borderColor: Colors.light.tertiary,
+        borderRadius: 99,
+        justifyContent: 'center',
+        alignItems: 'center',
+        shadowColor: Colors.light.black,
+        position: 'absolute',
+        top: 16,
+        right: 16,
+    },
+    buttonExpand: {
+        backgroundColor: Colors.light.white,
+        width: 32,
+        height: 32,
+        borderWidth: 1,
+        borderColor: Colors.light.tertiary,
+        borderRadius: 99,
+        justifyContent: 'center',
+        alignItems: 'center',
+        shadowColor: Colors.light.black,
+        position: 'absolute',
+        bottom: 64,
+        right: 16,
     },
     buttonsMatching: {
         flexDirection: 'row',
@@ -296,63 +355,34 @@ const styles = StyleSheet.create({
         maxHeight: 80,
         marginHorizontal: 16,
     },
-    buttonClose: {
-        backgroundColor: Colors.light.white,
-        width: 32,
-        height: 32,
-        borderWidth: 1,
-        borderColor: Colors.light.tertiary,
-        borderRadius: 99,
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        shadowColor: Colors.light.black,
-        position: 'absolute',
-        top: 16,
-        right: 16,
-    },
-    buttonExpand: {
-        backgroundColor: Colors.light.white,
-        width: 32,
-        height: 32,
-        borderWidth: 1,
-        borderColor: Colors.light.tertiary,
-        borderRadius: 99,
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        shadowColor: Colors.light.black,
-        position: 'absolute',
-        bottom: 64,
-        right: 16,
-    },
-    chipsContainer: {
+    noMatchesContainer: {
         flex: 1,
-        position: 'absolute',
-        bottom: 16,
-        paddingHorizontal: 16,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
-    chip: {
-        backgroundColor: Colors.light.white,
-        paddingVertical: 8,
-        paddingHorizontal: 4,
-        marginRight: 8,
-        borderRadius: 99,
-        shadowColor: Colors.light.black,
+    noMatchesTitle: {
+        fontFamily: 'HeadingBold',
+        fontSize: 24,
+        color: Colors.light.text,
+        marginTop: 16,
     },
-    chipActive: {
+    noMatchesText: {
+        fontFamily: 'BodyRegular',
+        fontSize: 16,
+        color: Colors.light.text,
+        lineHeight: 22,
+    },
+    refreshText: {
+        fontFamily: 'BodySemiBold',
+        fontSize: 18,
+        color: Colors.light.accent,
+    },
+    sharedChip: {
         backgroundColor: Colors.light.accent,
     },
-    chipLabel: {
-        color: Colors.light.text,
-        fontSize: 13,
-        fontFamily: 'BodyRegular',
-    },
-    chipActiveLabel: {
+    sharedChipLabel: {
         color: Colors.light.textInverted,
-    },
-    scrollContainer: {
-        marginLeft: 16,
     },
 });
 
+export default MatchingView;
