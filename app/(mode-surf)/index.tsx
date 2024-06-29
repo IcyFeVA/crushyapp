@@ -1,9 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, Image, StyleSheet, Pressable, ScrollView, ActivityIndicator } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
 import { Colors } from '@/constants/Colors';
 import hobbiesInterests from '@/constants/Interests';
+import { defaultStyles } from '@/constants/Styles';
+import Spacer from '@/components/Spacer';
+import TypewriterEffect from '@/components/TypewriterEffect';
+import { Chip } from 'react-native-ui-lib';
+import { router } from 'expo-router';
 
 interface PotentialMatch {
     id: string;
@@ -17,6 +24,7 @@ interface PotentialMatch {
 const MatchingView: React.FC = () => {
     const [potentialMatches, setPotentialMatches] = useState<PotentialMatch[]>([]);
     const [currentMatchIndex, setCurrentMatchIndex] = useState(0);
+    const [loading, setLoading] = useState(false);
     const session = useAuth();
 
     useEffect(() => {
@@ -25,7 +33,7 @@ const MatchingView: React.FC = () => {
 
     const fetchPotentialMatches = async () => {
         if (!session?.user.id) return;
-
+        setLoading(true);
         const { data, error } = await supabase.rpc('get_potential_matches', {
             user_id: session.user.id,
             limit_count: 10,
@@ -34,9 +42,9 @@ const MatchingView: React.FC = () => {
         if (error) {
             console.error('Error fetching potential matches:', error);
         } else {
-            console.log('Potential matches:', data);
             setPotentialMatches(data || []);
         }
+        setLoading(false);
     };
 
     const handleLike = () => {
@@ -50,102 +58,266 @@ const MatchingView: React.FC = () => {
     };
 
     const moveToNextMatch = () => {
+        setLoading(true);
         if (currentMatchIndex < potentialMatches.length - 1) {
             setCurrentMatchIndex(currentMatchIndex + 1);
         } else {
             fetchPotentialMatches();
             setCurrentMatchIndex(0);
         }
+        setLoading(false);
     };
 
     const currentMatch = potentialMatches[currentMatchIndex];
 
+    const renderInterestChips = () => {
+        if (!currentMatch) return null;
+
+        return currentMatch.interests.map((interestId) => {
+            const interestObject = hobbiesInterests.flat().find(item => item.value === interestId.toString());
+
+            if (!interestObject) {
+                console.error(`No label found for interest: ${interestId}`);
+                return null;
+            }
+
+            return (
+                <Chip
+                    key={interestId}
+                    label={interestObject.label}
+                    labelStyle={styles.chipLabel}
+                    containerStyle={styles.chip}
+                />
+            );
+        });
+    };
+
     if (!currentMatch) {
         return (
-            <View style={styles.container}>
-                <Text style={styles.noMatches}>No more potential matches</Text>
-            </View>
+            <SafeAreaView style={styles.container}>
+                <View style={styles.noMatchesContainer}>
+                    <Ionicons name="albums-outline" size={64} color={Colors.light.primary} />
+                    <Text style={styles.noMatchesTitle}>You've reached the end</Text>
+                    <Text style={styles.noMatchesText}>No more potential matches to show.</Text>
+                    <Text style={styles.noMatchesText}>Try changing your search filter.</Text>
+                    <Spacer height={64} />
+                    <Pressable onPress={fetchPotentialMatches}>
+                        <Text style={styles.refreshText}>Refresh Matches</Text>
+                    </Pressable>
+                </View>
+            </SafeAreaView>
         );
     }
 
     return (
-        <View style={styles.container}>
-            <Image source={{ uri: currentMatch.avatar_url }} style={styles.avatar} />
-            <Text style={styles.name}>{currentMatch.name}, {currentMatch.age}</Text>
-            <View style={styles.interestsContainer}>
-                {currentMatch.interests.map((interestId) => {
-                    const interest = hobbiesInterests.flat().find(i => i.value === interestId.toString());
-                    return (
-                        <Text key={interestId} style={styles.interest}>
-                            {interest ? interest.label : ''}
-                        </Text>
-                    );
-                })}
+        <SafeAreaView style={styles.container}>
+            <View style={styles.innerContainer}>
+                <View style={styles.header}>
+                    <Image source={require('@/assets/images/logo/logo_crushy.png')} style={styles.logo} />
+                    <Pressable style={[styles.buttonFilter, defaultStyles.buttonShadow]} onPress={() => { router.push('searchFilters') }}>
+                        <Ionicons name="search" size={12} color={Colors.light.text} />
+                        <Text style={styles.buttonFilterText}>Search Filters</Text>
+                    </Pressable>
+                </View>
+
+                <View style={styles.personContainer}>
+                    <Image source={{ uri: currentMatch.avatar_url }} style={styles.person} />
+                    {loading && <ActivityIndicator size="large" color={Colors.light.primary} style={styles.loader} />}
+                    <View style={styles.personInfo}>
+                        {!loading && (
+                            <>
+                                <Text style={styles.personName}>{currentMatch.name} </Text>
+                                <Text style={styles.personAge}>{currentMatch.age}</Text>
+                            </>
+                        )}
+                    </View>
+                    <ScrollView horizontal style={styles.chipsContainer} showsHorizontalScrollIndicator={false}>
+                        {renderInterestChips()}
+                    </ScrollView>
+                    <Pressable onPress={() => router.push('../')} style={[styles.buttonClose, defaultStyles.buttonShadow]}>
+                        <Ionicons name="close" size={24} color={Colors.light.accent} />
+                    </Pressable>
+                    <Pressable onPress={() => { router.push(`/detail/${currentMatch.id}?imageUrl=${currentMatch.avatar_url}`) }} style={[styles.buttonExpand, defaultStyles.buttonShadow]}>
+                        <Ionicons name="chevron-down" size={24} color={Colors.light.accent} />
+                    </Pressable>
+                </View>
+                <View style={styles.buttonsMatching}>
+                    <Pressable onPress={handleDislike}>
+                        <Image source={require('@/assets/images/buttons/buttonMatchingDislike.png')} style={styles.buttonsMatchingSecondary} />
+                    </Pressable>
+                    <Pressable onPress={handleLike}>
+                        <Image source={require('@/assets/images/buttons/buttonMatchingLike.png')} style={styles.buttonsMatchingPrimary} />
+                    </Pressable>
+                    <Pressable onPress={() => { alert("This feature will be available in the future.") }}>
+                        <Image source={require('@/assets/images/buttons/buttonMatchingChat.png')} style={styles.buttonsMatchingSecondary} />
+                    </Pressable>
+                </View>
             </View>
-            <View style={styles.buttonContainer}>
-                <TouchableOpacity style={styles.button} onPress={handleDislike}>
-                    <Text style={styles.buttonText}>Dislike</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.button} onPress={handleLike}>
-                    <Text style={styles.buttonText}>Like</Text>
-                </TouchableOpacity>
-            </View>
-        </View>
+        </SafeAreaView>
     );
 };
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
         backgroundColor: Colors.light.background,
     },
-    avatar: {
-        width: 200,
-        height: 200,
-        borderRadius: 100,
-        marginBottom: 20,
+    innerContainer: {
+        flex: 1,
+        padding: 16,
     },
-    name: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        marginBottom: 10,
-        color: Colors.light.text,
-    },
-    interestsContainer: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        justifyContent: 'center',
-        marginBottom: 20,
-    },
-    interest: {
-        backgroundColor: Colors.light.secondary,
-        paddingHorizontal: 10,
-        paddingVertical: 5,
-        borderRadius: 15,
-        margin: 5,
-        color: Colors.light.text,
-    },
-    buttonContainer: {
-        flexDirection: 'row',
-        justifyContent: 'space-around',
+    header: {
         width: '100%',
+        marginBottom: 16,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
     },
-    button: {
-        backgroundColor: Colors.light.primary,
-        paddingHorizontal: 30,
-        paddingVertical: 15,
-        borderRadius: 25,
+    logo: {
+        width: 96,
+        resizeMode: 'contain'
     },
-    buttonText: {
-        color: Colors.light.textInverted,
+    buttonFilter: {
+        backgroundColor: Colors.light.white,
+        paddingVertical: 2,
+        paddingHorizontal: 12,
+        borderRadius: 99,
+        borderWidth: 1,
+        borderColor: Colors.light.tertiary,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: 32,
+        gap: 4,
+    },
+    buttonFilterText: {
+        fontSize: 14,
+        fontFamily: 'BodyRegular',
+        color: Colors.light.text,
+    },
+    personContainer: {
+        flex: 1,
+        borderRadius: 20,
+        overflow: 'hidden',
+        width: '100%',
+        height: '100%',
+    },
+    person: {
+        width: '100%',
+        height: '100%',
+        resizeMode: 'cover',
+        backgroundColor: Colors.light.backgroundSecondary,
+    },
+    loader: {
+        position: 'absolute',
+        top: 32,
+        left: 32,
+        zIndex: 5,
+    },
+    personInfo: {
+        flexDirection: 'row',
+        alignItems: 'flex-end',
+        gap: 8,
+        position: 'absolute',
+        bottom: 56,
+        left: 16,
+        width: '78%',
+    },
+    personName: {
+        fontFamily: 'HeadingBold',
+        fontSize: 32,
+        color: Colors.light.white,
+    },
+    personAge: {
+        fontFamily: 'HeadingBold',
+        fontSize: 32,
+        color: Colors.light.white,
+        opacity: 0.7
+    },
+    chipsContainer: {
+        flex: 1,
+        position: 'absolute',
+        bottom: 16,
+        paddingHorizontal: 16,
+    },
+    chip: {
+        backgroundColor: Colors.light.white,
+        paddingVertical: 8,
+        paddingHorizontal: 4,
+        marginRight: 8,
+        borderRadius: 99,
+    },
+    chipLabel: {
+        color: Colors.light.text,
+        fontSize: 13,
+        fontFamily: 'BodyRegular',
+    },
+    buttonClose: {
+        backgroundColor: Colors.light.white,
+        width: 32,
+        height: 32,
+        borderWidth: 1,
+        borderColor: Colors.light.tertiary,
+        borderRadius: 99,
+        justifyContent: 'center',
+        alignItems: 'center',
+        shadowColor: Colors.light.black,
+        position: 'absolute',
+        top: 16,
+        right: 16,
+    },
+    buttonExpand: {
+        backgroundColor: Colors.light.white,
+        width: 32,
+        height: 32,
+        borderWidth: 1,
+        borderColor: Colors.light.tertiary,
+        borderRadius: 99,
+        justifyContent: 'center',
+        alignItems: 'center',
+        shadowColor: Colors.light.black,
+        position: 'absolute',
+        bottom: 64,
+        right: 16,
+    },
+    buttonsMatching: {
+        flexDirection: 'row',
+        width: '100%',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginTop: 16,
+        marginBottom: 16,
+    },
+    buttonsMatchingPrimary: {
+        maxWidth: 90,
+        maxHeight: 90,
+    },
+    buttonsMatchingSecondary: {
+        maxWidth: 80,
+        maxHeight: 80,
+        marginHorizontal: 16,
+    },
+    noMatchesContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    noMatchesTitle: {
+        fontFamily: 'HeadingBold',
+        fontSize: 24,
+        color: Colors.light.text,
+        marginTop: 16,
+    },
+    noMatchesText: {
+        fontFamily: 'BodyRegular',
+        fontSize: 16,
+        color: Colors.light.text,
+        lineHeight: 22,
+    },
+    refreshText: {
+        fontFamily: 'BodySemiBold',
         fontSize: 18,
-        fontWeight: 'bold',
-    },
-    noMatches: {
-        fontSize: 18,
-        color: Colors.light.textSecondary,
+        color: Colors.light.accent,
     },
 });
 
