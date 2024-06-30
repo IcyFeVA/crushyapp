@@ -251,12 +251,13 @@ export default function Surf() {
                     {/* <Image source={{ uri: currentMatch.avatar_url }} style={styles.person} /> */}
                     <Image source={{ uri: imageUrl }} style={styles.person} />
 
-                    <Pressable onPress={() => { router.push(`/detail/${currentMatch.id}?imageUrl=${imageUrl}`) }} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'absolute', left: 0, top: 0, width: '100%', height: '100%' }}>
+                    <Pressable onPress={() => { navigation.navigate('Profile', { id: currentMatch.id, imageUrl: imageUrl }) }} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'absolute', left: 0, top: 0, width: '100%', height: '100%' }}>
                         < View style={{ width: '100%', height: '66%' }} >
                         </View>
                     </Pressable>
 
                     <Fader visible position={Fader.position.BOTTOM} tintColor={'#282828'} size={150} />
+
                     {loading && <ActivityIndicator size="large" color={Colors.light.primary} style={styles.loader} />}
 
                     {!loading && (
@@ -279,7 +280,7 @@ export default function Surf() {
                     <Pressable onPress={() => router.push('../')} style={[styles.buttonClose, defaultStyles.buttonShadow]}>
                         <Ionicons name="close" size={24} color={Colors.light.accent} />
                     </Pressable>
-                    <Pressable onPress={() => { router.push(`/detail/${currentMatch.id}?imageUrl=${imageUrl}`) }} style={[styles.buttonExpand, defaultStyles.buttonShadow]}>
+                    <Pressable onPress={() => { navigation.navigate('Profile', { id: currentMatch.id, imageUrl: imageUrl }) }} style={[styles.buttonExpand, defaultStyles.buttonShadow]}>
                         <Ionicons name="chevron-down" size={24} color={Colors.light.accent} />
                     </Pressable>
                 </View>

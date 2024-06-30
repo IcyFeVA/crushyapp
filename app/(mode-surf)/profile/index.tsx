@@ -10,14 +10,18 @@ import hobbiesInterests from '@/constants/Interests'
 import { Chip } from 'react-native-ui-lib';
 import { useAuth } from '@/hooks/useAuth';
 import Spacer from '@/components/Spacer';
+import { useRoute } from '@react-navigation/native';
+
 
 export default function DetailsScreen() {
     const session = useAuth();
-    const { id, imageUrl } = useLocalSearchParams();
+    const { imageUrl } = useLocalSearchParams();
     const [loading, setLoading] = useState<boolean>(false);
     const [user, setUser] = useState<any[]>({ name: '', age: '0', interests: [] });
     const interestsList = useMemo(() => flattenArray(hobbiesInterests), []);
     const [myData, setMyData] = useState<any>({});
+    const route = useRoute();
+    const { id } = route.params;
 
     useEffect(() => {
         const fetchMe = async () => {
@@ -46,7 +50,7 @@ export default function DetailsScreen() {
             setLoading(true)
 
             const { data } = await supabase
-                .from('profiles')
+                .from('profiles_test')
                 .select('*')
                 .eq('id', id)
             if (data) {

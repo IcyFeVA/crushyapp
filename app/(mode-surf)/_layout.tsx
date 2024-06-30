@@ -5,6 +5,7 @@ import Surf from './surf';
 import FilterAgeRange from '../matching-prefs/filterAgeRange';
 import FilterGenderPreference from '../matching-prefs/filterGenderPreference';
 import FilterStarsign from '../matching-prefs/filterStarsign';
+import DetailsScreen from './profile';
 const Stack = createStackNavigator();
 
 export default function SurfLayout() {
@@ -33,6 +34,14 @@ export default function SurfLayout() {
                 <Stack.Screen
                     name="filterAgeRange"
                     component={FilterAgeRange}
+                />
+            </Stack.Group>
+
+            <Stack.Group screenOptions={{ headerShown: false, ...TransitionPresets.BottomSheetAndroid }}>
+                <Stack.Screen
+                    name="Profile"
+                    component={DetailsScreen}
+                    initialParams={{ id: null, imageUrl: null }}
                 />
             </Stack.Group>
         </Stack.Navigator>
