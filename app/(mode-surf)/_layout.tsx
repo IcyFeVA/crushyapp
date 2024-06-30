@@ -9,40 +9,32 @@ const Stack = createStackNavigator();
 
 export default function SurfLayout() {
     return (
-        <Stack.Navigator initialRouteName='surf' screenOptions={{ headerShown: false, ...TransitionPresets.ScaleFromCenterAndroid }}>
-            {/* <Stack.Screen name="filters" options={{ headerShown: false, presentation: 'modal', animation: 'slide_from_bottom', gestureDirection: 'vertical' }} /> */}
-            <Stack.Screen
-                name="searchFilters"
-                component={SearchFilters}
-            />
-            <Stack.Screen
-                name="surf"
-                component={Surf}
-            />
-            <Stack.Screen
-                name="filterGenderPreference"
-                component={FilterGenderPreference}
-                options={{
-                    headerShown: false,
-                    ...TransitionPresets.SlideFromRightIOS
-                }}
-            />
-            <Stack.Screen
-                name="filterStarsign"
-                component={FilterStarsign}
-                options={{
-                    headerShown: false,
-                    ...TransitionPresets.SlideFromRightIOS
-                }}
-            />
-            <Stack.Screen
-                name="filterAgeRange"
-                component={FilterAgeRange}
-                options={{
-                    headerShown: false,
-                    ...TransitionPresets.SlideFromRightIOS
-                }}
-            />
+        <Stack.Navigator initialRouteName='surf' >
+            <Stack.Group screenOptions={{ headerShown: false, ...TransitionPresets.ScaleFromCenterAndroid }}>
+                <Stack.Screen
+                    name="searchFilters"
+                    component={SearchFilters}
+                />
+                <Stack.Screen
+                    name="surf"
+                    component={Surf}
+                />
+            </Stack.Group>
+
+            <Stack.Group screenOptions={{ headerShown: false, ...TransitionPresets.SlideFromRightIOS }}>
+                <Stack.Screen
+                    name="filterGenderPreference"
+                    component={FilterGenderPreference}
+                />
+                <Stack.Screen
+                    name="filterStarsign"
+                    component={FilterStarsign}
+                />
+                <Stack.Screen
+                    name="filterAgeRange"
+                    component={FilterAgeRange}
+                />
+            </Stack.Group>
         </Stack.Navigator>
     );
 }

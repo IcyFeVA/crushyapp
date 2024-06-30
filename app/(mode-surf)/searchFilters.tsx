@@ -89,7 +89,7 @@ export default function SearchFilters() {
                         <Text style={[defaultStyles.settingListButtonLabel, styles.active]}>-</Text>
                     </Button>
                     <Button onPress={() => navigation.navigate('filterStarsign')} style={[defaultStyles.settingListButton, defaultStyles.noRadius]}>
-                        <Text style={defaultStyles.settingListButtonLabel}>Starsign</Text>
+                        <Text style={defaultStyles.settingListButtonLabel}>Zodiac Sign</Text>
                         <Text style={[defaultStyles.settingListButtonLabel, styles.active]}>{searchFilters.starSignPreference.value}</Text>
                     </Button>
                     <Button onPress={() => console.log('pressed')} style={[defaultStyles.settingListButton, defaultStyles.noRadius]}>
