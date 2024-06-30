@@ -266,6 +266,8 @@ export default function Surf() {
                                     text={currentMatch.name + ', ' + currentMatch.age.toString()}
                                     style={styles.personName}
                                     delay={12}
+                                    numberOfLines={1}
+                                    adjustsFontSizeToFit={true}
                                 />
                             </View>
                         </View>
@@ -365,12 +367,12 @@ const styles = StyleSheet.create({
     },
     personName: {
         fontFamily: 'HeadingBold',
-        fontSize: 24,
+        fontSize: 32,
         color: Colors.light.white,
     },
     personAge: {
         fontFamily: 'HeadingBold',
-        fontSize: 24,
+        fontSize: 32,
         color: Colors.light.white,
         opacity: 0.7
     },

@@ -5,9 +5,11 @@ interface TypewriterEffectProps {
     text: string;
     delay?: number;
     style?: TextStyle;
+    adjustsFontSizeToFit?: boolean;
+    numberOfLines?: number;
 }
 
-const TypewriterEffect: React.FC<TypewriterEffectProps> = ({ text, delay = 100, style }) => {
+const TypewriterEffect: React.FC<TypewriterEffectProps> = ({ text, delay = 100, style, adjustsFontSizeToFit, numberOfLines }) => {
     const [displayedText, setDisplayedText] = useState('');
 
     useEffect(() => {
@@ -24,7 +26,7 @@ const TypewriterEffect: React.FC<TypewriterEffectProps> = ({ text, delay = 100, 
         return () => clearInterval(timer);
     }, [text, delay]);
 
-    return <Text style={style}> {displayedText} < /Text>;
+    return <Text style={style} adjustsFontSizeToFit={adjustsFontSizeToFit} numberOfLines={numberOfLines} >{displayedText}</Text>;
 };
 
-        export default TypewriterEffect;
+export default TypewriterEffect;
