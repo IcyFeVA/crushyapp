@@ -29,7 +29,7 @@ const DATA: ItemData[] = [
     { id: '12', title: 'Pisces' },
 ];
 
-export default function filterStarSignPreference() {
+export default function FilterStarSign() {
     const { searchFilters, setSearchFilters } = useAppContext();
 
     const handlePress = useCallback((key: string, value: string) => {

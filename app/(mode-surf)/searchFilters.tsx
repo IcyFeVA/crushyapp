@@ -9,9 +9,11 @@ import { defaultStyles } from '@/constants/Styles'
 import { getData, resetUserSearchFilters } from '@/utils/storage'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useAppContext } from '@/providers/AppProvider'
+import { useNavigation } from '@react-navigation/native'
 
-export default function searchFilters() {
+export default function SearchFilters() {
     const { searchFilters, setSearchFilters, resetFilters } = useAppContext();
+    const navigation = useNavigation();
 
     const getMultiple = async () => {
         try {
@@ -49,7 +51,7 @@ export default function searchFilters() {
                 </Card>
 
                 <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
-                    <Button onPress={() => router.push('matching-prefs/filterGenderPreference')} style={[defaultStyles.settingListButton, defaultStyles.noRadius, styles.firstItem]}>
+                    <Button onPress={() => navigation.navigate('filterGenderPreference')} style={[defaultStyles.settingListButton, defaultStyles.noRadius, styles.firstItem]}>
                         <Text style={defaultStyles.settingListButtonLabel}>Gender</Text>
                         <Text style={[defaultStyles.settingListButtonLabel, styles.active]}>
                             {
@@ -59,7 +61,7 @@ export default function searchFilters() {
                             }
                         </Text>
                     </Button>
-                    <Button onPress={() => router.push('matching-prefs/filterAgeRange')} style={[defaultStyles.settingListButton, defaultStyles.noRadius]}>
+                    <Button onPress={() => navigation.navigate('filterAgeRange')} style={[defaultStyles.settingListButton, defaultStyles.noRadius]}>
                         <Text style={defaultStyles.settingListButtonLabel}>Age Range</Text>
                         <Text style={[defaultStyles.settingListButtonLabel, styles.active]}>{searchFilters.ageRange.min}-{searchFilters.ageRange.max}</Text>
                     </Button>
@@ -86,7 +88,7 @@ export default function searchFilters() {
                         <Text style={defaultStyles.settingListButtonLabel}>Sexual Orientation</Text>
                         <Text style={[defaultStyles.settingListButtonLabel, styles.active]}>-</Text>
                     </Button>
-                    <Button onPress={() => router.push('matching-prefs/filterStarsign')} style={[defaultStyles.settingListButton, defaultStyles.noRadius]}>
+                    <Button onPress={() => navigation.navigate('filterStarsign')} style={[defaultStyles.settingListButton, defaultStyles.noRadius]}>
                         <Text style={defaultStyles.settingListButtonLabel}>Starsign</Text>
                         <Text style={[defaultStyles.settingListButtonLabel, styles.active]}>{searchFilters.starSignPreference.value}</Text>
                     </Button>

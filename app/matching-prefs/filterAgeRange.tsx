@@ -12,7 +12,7 @@ import { useAppContext } from '@/providers/AppProvider';
 const MIN_AGE = 18;
 const MAX_AGE = 100;
 
-export default function SetAgeRange() {
+export default function FilterAgeRange() {
     const { searchFilters, setSearchFilters } = useAppContext();
     const [localMinAge, setLocalMinAge] = useState(searchFilters?.ageRange?.min ?? MIN_AGE);
     const [localMaxAge, setLocalMaxAge] = useState(searchFilters?.ageRange?.max ?? MAX_AGE);

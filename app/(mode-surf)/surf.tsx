@@ -11,6 +11,7 @@ import Spacer from '@/components/Spacer';
 import { Chip, Fader } from 'react-native-ui-lib';
 import { router } from 'expo-router';
 import TypewriterEffect from '@/components/CrushyTypewriterEffect';
+import { useNavigation } from '@react-navigation/native';
 
 interface Interest {
     id: number;
@@ -26,14 +27,14 @@ interface PotentialMatch {
     interests: Interest[];
 }
 
-const MatchingView: React.FC = () => {
+export default function Surf() {
     const [potentialMatches, setPotentialMatches] = useState<PotentialMatch[]>([]);
     const [currentMatchIndex, setCurrentMatchIndex] = useState(0);
     const [imageUrl, setImageUrl] = useState<string | null>(null);
     const [userInterests, setUserInterests] = useState<number[]>([]);
     const [loading, setLoading] = useState(false);
     const session = useAuth();
-
+    const navigation = useNavigation();
 
 
     const fetchUserAndPotentialMatches = useCallback(async () => {
@@ -240,7 +241,7 @@ const MatchingView: React.FC = () => {
             <View style={styles.innerContainer}>
                 <View style={styles.header}>
                     <Image source={require('@/assets/images/logo/logo_crushy.png')} style={styles.logo} />
-                    <Pressable style={[styles.buttonFilter, defaultStyles.buttonShadow]} onPress={() => { router.push('searchFilters') }}>
+                    <Pressable style={[styles.buttonFilter, defaultStyles.buttonShadow]} onPress={() => { navigation.navigate('searchFilters') }}>
                         <Ionicons name="search" size={12} color={Colors.light.text} />
                         <Text style={styles.buttonFilterText}>Search Filters</Text>
                     </Pressable>
@@ -466,5 +467,3 @@ const styles = StyleSheet.create({
         color: Colors.light.textInverted,
     },
 });
-
-export default MatchingView;

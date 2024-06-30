@@ -26,7 +26,7 @@ const DATA: ItemData[] = [
     { id: '9', title: 'Two-Spirit' },
 ];
 
-export default function filterGenderPreference() {
+export default function FilterGenderPreference() {
     const { searchFilters, setSearchFilters } = useAppContext();
     const [selectedItems, setSelectedItems] = useState<string[]>([]);
 
