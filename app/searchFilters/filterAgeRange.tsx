@@ -50,32 +50,34 @@ export default function FilterAgeRange() {
 
     return (
         <SafeAreaView style={defaultStyles.SafeAreaView}>
-            <View style={defaultStyles.innerContainer}>
-                <Text style={defaultStyles.h2}>Age Range</Text>
-                <Spacer height={8} />
-                <Text style={defaultStyles.body}>Set your preferred age range for potential matches.</Text>
-                <Spacer height={48} />
+            <View style={[defaultStyles.innerContainer, { justifyContent: 'space-between' }]}>
+                <View>
+                    <Text style={defaultStyles.h2}>Age Range</Text>
+                    <Spacer height={8} />
+                    <Text style={defaultStyles.body}>Set your preferred age range for potential matches.</Text>
+                    <Spacer height={48} />
+                    <Text style={styles.label}>Age Range: {Math.round(localMinAge)} - {Math.round(localMaxAge)}</Text>
+                    <Slider
+                        useRange
+                        initialMinimumValue={localMinAge}
+                        initialMaximumValue={localMaxAge}
+                        minimumValue={MIN_AGE}
+                        maximumValue={MAX_AGE}
+                        onRangeChange={(value) => handleSliderChange(value)}
+                        step={2}
+                        style={styles.slider}
+                    />
+                </View>
 
-                <Text style={styles.label}>Age Range: {Math.round(localMinAge)} - {Math.round(localMaxAge)}</Text>
-                <Slider
-                    useRange
-                    initialMinimumValue={localMinAge}
-                    initialMaximumValue={localMaxAge}
-                    minimumValue={MIN_AGE}
-                    maximumValue={MAX_AGE}
-                    onRangeChange={(value) => handleSliderChange(value)}
-                    step={2}
-                    style={styles.slider}
-                />
-
-                <Spacer height={48} />
-
-                <Button
-                    label="Save"
-                    onPress={handleSave}
-                    style={[defaultStyles.button, defaultStyles.buttonShadow]}
-                    labelStyle={defaultStyles.buttonLabel}
-                />
+                <View>
+                    <Spacer height={48} />
+                    <Button
+                        label="Save"
+                        onPress={handleSave}
+                        style={[defaultStyles.button, defaultStyles.buttonShadow]}
+                        labelStyle={defaultStyles.buttonLabel}
+                    />
+                </View>
             </View>
         </SafeAreaView>
     );
