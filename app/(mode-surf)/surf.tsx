@@ -11,7 +11,7 @@ import Spacer from '@/components/Spacer';
 import { Chip, Fader } from 'react-native-ui-lib';
 import { router } from 'expo-router';
 import TypewriterEffect from '@/components/CrushyTypewriterEffect';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, StackActions } from '@react-navigation/native';
 
 interface Interest {
     id: number;
@@ -188,7 +188,7 @@ export default function Surf() {
 
     };
 
-    const currentMatch = potentialMatches[currentMatchIndex];
+
 
 
     const renderInterestChips = () => {
@@ -220,6 +220,10 @@ export default function Surf() {
         });
     };
 
+
+
+    const currentMatch = potentialMatches[currentMatchIndex];
+
     if (!currentMatch) {
         return (
             <SafeAreaView style={styles.container}>
@@ -227,9 +231,10 @@ export default function Surf() {
                     <Ionicons name="albums-outline" size={64} color={Colors.light.primary} />
                     <Text style={styles.noMatchesTitle}>You've reached the end</Text>
                     <Text style={styles.noMatchesText}>No more potential matches to show.</Text>
-                    <Spacer height={64} />
-                    <Pressable onPress={fetchUserAndPotentialMatches}>
-                        <Text style={styles.refreshText}>Refresh Matches</Text>
+                    <Text style={styles.noMatchesText}>Check back later, or change the filters.</Text>
+                    <Spacer height={40} />
+                    <Pressable onPress={() => { navigation.dispatch(StackActions.popToTop()) }}>
+                        <Text style={styles.refreshText}>Back Home</Text>
                     </Pressable>
                 </View>
             </SafeAreaView>
@@ -241,10 +246,17 @@ export default function Surf() {
             <View style={styles.innerContainer}>
                 <View style={styles.header}>
                     <Image source={require('@/assets/images/logo/logo_crushy.png')} style={styles.logo} />
-                    <Pressable style={[styles.buttonFilter, defaultStyles.buttonShadow]} onPress={() => { navigation.navigate('searchFilters') }}>
-                        <Ionicons name="search" size={12} color={Colors.light.text} />
-                        <Text style={styles.buttonFilterText}>Search Filters</Text>
-                    </Pressable>
+
+                    <View style={{ display: 'flex', flexDirection: 'row', gap: 16 }}>
+                        <Pressable style={[styles.buttonFilter, defaultStyles.buttonShadow]} onPress={() => { navigation.navigate('searchFilters') }}>
+                            <Ionicons name="search" size={12} color={Colors.light.text} style={{ marginTop: 2 }} />
+                            <Text style={styles.buttonFilterText}>Search Filters</Text>
+                        </Pressable>
+
+                        <Pressable style={[styles.buttonFilter, defaultStyles.buttonShadow]} onPress={() => { router.push('../') }}>
+                            <Ionicons name="home" size={16} color={Colors.light.text} style={{ marginTop: 2 }} />
+                        </Pressable>
+                    </View>
                 </View>
 
                 <View style={styles.personContainer}>
@@ -277,9 +289,10 @@ export default function Surf() {
                     <ScrollView horizontal style={styles.chipsContainer} showsHorizontalScrollIndicator={false}>
                         {renderInterestChips()}
                     </ScrollView>
-                    <Pressable onPress={() => router.push('../')} style={[styles.buttonClose, defaultStyles.buttonShadow]}>
+                    {/* <Pressable onPress={() => router.push('../')} style={[styles.buttonClose, defaultStyles.buttonShadow]}>
                         <Ionicons name="close" size={24} color={Colors.light.accent} />
-                    </Pressable>
+                    </Pressable> */}
+
                     <Pressable onPress={() => { navigation.navigate('Profile', { id: currentMatch.id, imageUrl: imageUrl }) }} style={[styles.buttonExpand, defaultStyles.buttonShadow]}>
                         <Ionicons name="chevron-down" size={24} color={Colors.light.accent} />
                     </Pressable>
@@ -311,6 +324,7 @@ const styles = StyleSheet.create({
     },
     header: {
         width: '100%',
+        marginTop: 16,
         marginBottom: 16,
         flexDirection: 'row',
         justifyContent: 'space-between',
@@ -322,7 +336,7 @@ const styles = StyleSheet.create({
     },
     buttonFilter: {
         backgroundColor: Colors.light.white,
-        paddingVertical: 2,
+        paddingBottom: 2,
         paddingHorizontal: 12,
         borderRadius: 99,
         borderWidth: 1,
@@ -421,7 +435,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         shadowColor: Colors.light.black,
         position: 'absolute',
-        bottom: 64,
+        bottom: 68,
         right: 16,
     },
     buttonsMatching: {

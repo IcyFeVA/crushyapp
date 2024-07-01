@@ -6,6 +6,8 @@ import FilterAgeRange from '../searchFilters/filterAgeRange';
 import FilterGenderPreference from '../searchFilters/filterGenderPreference';
 import FilterStarsign from '../searchFilters/filterStarsign';
 import DetailsScreen from './profile';
+
+
 const Stack = createStackNavigator();
 
 export default function SurfLayout() {
