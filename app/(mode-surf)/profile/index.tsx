@@ -90,7 +90,7 @@ Let me know what  you like and let’s get connected here on this cool platform!
         return 0;
     };
 
-    const renderInterestChips = () => {
+    const renderInterestChips = (type: string) => {
 
         if (!user.interests || !myData.interests) return null;
 
@@ -106,17 +106,33 @@ Let me know what  you like and let’s get connected here on this cool platform!
             }
 
             const isActive = myData.interests.includes(parseInt(interestObject.value));
-            const isLast = index === sortedInterests.length - 1;
 
-            return (
-                <Chip
-                    key={interest}
-                    label={interestObject.label}
-                    labelStyle={[styles.chipLabel, isActive && styles.chipActiveLabel]}
-                    containerStyle={[styles.chip, isActive && styles.chipActive, isLast && { marginRight: 0 }
-                    ]}
-                />
-            );
+            if (type === 'shared') {
+                if (isActive) {
+                    return (
+                        <View>
+                            <Chip
+                                key={interest.id}
+                                label={interestObject.label}
+                                labelStyle={[styles.chipLabel, styles.sharedChipLabel]}
+                                containerStyle={[styles.chip, styles.sharedChip]}
+                                iconSource={require('@/assets/images/icons/iconSharedInterest.png')}
+                            />
+                        </View>
+                    );
+                }
+            } else {
+                if (!isActive) {
+                    return (
+                        <Chip
+                            key={interest}
+                            label={interestObject.label}
+                            labelStyle={[styles.chipLabel]}
+                            containerStyle={[styles.chip]}
+                        />
+                    );
+                }
+            }
         });
     };
 
@@ -140,15 +156,22 @@ Let me know what  you like and let’s get connected here on this cool platform!
 
                     <Spacer height={32} />
 
-                    <Text style={{ fontFamily: 'HeadingBold', fontSize: 22, color: Colors.light.text, marginTop: 16 }}>Hobbies & Interests</Text>
+                    <Text style={{ fontFamily: 'HeadingBold', fontSize: 22, color: Colors.light.text, marginTop: 16 }}>Shared Hobbies & Interests</Text>
                     <View style={styles.chipsContainer}>
-                        {renderInterestChips()}
+                        {renderInterestChips('shared')}
                     </View>
 
                     <Spacer height={32} />
 
                     <Text style={{ fontFamily: 'HeadingBold', fontSize: 22, color: Colors.light.text, marginTop: 16 }}>Bio</Text>
                     <Text style={{ fontFamily: 'BodyRegular', fontSize: 18, lineHeight: 26 }}>{bioText}</Text>
+
+                    <Spacer height={32} />
+
+                    <Text style={{ fontFamily: 'HeadingBold', fontSize: 22, color: Colors.light.text, marginTop: 16 }}>Other Hobbies & Interests</Text>
+                    <View style={styles.chipsContainer}>
+                        {renderInterestChips()}
+                    </View>
                 </View>
 
             </ScrollView>
@@ -219,16 +242,17 @@ const styles = StyleSheet.create({
         borderRadius: 99,
         shadowColor: Colors.light.black,
     },
-    chipActive: {
-        backgroundColor: Colors.light.accent,
+    sharedChip: {
+        paddingLeft: 12,
+        backgroundColor: Colors.light.white,
+    },
+    sharedChipLabel: {
+        color: Colors.light.text,
     },
     chipLabel: {
         color: Colors.light.text,
         fontSize: 13,
         fontFamily: 'BodyRegular',
-    },
-    chipActiveLabel: {
-        color: Colors.light.textInverted,
     },
     scrollContainer: {
         marginLeft: 16,

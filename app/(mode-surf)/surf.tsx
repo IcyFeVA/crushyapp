@@ -201,22 +201,37 @@ export default function Surf() {
             return 0;
         });
 
-        return sortedInterests.map((interest) => {
+        return sortedInterests.map((interest, index) => {
             const interestObject = hobbiesInterests.flat().find(item => item.value === interest.id.toString());
 
             if (!interestObject) {
                 console.error(`No label found for interest: ${interest.id}`);
                 return null;
             }
+            const isLast = index === sortedInterests.length - 1;
 
-            return (
-                <Chip
-                    key={interest.id}
-                    label={interestObject.label}
-                    labelStyle={[styles.chipLabel, interest.isShared && styles.sharedChipLabel]}
-                    containerStyle={[styles.chip, interest.isShared && styles.sharedChip]}
-                />
-            );
+            if (!interest.isShared) {
+                return (
+                    <Chip
+                        key={interest.id}
+                        label={interestObject.label}
+                        labelStyle={[styles.chipLabel]}
+                        containerStyle={[styles.chip, isLast && { marginRight: 32 }]}
+                    />
+                );
+            } else {
+                return (
+                    <View>
+                        <Chip
+                            key={interest.id}
+                            label={interestObject.label}
+                            labelStyle={[styles.chipLabel, styles.sharedChipLabel]}
+                            containerStyle={[styles.chip, styles.sharedChip, isLast && { marginRight: 32 }]}
+                            iconSource={require('@/assets/images/icons/iconSharedInterest.png')}
+                        />
+                    </View>
+                );
+            }
         });
     };
 
@@ -478,9 +493,10 @@ const styles = StyleSheet.create({
         color: Colors.light.accent,
     },
     sharedChip: {
-        backgroundColor: Colors.light.accent,
+        paddingLeft: 12,
+        backgroundColor: Colors.light.white,
     },
     sharedChipLabel: {
-        color: Colors.light.textInverted,
+        color: Colors.light.text,
     },
 });
