@@ -19,6 +19,7 @@ export default function DetailsScreen() {
     const [loading, setLoading] = useState<boolean>(false);
     const [user, setUser] = useState<any[]>({ name: '', age: '0', interests: [] });
     const interestsList = useMemo(() => flattenArray(hobbiesInterests), []);
+    const [hasSharedInterests, setHasSharedInterests] = useState<boolean>(false);
     const [myData, setMyData] = useState<any>({});
     const route = useRoute();
     const { id } = route.params;
@@ -106,6 +107,9 @@ Let me know what  you like and let’s get connected here on this cool platform!
             }
 
             const isActive = myData.interests.includes(parseInt(interestObject.value));
+            if (!hasSharedInterests && isActive) {
+                setHasSharedInterests(true);
+            }
 
             if (type === 'shared') {
                 if (isActive) {
@@ -152,16 +156,22 @@ Let me know what  you like and let’s get connected here on this cool platform!
                         {user.name && <Text style={styles.personName}>{user.name}<Text style={styles.personAge}>, {user.age.toString()}</Text></Text>}
                     </View>
 
-                    <Spacer height={32} />
 
-                    <Text style={{ fontFamily: 'HeadingBold', fontSize: 22, color: Colors.light.text, marginTop: 16 }}>Shared Hobbies & Interests</Text>
-                    <View style={styles.chipsContainer}>
-                        {renderInterestChips('shared')}
-                    </View>
+                    {hasSharedInterests === true && (
+                        <View>
+                            <Spacer height={32} />
+
+                            <Text style={{ fontFamily: 'HeadingBold', fontSize: 22, color: Colors.light.text, marginTop: 16 }}>Shared Hobbies & Interests</Text>
+                            <View style={styles.chipsContainer}>
+                                {renderInterestChips('shared')}
+                            </View>
+                        </View>
+                    )}
 
                     <Spacer height={32} />
 
                     <Text style={{ fontFamily: 'HeadingBold', fontSize: 22, color: Colors.light.text, marginTop: 16 }}>Bio</Text>
+                    <Spacer height={8} />
                     <Text style={{ fontFamily: 'BodyRegular', fontSize: 18, lineHeight: 26 }}>{bioText}</Text>
 
                     <Spacer height={32} />
@@ -199,12 +209,12 @@ const styles = StyleSheet.create({
     },
     personName: {
         fontFamily: 'HeadingBold',
-        fontSize: 32,
+        fontSize: 28,
         color: Colors.light.text,
     },
     personAge: {
         fontFamily: 'HeadingBold',
-        fontSize: 32,
+        fontSize: 28,
         color: Colors.light.text,
         opacity: 0.7
     },
