@@ -110,15 +110,13 @@ Let me know what  you like and let’s get connected here on this cool platform!
             if (type === 'shared') {
                 if (isActive) {
                     return (
-                        <View>
-                            <Chip
-                                key={interest.id}
-                                label={interestObject.label}
-                                labelStyle={[styles.chipLabel, styles.sharedChipLabel]}
-                                containerStyle={[styles.chip, styles.sharedChip]}
-                                iconSource={require('@/assets/images/icons/iconSharedInterest.png')}
-                            />
-                        </View>
+                        <Chip
+                            key={interest.id}
+                            label={interestObject.label}
+                            labelStyle={[styles.chipLabel, styles.sharedChipLabel]}
+                            containerStyle={[styles.chip, styles.sharedChip]}
+                            iconSource={require('@/assets/images/icons/iconSharedInterest.png')}
+                        />
                     );
                 }
             } else {
