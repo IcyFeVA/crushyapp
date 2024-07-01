@@ -151,7 +151,7 @@ Let me know what  you like and let’s get connected here on this cool platform!
                 </View>
                 <View style={{ padding: 16 }}>
                     <View style={styles.personInfo}>
-                        {user.name && <Text style={styles.personName}>{user.name}<Text style={styles.personAge}>, {(2024 - parseInt(user.age)).toString()}</Text></Text>}
+                        {user.name && <Text style={styles.personName}>{user.name}<Text style={styles.personAge}>, {user.age.toString()}</Text></Text>}
                     </View>
 
                     <Spacer height={32} />
