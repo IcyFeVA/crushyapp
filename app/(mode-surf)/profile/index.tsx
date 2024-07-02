@@ -127,7 +127,7 @@ Let me know what  you like and let’s get connected here on this cool platform!
                 if (!isActive) {
                     return (
                         <Chip
-                            key={interest}
+                            key={interest.id}
                             label={interestObject.label}
                             labelStyle={[styles.chipLabel]}
                             containerStyle={[styles.chip]}
