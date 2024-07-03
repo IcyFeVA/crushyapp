@@ -164,13 +164,21 @@ export default function Surf() {
             );
         }
 
-        moveToNextMatch();
-
         setLoading(false);
     };
 
 
-    const handleDislike = () => handleAction('dislike');
+    const handleDislike = async () => {
+        if (!session?.user.id || !currentMatch) return;
+
+        setLoading(true);
+
+        await handleAction('dislike');
+
+        moveToNextMatch();
+
+        setLoading(false);
+    }
 
 
 
@@ -179,7 +187,6 @@ export default function Surf() {
         if (currentMatchIndex < potentialMatches.length - 1) {
             setCurrentMatchIndex(currentMatchIndex + 1);
             setImageUrl(potentialMatches[currentMatchIndex + 1].avatar_url);
-            console.log(potentialMatches[currentMatchIndex + 1].avatar_url)
             // setImageUrl(supabase.storage.from('avatars').getPublicUrl(potentialMatches[currentMatchIndex + 1].avatar_url).data.publicUrl);
         } else {
             fetchUserAndPotentialMatches();
@@ -317,7 +324,7 @@ export default function Surf() {
                     <Pressable onPress={handleLike} disabled={loading}>
                         <Image source={require('@/assets/images/buttons/buttonMatchingLike.png')} style={styles.buttonsMatchingPrimary} />
                     </Pressable>
-                    <Pressable onPress={() => { alert("This feature will be available in the future.") }}>
+                    <Pressable onPress={() => { alert("This feature will be available in the future.") }} disabled={loading}>
                         <Image source={require('@/assets/images/buttons/buttonMatchingChat.png')} style={styles.buttonsMatchingSecondary} />
                     </Pressable>
                 </View>

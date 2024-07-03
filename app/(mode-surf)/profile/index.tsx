@@ -110,12 +110,11 @@ Let me know what  you like and let’s get connected here on this cool platform!
             if (!hasSharedInterests && isActive) {
                 setHasSharedInterests(true);
             }
-
             if (type === 'shared') {
                 if (isActive) {
                     return (
                         <Chip
-                            key={interest.id}
+                            key={index}
                             label={interestObject.label}
                             labelStyle={[styles.chipLabel, styles.sharedChipLabel]}
                             containerStyle={[styles.chip, styles.sharedChip]}
