@@ -65,7 +65,12 @@ export default function FilterAgeRange() {
                         maximumValue={MAX_AGE}
                         onRangeChange={(value) => handleSliderChange(value)}
                         step={2}
-                        style={styles.slider}
+                        containerStyle={styles.slider}
+                        thumbStyle={styles.thumbStyle}
+                        thumbTintColor={Colors.light.accent}
+                        minimumTrackTintColor={Colors.light.accent}
+                        maximumTrackTintColor={Colors.light.tertiary}
+
                     />
                 </View>
 
@@ -88,8 +93,18 @@ const styles = StyleSheet.create({
         ...defaultStyles.body,
         marginBottom: 8,
     },
-    slider: {
-        width: '100%',
-        height: 40,
+    sliderContainer: {
+        paddingHorizontal: 16,
     },
+    slider: {
+        width: '90%',
+        height: 40,
+        alignSelf: 'center',
+    },
+    thumbStyle: {
+        borderWidth: 4,
+        height: 32,
+        width: 32,
+    },
+
 });
