@@ -30,7 +30,7 @@ interface PotentialMatch {
 export default function Surf() {
     const [potentialMatches, setPotentialMatches] = useState<PotentialMatch[]>([]);
     const [currentMatchIndex, setCurrentMatchIndex] = useState(0);
-    const [imageUrl, setImageUrl] = useState<string | null>(null);
+    const [imageUrl, setImageUrl] = useState<string | number>(require('@/assets/images/react-logo.png'));
     const [userInterests, setUserInterests] = useState<number[]>([]);
     const [loading, setLoading] = useState(false);
     const session = useAuth();
@@ -281,7 +281,7 @@ export default function Surf() {
 
                 <View style={styles.personContainer}>
                     {/* <Image source={{ uri: currentMatch.avatar_url }} style={styles.person} /> */}
-                    <Image source={{ uri: imageUrl }} style={styles.person} />
+                    <Image source={typeof imageUrl === 'string' ? { uri: imageUrl } : imageUrl} style={styles.person} />
 
                     <Pressable onPress={() => { navigation.navigate('Profile', { id: currentMatch.id, imageUrl: imageUrl }) }} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'absolute', left: 0, top: 0, width: '100%', height: '100%' }}>
                         < View style={{ width: '100%', height: '66%' }} >
