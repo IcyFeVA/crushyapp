@@ -13,9 +13,12 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Platform } from 'react-native';
 import { MMKV } from 'react-native-mmkv'
 import hobbiesInterests from '@/constants/Interests'
-
+import { useNotifications } from '@/hooks/useNotifications';
 import { clearAllStorage, getData, resetUserSearchFilters } from '@/utils/storage';
 import { AppProvider } from '@/providers/AppProvider';
+import { supabase } from '@/lib/supabase';
+import { get } from 'react-native/Libraries/TurboModule/TurboModuleRegistry';
+import ErrorBoundary from '@/components/ErrorBoundary';
 
 
 
@@ -31,7 +34,7 @@ if (Platform.OS != 'ios') {
 export default function RootLayout() {
     const session = useAuth();
     const [showOnboarding, setShowOnboarding] = useState(useProfile(session));
-
+    const { expoPushToken, notification, matchNotifications } = useNotifications();
     const [loaded, error] = useFonts({
         HeadingBold: require('@/assets/fonts/RobotoSlab-Bold.ttf'),
         HeadingRegular: require('@/assets/fonts/RobotoSlab-Regular.ttf'),
@@ -65,8 +68,19 @@ export default function RootLayout() {
                     console.log('search preferences found', genderPreference)
                 }
             })
+
+
         }
     }, [loaded]);
+
+
+    useEffect(() => {
+        if (matchNotifications.length > 0) {
+            console.log('You have new matches!', matchNotifications);
+            // Here you can update UI, show a notification, etc.
+        }
+    }, [matchNotifications]);
+
 
     if (!loaded) {
         return null;
@@ -75,13 +89,15 @@ export default function RootLayout() {
     return (
         <AppProvider>
             <GestureHandlerRootView style={{ flex: 1 }}>
-                <SafeAreaProvider>
-                    <RootNavigator
-                        session={session}
-                        showOnboarding={showOnboarding}
-                        setShowOnboarding={setShowOnboarding}
-                    />
-                </SafeAreaProvider>
+                <ErrorBoundary>
+                    <SafeAreaProvider>
+                        <RootNavigator
+                            session={session}
+                            showOnboarding={showOnboarding}
+                            setShowOnboarding={setShowOnboarding}
+                        />
+                    </SafeAreaProvider>
+                </ErrorBoundary>
             </GestureHandlerRootView>
         </AppProvider>
     );

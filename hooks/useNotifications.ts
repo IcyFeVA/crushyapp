@@ -4,6 +4,7 @@ import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
 import Constants from 'expo-constants';
 import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/hooks/useAuth';
 
 Notifications.setNotificationHandler({
     handleNotification: async () => ({
@@ -13,11 +14,13 @@ Notifications.setNotificationHandler({
     }),
 });
 
-export default function usePushNotifications() {
+export function useNotifications() {
     const [expoPushToken, setExpoPushToken] = useState('');
     const [notification, setNotification] = useState(false);
+    const [matchNotifications, setMatchNotifications] = useState([]);
     const notificationListener = useRef();
     const responseListener = useRef();
+    const session = useAuth();
 
     useEffect(() => {
         registerForPushNotificationsAsync().then(token => setExpoPushToken(token));
@@ -36,7 +39,51 @@ export default function usePushNotifications() {
         };
     }, []);
 
-    return { expoPushToken, notification };
+    useEffect(() => {
+        let subscription;
+
+        const setupMatchNotifications = async () => {
+            if (session?.user.id) {
+                // Initial fetch of unread notifications
+                const { data, error } = await supabase
+                    .rpc('get_unread_match_notifications', { user_id: session.user.id });
+
+                if (data) {
+                    setMatchNotifications(data);
+                    console.log('Initial match notifications:', data);
+                }
+
+                // Set up realtime subscription
+                subscription = supabase
+                    .channel('match_notifications')
+                    .on(
+                        'postgres_changes',
+                        {
+                            event: 'INSERT',
+                            schema: 'public',
+                            table: 'match_notifications',
+                            filter: `user_id=eq.${session.user.id}`,
+                        },
+                        (payload) => {
+                            console.log('New match notification:', payload);
+                            setMatchNotifications(prevNotifications => [...prevNotifications, payload.new]);
+                        }
+                    )
+                    .subscribe();
+            }
+        };
+
+        setupMatchNotifications();
+
+        // Cleanup function
+        return () => {
+            if (subscription) {
+                supabase.removeChannel(subscription);
+            }
+        };
+    }, [session?.user.id]);
+
+    return { expoPushToken, notification, matchNotifications };
 }
 
 async function registerForPushNotificationsAsync() {
@@ -66,12 +113,12 @@ async function registerForPushNotificationsAsync() {
     } else {
         alert('Must use physical device for Push Notifications');
     }
-
+    console.log('token', token)
     // Store the token in Supabase
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
         const { error } = await supabase
-            .from('profiles')
+            .from('profiles_test')
             .update({ push_token: token })
             .eq('id', user.id);
 

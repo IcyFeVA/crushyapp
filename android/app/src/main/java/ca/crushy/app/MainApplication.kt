@@ -1,4 +1,4 @@
-package com.anonymous.crushyapp
+package ca.crushy.app
 
 import android.app.Application
 import android.content.res.Configuration

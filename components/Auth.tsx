@@ -13,6 +13,7 @@ import { Image, Animated, FlatList, useWindowDimensions, ImageSourcePropType } f
 import { PrimaryButton, PrimaryButtonText, SecondaryButton, SecondaryButtonText } from './ui/Buttons';
 import { useRef } from 'react';
 import { defaultStyles } from '@/constants/Styles';
+import { Colors } from '@/constants/Colors';
 
 
 
@@ -183,7 +184,7 @@ export default function Auth({ onboarding }: any) {
 
 
     return (
-        <SafeAreaView style={{ flex: 1 }}>
+        <SafeAreaView style={{ flex: 1, backgroundColor: Colors.light.background }}>
             <StatusBar backgroundColor="white" barStyle="dark-content" />
             {mode === 'signin' && (
 

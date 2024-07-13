@@ -1,9 +1,7 @@
-import { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { View, Text, Image, StyleSheet, Pressable, ScrollView, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { supabase } from '@/lib/supabase';
-import { useAuth } from '@/hooks/useAuth';
 import { Colors } from '@/constants/Colors';
 import hobbiesInterests from '@/constants/Interests';
 import { defaultStyles } from '@/constants/Styles';
@@ -12,6 +10,9 @@ import { Chip, Fader } from 'react-native-ui-lib';
 import { router } from 'expo-router';
 import TypewriterEffect from '@/components/CrushyTypewriterEffect';
 import { useNavigation, StackActions } from '@react-navigation/native';
+import { usePotentialMatches, useProfile } from '@/hooks/useApi';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/lib/supabase';
 
 interface Interest {
     id: number;
@@ -24,109 +25,112 @@ interface PotentialMatch {
     age: number;
     gender: number;
     avatar_url: string;
-    interests: Interest[];
+    interests: number[];
 }
 
 export default function Surf() {
-    const [potentialMatches, setPotentialMatches] = useState<PotentialMatch[]>([]);
+    const session = useAuth();
+    const { matches: potentialMatches, loading, error, fetchMatches, recordAction } = usePotentialMatches();
+    const { profile, fetchProfile } = useProfile();
     const [currentMatchIndex, setCurrentMatchIndex] = useState(0);
     const [imageUrl, setImageUrl] = useState<string | number>(require('@/assets/images/react-logo.png'));
-    const [userInterests, setUserInterests] = useState<number[]>([]);
-    const [loading, setLoading] = useState(false);
-    const session = useAuth();
     const navigation = useNavigation();
-
-
-    const fetchUserAndPotentialMatches = useCallback(async () => {
-        if (!session?.user.id) return;
-        console.log('fetchUserAndPotentialMatches');
-        setLoading(true);
-
-        // Fetch user interests
-        const { data: userData, error: userError } = await supabase
-            .from('profiles')
-            .select('interests')
-            .eq('id', session.user.id)
-            .single();
-
-        if (userError) {
-            console.error('Error fetching user interests:', userError);
-            return;
-        }
-
-        setUserInterests(userData.interests);
-
-        // Fetch potential matches
-        const { data, error } = await supabase.rpc('get_potential_matches', {
-            user_id: session.user.id,
-            limit_count: 10,
-        });
-
-        if (error) {
-            console.error('Error fetching potential matches:', error);
-            return;
-        }
-
-        // Process matches to include shared interest information
-        const processedMatches = data.map((match: PotentialMatch) => ({
-            ...match,
-            interests: match.interests.map(interest => ({
-                id: interest,
-                isShared: userData.interests.includes(interest)
-            }))
-        }));
-
-        setPotentialMatches(processedMatches);
-
-        if (processedMatches.length > 0) {
-            if (processedMatches[0].avatar_url) {
-                setImageUrl(processedMatches[0].avatar_url);
-                // setImageUrl(supabase.storage.from('avatars').getPublicUrl(processedMatches[0].avatar_url).data.publicUrl);
-            }
-        }
-
-
-        setLoading(false);
-    }, [session?.user.id]);
+    const typewriterKey = useRef(0);
 
     useEffect(() => {
-        fetchUserAndPotentialMatches();
-    }, [fetchUserAndPotentialMatches]);
+        console.log('Session:', session);
+        console.log('Potential Matches:', potentialMatches);
+        if (session?.user?.id) {
+            fetchMatches();
+            fetchProfile();
+        }
+    }, [session, fetchMatches, fetchProfile]);
 
+    useEffect(() => {
+        console.log('Current Match Index:', currentMatchIndex);
+        const currentMatch = potentialMatches[currentMatchIndex];
+        console.log('Current Match:', currentMatch);
 
-
-
-    const handleAction = async (action: 'like' | 'dislike') => {
-        if (!session?.user.id || !currentMatch) return;
-
-
-
-        // Record the action in the matches table
-        const { error } = await supabase
-            .from('matches')
-            .insert({
-                user1_id: session.user.id,
-                user2_id: currentMatch.id,
-                user1_action: action === 'like' ? 1 : 0, // 1 for like, 0 for dislike
-            });
-
-        if (error) {
-            console.error(`Error recording ${action} action:`, error);
+        if (currentMatch?.avatar_url) {
+            console.log('Setting image URL:', currentMatch.avatar_url);
+            setImageUrl(currentMatch.avatar_url);
         } else {
-            console.log(`${action} action recorded successfully`);
+            console.log('No avatar URL, setting default image');
+            setImageUrl(require('@/assets/images/react-logo.png'));
+        }
+    }, [currentMatchIndex, potentialMatches]);
+
+    const currentMatch = potentialMatches[currentMatchIndex];
+
+    const handleAction = useCallback(async (action: 'like' | 'dislike') => {
+        console.log('HandleAction called');
+        console.log('Session:', session);
+        console.log('Current Match:', currentMatch);
+
+        if (!session?.user?.id) {
+            console.log('No session, returning early');
+            return;
         }
 
-        moveToNextMatch();
+        if (!currentMatch) {
+            console.log('No currentMatch, returning early');
+            return;
+        }
+
+        try {
+            console.log(`Recording action for match: ${currentMatch.id}`);
+            await recordAction(currentMatch.id, action);
+            console.log('Action recorded successfully');
+
+            if (action === 'like') {
+                console.log('Checking for match');
+                const isMatch = await checkForMatch(session.user.id, currentMatch.id);
+                if (isMatch) {
+                    console.log("It's a match!");
+                    Alert.alert(
+                        "It's a Match!",
+                        `You and ${currentMatch.name} have liked each other!`,
+                        [{ text: "OK", onPress: () => console.log("OK Pressed") }]
+                    );
+                }
+            }
+
+            console.log('Moving to next match');
+            moveToNextMatch();
+        } catch (error) {
+            console.error('Error in handleAction:', error);
+        }
+    }, [session, currentMatch, recordAction, checkForMatch, moveToNextMatch]);
+
+    const moveToNextMatch = useCallback(() => {
+        console.log('moveToNextMatch called');
+        console.log(`Current index: ${currentMatchIndex}, Matches length: ${potentialMatches.length}`);
+        if (currentMatchIndex < potentialMatches.length - 1) {
+            console.log('Moving to next match in the list');
+            setCurrentMatchIndex(prevIndex => {
+                console.log(`New index: ${prevIndex + 1}`);
+                return prevIndex + 1;
+            });
+        } else {
+            console.log('Reached end of list, fetching new matches');
+            fetchMatches();
+            setCurrentMatchIndex(0);
+        }
+
+        typewriterKey.current += 1;
+    }, [currentMatchIndex, potentialMatches.length, fetchMatches]);
 
 
-    };
 
 
 
+    const handleLike = () => handleAction('like');
+    const handleDislike = () => handleAction('dislike');
 
 
 
     const checkForMatch = async (currentUserId: string, likedUserId: string) => {
+        // This function should be moved to the API layer in a future refactoring
         const { data, error } = await supabase
             .from('matches')
             .select('*')
@@ -142,107 +146,55 @@ export default function Surf() {
         return data && data.length > 0;
     };
 
-    const handleLike = async () => {
-        if (!session?.user.id || !currentMatch) return;
-
-        setLoading(true);
-
-        await handleAction('like');
-
-        const isMatch = await checkForMatch(session.user.id, currentMatch.id);
-        if (isMatch) {
-            // It's a match!
-            console.log("It's a match!");
-            // TODO: Implement match notification or navigation to chat
-            // For now, let's show an alert
-            Alert.alert(
-                "It's a Match!",
-                `You and ${currentMatch.name} have liked each other!`,
-                [
-                    { text: "OK", onPress: () => console.log("OK Pressed") }
-                ]
-            );
-        }
-
-        setLoading(false);
-    };
-
-
-    const handleDislike = async () => {
-        if (!session?.user.id || !currentMatch) return;
-
-        setLoading(true);
-
-        await handleAction('dislike');
-
-        moveToNextMatch();
-
-        setLoading(false);
-    }
-
-
-
-    const moveToNextMatch = () => {
-
-        if (currentMatchIndex < potentialMatches.length - 1) {
-            setCurrentMatchIndex(currentMatchIndex + 1);
-            setImageUrl(potentialMatches[currentMatchIndex + 1].avatar_url);
-            // setImageUrl(supabase.storage.from('avatars').getPublicUrl(potentialMatches[currentMatchIndex + 1].avatar_url).data.publicUrl);
-        } else {
-            fetchUserAndPotentialMatches();
-            setCurrentMatchIndex(0);
-        }
-
-    };
-
-
-
-
-    const renderInterestChips = () => {
-        if (!currentMatch) return null;
+    const renderInterestChips = useCallback(() => {
+        if (!currentMatch || !profile?.interests) return null;
 
         // Sort interests: shared interests first, then non-shared
         const sortedInterests = [...currentMatch.interests].sort((a, b) => {
-            if (a.isShared && !b.isShared) return -1;
-            if (!a.isShared && b.isShared) return 1;
+            const aIsShared = profile.interests.includes(a);
+            const bIsShared = profile.interests.includes(b);
+            if (aIsShared && !bIsShared) return -1;
+            if (!aIsShared && bIsShared) return 1;
             return 0;
         });
 
-        return sortedInterests.map((interest, index) => {
-            const interestObject = hobbiesInterests.flat().find(item => item.value === interest.id.toString());
+        return sortedInterests.map((interestId, index) => {
+            const interestObject = hobbiesInterests.flat().find(item => item.value === interestId.toString());
 
             if (!interestObject) {
-                console.error(`No label found for interest: ${interest.id}`);
+                console.error(`No label found for interest: ${interestId}`);
                 return null;
             }
+
             const isLast = index === sortedInterests.length - 1;
+            const isShared = profile.interests.includes(interestId);
 
-            if (!interest.isShared) {
-                return (
-                    <Chip
-                        key={interest.id}
-                        label={interestObject.label}
-                        labelStyle={[styles.chipLabel]}
-                        containerStyle={[styles.chip, isLast && { marginRight: 32 }]}
-                    />
-                );
-            } else {
-                return (
-                    <Chip
-                        key={interest.id}
-                        label={interestObject.label}
-                        labelStyle={[styles.chipLabel, styles.sharedChipLabel]}
-                        containerStyle={[styles.chip, styles.sharedChip, isLast && { marginRight: 32 }]}
-                        iconSource={require('@/assets/images/icons/iconSharedInterest.png')}
-                    />
-                );
-            }
+            return (
+                <Chip
+                    key={`${currentMatch.id}-${interestId}`}
+                    label={interestObject.label}
+                    labelStyle={[styles.chipLabel, isShared && styles.sharedChipLabel]}
+                    containerStyle={[
+                        styles.chip,
+                        isShared && styles.sharedChip,
+                        isLast && { marginRight: 32 }
+                    ]}
+                    iconSource={isShared ? require('@/assets/images/icons/iconSharedInterest.png') : null}
+                />
+            );
         });
-    };
+    }, [currentMatch, profile]);
 
+    if (error) {
+        return (
+            <SafeAreaView style={styles.container}>
+                <View style={styles.errorContainer}>
+                    <Text style={styles.errorText}>An error occurred. Please try again later.</Text>
+                </View>
+            </SafeAreaView>
+        );
+    }
 
-
-    const currentMatch = potentialMatches[currentMatchIndex];
 
     if (!currentMatch) {
         return (
@@ -280,12 +232,17 @@ export default function Surf() {
                 </View>
 
                 <View style={styles.personContainer}>
-                    {/* <Image source={{ uri: currentMatch.avatar_url }} style={styles.person} /> */}
-                    <Image source={typeof imageUrl === 'string' ? { uri: imageUrl } : imageUrl} style={styles.person} />
+                    <Image
+                        source={typeof imageUrl === 'string' ? { uri: imageUrl } : imageUrl}
+                        style={styles.person}
+                        onError={() => {
+                            console.log('Error loading image, setting default');
+                            setImageUrl(require('@/assets/images/react-logo.png'));
+                        }}
+                    />
 
                     <Pressable onPress={() => { navigation.navigate('Profile', { id: currentMatch.id, imageUrl: imageUrl }) }} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'absolute', left: 0, top: 0, width: '100%', height: '100%' }}>
-                        < View style={{ width: '100%', height: '66%' }} >
-                        </View>
+                        <View style={{ width: '100%', height: '66%' }} />
                     </Pressable>
 
                     <Fader visible position={Fader.position.BOTTOM} tintColor={'#282828'} size={150} />
@@ -296,6 +253,7 @@ export default function Surf() {
                         <View style={{ width: '78%' }}>
                             <View style={styles.personInfo}>
                                 <TypewriterEffect
+                                    key={typewriterKey.current}
                                     text={currentMatch.name + ', ' + currentMatch.age.toString()}
                                     style={styles.personName}
                                     delay={12}
@@ -309,9 +267,6 @@ export default function Surf() {
                     <ScrollView horizontal style={styles.chipsContainer} showsHorizontalScrollIndicator={false}>
                         {renderInterestChips()}
                     </ScrollView>
-                    {/* <Pressable onPress={() => router.push('../')} style={[styles.buttonClose, defaultStyles.buttonShadow]}>
-                        <Ionicons name="close" size={24} color={Colors.light.accent} />
-                    </Pressable> */}
 
                     <Pressable onPress={() => { navigation.navigate('Profile', { id: currentMatch.id, imageUrl: imageUrl }) }} style={[styles.buttonExpand, defaultStyles.buttonShadow]}>
                         <Ionicons name="chevron-down" size={24} color={Colors.light.accent} />
@@ -331,7 +286,8 @@ export default function Surf() {
             </View>
         </SafeAreaView>
     );
-};
+}
+
 
 const styles = StyleSheet.create({
     container: {

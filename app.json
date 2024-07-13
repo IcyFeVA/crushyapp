@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "crushyapp",
-    "slug": "crushyapp",
+    "name": "Crushy",
+    "slug": "crushy",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "myapp",
+    "scheme": "crushy",
     "userInterfaceStyle": "automatic",
     "splash": {
       "image": "./assets/images/splash.png",
@@ -20,7 +20,7 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.anonymous.crushyapp"
+      "package": "ca.crushy.app"
     },
     "web": {
       "bundler": "metro",
@@ -28,8 +28,30 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
-      "expo-router",
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/icon.png",
+          "color": "#666999",
+          "sounds": [
+            "./assets/sounds/notification.wav",
+          ]
+        }
+      ],
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "$(PRODUCT_NAME) would like access to your photo gallery to share image in a message.",
+          "savePhotosPermission": "$(PRODUCT_NAME) would like to save photos to your photo gallery after downloading from a message."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "$(PRODUCT_NAME) would like to use your camera to share image in a message."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
@@ -39,7 +61,7 @@
         "origin": false
       },
       "eas": {
-        "projectId": "3a2a21e7-410f-4005-873f-a6039be7b82e"
+        "projectId": "f068ee11-0703-47a6-adf1-55b1eb967272"
       }
     }
   }

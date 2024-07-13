@@ -1,4 +1,4 @@
-rootProject.name = 'crushyapp'
+rootProject.name = 'Crushy'
 
 dependencyResolutionManagement {
   versionCatalogs {
