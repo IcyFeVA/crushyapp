@@ -27,7 +27,7 @@
     "@react-navigation/native-stack": "^6.9.26",
     "@react-navigation/stack": "^6.3.29",
     "@rneui/themed": "^4.0.0-rc.8",
-    "@shopify/flash-list": "1.6.4",
+    "@shopify/flash-list": "^1.6.4",
     "@stream-io/flat-list-mvcp": "^0.10.3",
     "@supabase/supabase-js": "^2.43.4",
     "base64-js": "^1.5.1",

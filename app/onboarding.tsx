@@ -18,8 +18,10 @@ import { router } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import Avatar from '@/components/Avatar';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+// import StepInterests from '@/components/onboarding/StepInterests';
+import { FlashList } from '@shopify/flash-list';
 
-const screenWidth = Dimensions.get('window').width;
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 const useOnboardingStore = create((set) => ({
     name: '',
@@ -47,6 +49,7 @@ const Onboarding = ({ setShowOnboarding }: { setShowOnboarding: any }) => {
     const session = useAuth();
     const [currentStep, setCurrentStep] = useState(0);
     const flatListRef = useRef(null);
+    const [listKey, setListKey] = useState(0); // used to force re-render of FlatList
     const [name, age, gender, pronouns, relationship, genderPreferences, interests, photoUploaded, dataUploaded, onboardingCompleted] = useOnboardingStore(
         useShallow((state) => [state.name, state.age, state.gender, state.pronouns, state.relationship, state.genderPreferences, state.interests, state.photoUploaded, state.dataUploaded, state.onboardingCompleted]),
     )
@@ -98,11 +101,11 @@ const Onboarding = ({ setShowOnboarding }: { setShowOnboarding: any }) => {
             }
         }
         if (currentStep === 1) {
-            if (age === null || parseInt(age) > 2006 || parseInt(age) < 1924) {
+            if (age === null || parseInt(age) > 111 || parseInt(age) < 17) {
                 Toast.show({
                     type: 'default',
                     text1: '👋 Check your age',
-                    text2: 'You have to be 18 or older to continue',
+                    text2: 'You have to be 17 or older to continue',
                 });
                 return
             }
@@ -235,7 +238,7 @@ const Onboarding = ({ setShowOnboarding }: { setShowOnboarding: any }) => {
 
 
     return (
-        <SafeAreaView style={{ flex: 1, backgroundColor: 'white' }}>
+        <SafeAreaView style={styles.safeArea}>
             <View>
                 {dataUploaded ? (
                     <StepFinal />
@@ -253,26 +256,18 @@ const Onboarding = ({ setShowOnboarding }: { setShowOnboarding: any }) => {
                         />
                         <View style={styles.buttonContainer}>
                             {currentStep > 0 ? (
-
                                 <Button onPress={handleBack} style={[defaultStyles.buttonSecondary, defaultStyles.buttonShadow]}>
                                     <Text style={defaultStyles.buttonSecondaryLabel}>Back</Text>
                                 </Button>
                             ) : (
                                 <View style={{ width: 16 }}></View>
                             )}
-                            {currentStep < steps.length - 1 ? (
-                                <Button onPress={handleNext} style={[defaultStyles.button, defaultStyles.buttonShadow]}>
-                                    <Text style={defaultStyles.buttonLabel}>Next</Text>
-                                </Button>
-                            ) : (
-                                <Button onPress={handleNext} style={[defaultStyles.button, defaultStyles.buttonShadow]}>
-                                    <Text style={defaultStyles.buttonLabel}>Next</Text>
-                                </Button>
-                            )}
+                            <Button onPress={handleNext} style={[defaultStyles.button, defaultStyles.buttonShadow]}>
+                                <Text style={defaultStyles.buttonLabel}>Next</Text>
+                            </Button>
                         </View>
                     </View>
                 )}
-
                 <Toast config={toastConfig} />
             </View>
         </SafeAreaView>
@@ -327,7 +322,7 @@ const StepAge = () => (
 
         <Spacer height={48} />
 
-        <Text style={defaultStyles.h2}>In what year were you born?</Text>
+        <Text style={defaultStyles.h2}>How old are you</Text>
         <Spacer height={8} />
         <View className=''>
             <Text style={defaultStyles.body}>You can always change your settings later.</Text>
@@ -335,13 +330,13 @@ const StepAge = () => (
 
         <Spacer height={64} />
 
-        <Text style={defaultStyles.inputLabel}>Year of birth</Text>
+        <Text style={defaultStyles.inputLabel}>Age</Text>
         <Spacer height={4} />
         <Textfield
             className='w-28 text-center'
-            placeholder='YYYY'
+            placeholder='XX'
             keyboardType='numeric'
-            maxLength={4}
+            maxLength={3}
             onChangeText={(text) => useOnboardingStore.setState({ age: text })}
         />
     </View>
@@ -585,97 +580,97 @@ const StepGenderPreferences = () => {
     );
 };
 
-const StepInterests = () => {
-    const [selectedValues, setSelectedValues] = useState<string[]>([]);
 
-    const handlePress = (value: string) => {
-        if (selectedValues.includes(value)) {
-            setSelectedValues(selectedValues.filter(item => item !== value));
-        } else {
-            setSelectedValues([...selectedValues, value]);
-        }
-    };
+const categories = [
+    "Outdoor Activities",
+    "Sports & Fitness",
+    "Creative Arts",
+    "Entertainment & Media",
+    "Culinary Interests",
+    "Social Activities",
+    "Tech & Science",
+    "Intellectual Pursuits",
+    "Nature & Animals",
+    "Miscellaneous"
+];
+
+const StepInterests = () => {
+    const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
+
+    const flattenedInterests = React.useMemo(() => {
+        return hobbiesInterests.flatMap((section, index) => [
+            { type: 'header', title: categories[index] },
+            ...section.map(item => ({ type: 'item', ...item }))
+        ]);
+    }, []);
+
+    const handleInterestToggle = useCallback((value: string) => {
+        setSelectedInterests(prevInterests => {
+            if (prevInterests.includes(value)) {
+                return prevInterests.filter(i => i !== value);
+            } else {
+                return [...prevInterests, value];
+            }
+        });
+    }, []);
 
     useEffect(() => {
-        useOnboardingStore.setState({ interests: selectedValues })
-        console.log('Interests:', selectedValues);
-    }, [selectedValues]);
+        useOnboardingStore.setState({ interests: selectedInterests });
+        console.log('Interests:', selectedInterests);
+    }, [selectedInterests]);
 
-    const renderItem = ({ item }: { item: { label: string, value: string } }) => (
-        // TODO: Pressable adds weird padding
-        // <Pressable onPress={() => handlePress(item.value)} >
-        <Checkbox
-            color={selectedValues.includes(item.value) ? Colors.light.text : Colors.light.tertiary}
-            label={item.label}
-            value={selectedValues.includes(item.value)}
-            containerStyle={[defaultStyles.checkboxButton]}
-            labelStyle={defaultStyles.checkboxButtonLabel}
-            onValueChange={() => handlePress(item.value)}
-        />
-        // </Pressable >
-    );
+    const renderItem = useCallback(({ item }) => {
+        if (item.type === 'header') {
+            return (
+                <View style={styles.sectionHeader}>
+                    <Text style={styles.sectionHeaderText}>{item.title}</Text>
+                </View>
+            );
+        }
 
-    const ITEM_HEIGHT = 75;
+        const isSelected = selectedInterests.includes(item.value);
+        return (
+            <Pressable onPress={() => handleInterestToggle(item.value)}>
+                <Checkbox
+                    color={isSelected ? Colors.light.text : Colors.light.tertiary}
+                    label={item.label}
+                    value={isSelected}
+                    containerStyle={[
+                        defaultStyles.checkboxButton,
+                        { borderColor: isSelected ? Colors.light.text : Colors.light.tertiary }
+                    ]}
+                    labelStyle={defaultStyles.checkboxButtonLabel}
+                    onValueChange={() => handleInterestToggle(item.value)}
+                />
+            </Pressable>
+        );
+    }, [selectedInterests, handleInterestToggle]);
 
     return (
-        <View className='p-6 w-screen'>
+        <View style={styles.container}>
             <Spacer height={16} />
-
             <Progress percent={77} />
-
             <Spacer height={48} />
-
-            <Text style={defaultStyles.h2}>Interests ({selectedValues.length})</Text>
+            <Text style={defaultStyles.h2}>Interests ({selectedInterests.length})</Text>
             <Spacer height={8} />
             <View>
                 <Text style={defaultStyles.body}>
                     This helps us find people with the same hobbies and interests.
                 </Text>
             </View>
-
             <Spacer height={24} />
-
-            <BigList
-                // data={hobbiesInterests}
-                sections={hobbiesInterests}
+            <FlashList
+                data={flattenedInterests}
                 renderItem={renderItem}
-                renderSectionHeader={(section) => {
-                    const categories = [
-                        "Outdoor Activities",
-                        "Sports & Fitness",
-                        "Creative Arts",
-                        "Entertainment & Media",
-                        "Culinary Interests",
-                        "Social Activities",
-                        "Tech & Science",
-                        "Intellectual Pursuits",
-                        "Nature & Animals",
-                        "Miscellaneous"
-                    ];
-                    return (
-                        <View style={{ backgroundColor: Colors.light.white }}>
-                            <Text style={{ fontFamily: 'HeadingBold', fontSize: 20, color: Colors.light.accent }}>{categories[section]}</Text>
-                        </View>
-                    )
-                }}
-                keyExtractor={(item) => item.value}
-
-                // ListHeaderComponent={`renderHeader`} // Replaceable with `renderHeader`
-                // ListFooterComponent={<Spacer height={48} />}
-                // ListEmptyComponent={`renderEmpty`} // Replaceable with `renderEmpty`
-
-                getItemLayout={(data, index) => ({
-                    length: ITEM_HEIGHT,
-                    offset: ITEM_HEIGHT * index,
-                    index,
-                })} // Replaceable with `itemHeight={ITEM_HEIGHT}`
-                headerHeight={0} // Default 0, need to specify the header height
-                footerHeight={48} // Default 0, need to specify the foorer height
-                sectionHeaderHeight={48}
+                estimatedItemSize={75}
+                keyExtractor={(item, index) => item.type === 'header' ? `header-${index}` : item.value}
+                extraData={selectedInterests}
+                contentContainerStyle={styles.listContentContainer}
             />
         </View>
     );
 };
+
 
 const StepPhoto = () => {
     const [loading, setLoading] = useState(true)
@@ -868,38 +863,51 @@ const StepFinal = () => {
 
 
 const styles = StyleSheet.create({
+    safeArea: {
+        flex: 1,
+        backgroundColor: Colors.light.background,
+    },
     container: {
-        // flex: 1,
-        // padding: 16,
+        flex: 1,
+        width: SCREEN_WIDTH,
+        paddingHorizontal: 16,
     },
-    stepContainer: {
-        // width: '100%',
-        // alignItems: 'center',
+    listContentContainer: {
+        paddingBottom: 16,
     },
-    title: {
-        // fontSize: 24,
-        // marginBottom: 16,
+    sectionHeader: {
+        backgroundColor: Colors.light.background,
+        padding: 8,
+        borderBottomWidth: 1,
+        borderBottomColor: Colors.light.tertiary,
+        width: '100%',
     },
-    formStep: {
-        // width: '100%',
-        // padding: 16,
+    sectionHeaderText: {
+        fontFamily: 'HeadingBold',
+        fontSize: 18,
+        color: Colors.light.accent,
     },
-    input: {
-        // height: 40,
-        // borderColor: 'gray',
-        // borderWidth: 1,
-        // marginBottom: 12,
-        // paddingHorizontal: 8,
-        // width: '100%',
+    checkboxContainer: {
+        width: '100%',
+        paddingVertical: 8,
+    },
+    checkbox: {
+        borderWidth: 1,
+        borderRadius: 8,
+        padding: 12,
+        backgroundColor: Colors.light.background,
+    },
+    checkboxLabel: {
+        fontFamily: 'BodyRegular',
+        fontSize: 16,
+        color: Colors.light.text,
     },
     buttonContainer: {
-        display: 'flex',
         flexDirection: 'row',
         justifyContent: 'space-between',
+        paddingHorizontal: 16,
+        paddingBottom: 16,
         gap: 8,
-        minWidth: screenWidth * 0.5 - 20,
-        marginHorizontal: 16,
-        marginBottom: 16,
     },
 });
 
