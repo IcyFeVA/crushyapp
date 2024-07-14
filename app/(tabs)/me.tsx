@@ -24,7 +24,7 @@ export default function Account() {
             if (!session?.user) throw new Error('No user on the session!')
 
             const { data, error, status } = await supabase
-                .from('profiles')
+                .from('profiles_test')
                 .select('*')
                 .eq('id', session?.user.id)
                 .single()
@@ -63,7 +63,7 @@ export default function Account() {
                 updated_at: new Date(),
             }
 
-            const { error } = await supabase.from('profiles').upsert(updates)
+            const { error } = await supabase.from('profiles_test').upsert(updates)
 
             if (error) {
                 throw error

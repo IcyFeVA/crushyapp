@@ -138,7 +138,7 @@ export default function Auth({ onboarding }: any) {
             return
         }
         if (!passwordRegex.test(password)) {
-            Alert.alert('Password must be at least 6 characters long, contain one capital letter, and include both letters and numbers')
+            Alert.alert('Password', 'Password is too easy to guess. Please use a stronger password. See below for requirements.')
             return
         }
         setLoading(true)

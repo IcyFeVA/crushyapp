@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase';
 export const api = {
   getProfile: async (userId: string) => {
     const { data, error } = await supabase
-      .from('profiles')
+      .from('profiles_test')
       .select('*')
       .eq('id', userId)
       .single();
@@ -14,7 +14,7 @@ export const api = {
 
   updateProfile: async (userId: string, updates: any) => {
     const { data, error } = await supabase
-      .from('profiles')
+      .from('profiles_test')
       .upsert({ id: userId, ...updates })
       .select();
     
@@ -33,6 +33,7 @@ export const api = {
   },
 
   recordMatchAction: async (userId: string, matchedUserId: string, action: 'like' | 'dislike') => {
+    console.log('userId: ', userId, 'matchedUserId: ', matchedUserId, 'action: ', action)
     const { error } = await supabase
       .from('matches')
       .insert({

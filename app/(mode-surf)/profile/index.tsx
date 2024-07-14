@@ -30,7 +30,7 @@ export default function DetailsScreen() {
             setLoading(true)
 
             const { data } = await supabase
-                .from('profiles')
+                .from('profiles_test')
                 .select('*')
                 .eq('id', session?.user.id);
             if (data) {

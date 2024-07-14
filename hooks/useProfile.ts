@@ -12,7 +12,7 @@ export const useProfile = (session: Session | null) => {
             const getProfile = async () => {
                 try {
                     const { data } = await supabase
-                        .from('profiles')
+                        .from('profiles_test')
                         .select('name, avatar_url')
                         .eq('id', session?.user.id)
                         .single();

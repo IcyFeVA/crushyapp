@@ -35,7 +35,7 @@ serve(async (req) => {
 
   // Fetch the push token for the user to be notified
   const { data: userData, error: userError } = await supabase
-    .from('profiles')
+    .from('profiles_test')
     .select('push_token, name')
     .eq('id', user_id)
     .single()
@@ -49,7 +49,7 @@ serve(async (req) => {
 
   // Fetch the name of the user who created the match
   const { data: matchedUserData, error: matchedUserError } = await supabase
-    .from('profiles')
+    .from('profiles_test')
     .select('name')
     .eq('id', matched_user_id)
     .single()

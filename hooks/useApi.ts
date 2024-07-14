@@ -50,6 +50,7 @@ export const usePotentialMatches = () => {
     try {
       const data = await api.getPotentialMatches(session.user.id, limit);
       setMatches(data);
+      console.log('aaaaa///////////////////// ', data)
     } catch (err) {
       setError(err);
     } finally {

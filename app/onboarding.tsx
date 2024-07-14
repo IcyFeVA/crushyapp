@@ -210,7 +210,7 @@ const Onboarding = ({ setShowOnboarding }: { setShowOnboarding: any }) => {
 
         try {
             const { data, error } = await supabase
-                .from('profiles')
+                .from('profiles_test')
                 .update({
                     name: name,
                     age: age,
@@ -692,7 +692,7 @@ const StepPhoto = () => {
                 updated_at: new Date(),
             }
 
-            const { error } = await supabase.from('profiles').upsert(updates)
+            const { error } = await supabase.from('profiles_test').upsert(updates)
 
             if (error) {
                 throw error
