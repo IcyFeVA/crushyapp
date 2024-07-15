@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabase';
 
 export const api = {
+  
   getProfile: async (userId: string) => {
     const { data, error } = await supabase
       .from('profiles_test')
@@ -33,17 +34,20 @@ export const api = {
   },
 
   recordMatchAction: async (userId: string, matchedUserId: string, action: 'like' | 'dislike') => {
-    console.log('userId: ', userId, 'matchedUserId: ', matchedUserId, 'action: ', action)
-    const { error } = await supabase
-      .from('matches')
-      .insert({
-        user1_id: userId,
-        user2_id: matchedUserId,
-        user1_action: action === 'like' ? 1 : 0,
+    const { data, error } = await supabase
+      .rpc('handle_match_action', { 
+        acting_user_id: userId, 
+        target_user_id: matchedUserId 
       });
     
-    if (error) throw error;
+    if (error) {
+      console.error('Error in handle_match_action:', error);
+    } else {
+      console.log('Match action handled, is new match:', data);
+    }
   },
 
-  // Add more API functions as needed
+
+
+
 };
