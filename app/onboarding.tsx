@@ -1,4 +1,4 @@
-import { Image, StyleSheet, Animated, Pressable, Dimensions, Alert, useWindowDimensions, ImageSourcePropType } from 'react-native';
+import { Image, StyleSheet, Animated, Pressable, Dimensions, Alert, useWindowDimensions, ImageSourcePropType, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Session } from '@supabase/supabase-js';
 import { Pageview } from '@/components/ui/Containers';
@@ -20,6 +20,9 @@ import Avatar from '@/components/Avatar';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 // import StepInterests from '@/components/onboarding/StepInterests';
 import { FlashList } from '@shopify/flash-list';
+import * as ImageManipulator from 'expo-image-manipulator';
+import * as ImagePicker from 'expo-image-picker';
+import * as FileSystem from 'expo-file-system';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -672,51 +675,190 @@ const StepInterests = () => {
 };
 
 
+
+
+
+
+
+
+
+
 const StepPhoto = () => {
-    const [loading, setLoading] = useState(true)
-    const [avatarUrl, setAvatarUrl] = useState('')
+    const [loading, setLoading] = useState(false);
+    const [avatarUrl, setAvatarUrl] = useState('');
     const session = useAuth();
+
+    async function pixelateImage(uri: string, pixelBlocks = 15) {
+        try {
+            const { width, height } = await new Promise((resolve, reject) => {
+                Image.getSize(uri,
+                    (width, height) => resolve({ width, height }),
+                    (error) => reject(error)
+                );
+            });
+
+            const newWidth = pixelBlocks;
+            const newHeight = Math.round((height / width) * pixelBlocks);
+
+            const smallImage = await ImageManipulator.manipulateAsync(
+                uri,
+                [{ resize: { width: newWidth, height: newHeight } }],
+                { format: 'jpeg', compress: 1 }
+            );
+
+            const pixelatedImage = await ImageManipulator.manipulateAsync(
+                smallImage.uri,
+                [{ resize: { width, height } }],
+                { format: 'jpeg', compress: 1 }
+            );
+
+            return pixelatedImage.uri;
+        } catch (error) {
+            console.error('Error in pixelateImage:', error);
+            throw error;
+        }
+    }
 
     async function updateProfile({
         avatar_url,
+        avatar_pixelated_url,
     }: {
-        avatar_url: string
+        avatar_url: string;
+        avatar_pixelated_url: string;
     }) {
         try {
-            setLoading(true)
-            if (!session?.user) throw new Error('No user on the session!')
+            setLoading(true);
+            if (!session?.user) throw new Error('No user on the session!');
 
             const updates = {
                 id: session?.user.id,
                 avatar_url,
+                avatar_pixelated_url,
                 updated_at: new Date(),
-            }
+            };
 
-            const { error } = await supabase.from('profiles_test').upsert(updates)
+            const { error } = await supabase.from('profiles_test').upsert(updates);
 
             if (error) {
-                throw error
-            } else {
-
+                throw error;
             }
         } catch (error) {
             if (error instanceof Error) {
-                Alert.alert(error.message)
+                Alert.alert('Profile Update Error', error.message);
+            } else {
+                Alert.alert('Profile Update Error', 'An unknown error occurred');
             }
+            throw error;
         } finally {
-            useOnboardingStore.setState({ photoUploaded: true })
-            setLoading(false)
+            setLoading(false);
         }
+    }
+
+    const handleUpload = async () => {
+        try {
+            setLoading(true);
+
+            const result = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                allowsEditing: true,
+                aspect: [1, 1],
+                quality: 1,
+            });
+
+            if (result.canceled || !result.assets || result.assets.length === 0) {
+                setLoading(false);
+                return;
+            }
+
+            const uri = result.assets[0].uri;
+            console.log('Image picked:', uri);
+
+            // Read the file as base64
+            const base64 = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
+            if (!base64) {
+                throw new Error('Failed to read image file');
+            }
+            console.log('Image read as base64');
+
+            // Upload original image
+            const originalPath = `${Date.now()}_original.jpg`;
+            const { data: originalData, error: originalError } = await supabase.storage
+                .from('avatars')
+                .upload(originalPath, decode(base64), {
+                    contentType: 'image/jpeg'
+                });
+
+            if (originalError) throw originalError;
+            console.log('Original image uploaded');
+
+            // Create and upload pixelated version
+            const pixelatedUri = await pixelateImage(uri, 15);
+            const pixelatedBase64 = await FileSystem.readAsStringAsync(pixelatedUri, { encoding: FileSystem.EncodingType.Base64 });
+            if (!pixelatedBase64) {
+                throw new Error('Failed to read pixelated image file');
+            }
+            console.log('Pixelated image created and read as base64');
+
+            const pixelatedPath = `${Date.now()}_pixelated.jpg`;
+            const { data: pixelatedData, error: pixelatedError } = await supabase.storage
+                .from('avatars')
+                .upload(pixelatedPath, decode(pixelatedBase64), {
+                    contentType: 'image/jpeg'
+                });
+
+            if (pixelatedError) throw pixelatedError;
+            console.log('Pixelated image uploaded');
+
+            // Get public URLs
+            const originalUrl = supabase.storage.from('avatars').getPublicUrl(originalData.path).data.publicUrl;
+            const pixelatedUrl = supabase.storage.from('avatars').getPublicUrl(pixelatedData.path).data.publicUrl;
+
+            // Update profile
+            await updateProfile({ avatar_url: originalUrl, avatar_pixelated_url: pixelatedUrl });
+
+            setAvatarUrl(originalUrl);
+            useOnboardingStore.setState({ photoUploaded: true });
+            console.log('Profile updated successfully');
+        } catch (error) {
+            if (error instanceof Error) {
+                Alert.alert('Upload Error', error.message);
+            } else {
+                Alert.alert('Upload Error', 'An unknown error occurred');
+            }
+            console.error('Error in handleUpload:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Helper function to decode base64
+    function decode(base64: string) {
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+        let bufferLength = base64.length * 0.75,
+            length = base64.length, i, p = 0,
+            encoded1, encoded2, encoded3, encoded4;
+
+        const bytes = new Uint8Array(bufferLength);
+
+        for (i = 0; i < length; i += 4) {
+            encoded1 = chars.indexOf(base64[i]);
+            encoded2 = chars.indexOf(base64[i + 1]);
+            encoded3 = chars.indexOf(base64[i + 2]);
+            encoded4 = chars.indexOf(base64[i + 3]);
+
+            bytes[p++] = (encoded1 << 2) | (encoded2 >> 4);
+            bytes[p++] = ((encoded2 & 15) << 4) | (encoded3 >> 2);
+            bytes[p++] = ((encoded3 & 3) << 6) | (encoded4 & 63);
+        }
+
+        return bytes.buffer;
     }
 
     return (
         <View className='p-6 w-screen'>
             <Spacer height={16} />
-
             <Progress percent={88} />
-
             <Spacer height={48} />
-
             <Text style={defaultStyles.h2}>Your Photo</Text>
             <Spacer height={8} />
             <View>
@@ -724,23 +866,31 @@ const StepPhoto = () => {
                     You can only add one. So, make it count :)
                 </Text>
             </View>
-
             <Spacer height={24} />
-
-            <View className=''>
-                <Avatar
-                    size={80}
-                    url={avatarUrl}
-                    onUpload={(url: string) => {
-                        setAvatarUrl(url)
-                        updateProfile({ avatar_url: url })
-                    }}
-                />
+            <View style={styles.avatarContainer}>
+                {avatarUrl ? (
+                    <Image
+                        source={{ uri: avatarUrl }}
+                        style={styles.avatar}
+                    />
+                ) : (
+                    <TouchableOpacity onPress={handleUpload} disabled={loading}>
+                        <View style={styles.placeholderAvatar}>
+                            <Text>{loading ? 'Uploading...' : 'Tap to upload'}</Text>
+                        </View>
+                    </TouchableOpacity>
+                )}
             </View>
-
         </View>
     );
 };
+
+
+
+
+
+
+
 
 const StepFinal = () => {
 
@@ -908,6 +1058,25 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         paddingBottom: 16,
         gap: 8,
+    },
+    avatarContainer: {
+        alignItems: 'center',
+    },
+    avatar: {
+        width: 200,
+        height: 300,
+        borderRadius: 16,
+        resizeMode: 'cover',
+    },
+    placeholderAvatar: {
+        width: 200,
+        height: 300,
+        borderRadius: 16,
+        backgroundColor: Colors.light.backgroundSecondary,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: Colors.light.tertiary,
     },
 });
 

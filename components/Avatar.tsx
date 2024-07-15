@@ -15,13 +15,30 @@ interface Props {
     onUpload: (filePath: string) => void
 }
 
+function extractFullFilename(url) {
+    // Split the URL by '/' and get the last part
+    const fullFilename = url.split('/').pop();
+
+    // If there's no filename (URL ends with '/'), return null
+    if (!fullFilename) return null;
+
+    // Return the full filename
+    return fullFilename;
+}
+
 export default function Avatar({ url, size = 70, onUpload }: Props) {
     const [uploading, setUploading] = useState(false)
     const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
     const avatarSize = { width: size + '%' }
 
     useEffect(() => {
-        if (url) downloadImage(url)
+        if (url) {
+            if (url.toLowerCase().includes('http')) {
+                downloadImage(extractFullFilename(url))
+            } else {
+                downloadImage(url)
+            }
+        }
     }, [url])
 
     async function downloadImage(path: string) {
