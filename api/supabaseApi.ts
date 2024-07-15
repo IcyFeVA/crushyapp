@@ -37,7 +37,8 @@ export const api = {
     const { data, error } = await supabase
       .rpc('handle_match_action', { 
         acting_user_id: userId, 
-        target_user_id: matchedUserId 
+        target_user_id: matchedUserId,
+        match_action: action === 'like' ? 1 : 0,
       });
     
     if (error) {
