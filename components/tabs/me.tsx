@@ -7,7 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Avatar from '@/components/Avatar'
 
 
-export default function Account() {
+export default function Me() {
     const session = useAuth();
     const [loading, setLoading] = useState(true)
     const [name, setName] = useState('')

@@ -2,7 +2,6 @@ import React, { useCallback, useState, useEffect } from 'react';
 import { Text, View, FlatList, StyleSheet } from 'react-native';
 import { Button, Checkbox } from "react-native-ui-lib";
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
 import { storeData, getData } from '@/utils/storage';
 import { Colors } from '@/constants/Colors';
 import { defaultStyles } from '@/constants/Styles';
@@ -58,7 +57,7 @@ export default function FilterGenderPreference() {
         storeData('genderPreference', { key: '', value: selectedItems })
             .then(() => {
                 console.log('genderPreference:', selectedItems);
-                setTimeout(() => router.dismiss(), 250);
+                // setTimeout(() => router.dismiss(), 250);
             })
             .catch(error => console.error('Failed to save gender preference:', error));
     }, [selectedItems, setSearchFilters]);

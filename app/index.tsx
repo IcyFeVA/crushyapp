@@ -19,8 +19,7 @@ import { AppProvider } from '@/providers/AppProvider';
 import { supabase } from '@/lib/supabase';
 import { get } from 'react-native/Libraries/TurboModule/TurboModuleRegistry';
 import ErrorBoundary from '@/components/ErrorBoundary';
-
-
+import { NavigationContainer } from '@react-navigation/native';
 
 
 
@@ -91,11 +90,13 @@ export default function RootLayout() {
             <GestureHandlerRootView style={{ flex: 1 }}>
                 <ErrorBoundary>
                     <SafeAreaProvider>
+                        {/* <NavigationContainer> */}
                         <RootNavigator
                             session={session}
                             showOnboarding={showOnboarding}
                             setShowOnboarding={setShowOnboarding}
                         />
+                        {/* </NavigationContainer> */}
                     </SafeAreaProvider>
                 </ErrorBoundary>
             </GestureHandlerRootView>

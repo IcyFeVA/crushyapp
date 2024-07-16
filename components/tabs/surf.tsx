@@ -7,7 +7,6 @@ import hobbiesInterests from '@/constants/Interests';
 import { defaultStyles } from '@/constants/Styles';
 import Spacer from '@/components/Spacer';
 import { Chip, Fader } from 'react-native-ui-lib';
-import { router } from 'expo-router';
 import TypewriterEffect from '@/components/CrushyTypewriterEffect';
 import { useNavigation, StackActions } from '@react-navigation/native';
 import { usePotentialMatches, useProfile } from '@/hooks/useApi';
@@ -225,7 +224,7 @@ export default function Surf() {
                             <Text style={styles.buttonFilterText}>Search Filters</Text>
                         </Pressable>
 
-                        <Pressable style={[styles.buttonFilter, defaultStyles.buttonShadow]} onPress={() => { router.push('../') }}>
+                        <Pressable style={[styles.buttonFilter, defaultStyles.buttonShadow]} onPress={() => { }}>
                             <Ionicons name="home" size={16} color={Colors.light.text} style={{ marginTop: 2 }} />
                         </Pressable>
                     </View>

@@ -1,26 +1,26 @@
 // app/profile/_layout.js
 import { TransitionPresets, createStackNavigator } from '@react-navigation/stack';
-import SearchFilters from './searchFilters';
-import Surf from './surf';
-import FilterAgeRange from '../searchFilters/filterAgeRange';
-import FilterGenderPreference from '../searchFilters/filterGenderPreference';
-import FilterStarsign from '../searchFilters/filterStarsign';
-import DetailsScreen from './profile';
+import SearchFilters from '@/app/searchFilters';
+import Dive from './dive';
+import FilterAgeRange from '@/app/searchFilters/filterAgeRange';
+import FilterGenderPreference from '@/app/searchFilters/filterGenderPreference';
+import FilterStarsign from '@/app/searchFilters/filterStarsign';
+import DetailsScreen from '@/app/profile';
 
 
 const Stack = createStackNavigator();
 
 export default function SurfLayout() {
     return (
-        <Stack.Navigator initialRouteName='surf' >
+        <Stack.Navigator initialRouteName='dive' >
             <Stack.Group screenOptions={{ headerShown: false, ...TransitionPresets.ScaleFromCenterAndroid }}>
                 <Stack.Screen
                     name="searchFilters"
                     component={SearchFilters}
                 />
                 <Stack.Screen
-                    name="surf"
-                    component={Surf}
+                    name="Dive"
+                    component={Dive}
                 />
             </Stack.Group>
 

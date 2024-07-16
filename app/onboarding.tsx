@@ -14,17 +14,18 @@ import BigList from "react-native-big-list"
 import { create } from 'zustand';
 import { useShallow } from 'zustand/react/shallow'
 import { supabase } from '@/lib/supabase';
-import { router } from 'expo-router';
+import { NavigationContainer } from '@react-navigation/native';
 import { useAuth } from '@/hooks/useAuth';
 import Avatar from '@/components/Avatar';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-// import StepInterests from '@/components/onboarding/StepInterests';
 import { FlashList } from '@shopify/flash-list';
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
+import { useNavigation } from '@react-navigation/native'
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
 
 const useOnboardingStore = create((set) => ({
     name: '',
@@ -48,7 +49,7 @@ const useOnboardingStore = create((set) => ({
 
 
 
-const Onboarding = ({ setShowOnboarding }: { setShowOnboarding: any }) => {
+export default function Onboarding() {
     const session = useAuth();
     const [currentStep, setCurrentStep] = useState(0);
     const flatListRef = useRef(null);
@@ -893,6 +894,8 @@ const StepPhoto = () => {
 
 
 const StepFinal = () => {
+    //const navigation = useNavigation();
+
 
     const [relationshipType] = useOnboardingStore(
         useShallow((state) => [state.relationship]),
@@ -972,7 +975,7 @@ const StepFinal = () => {
 
         // TODO: save in local storage
 
-        return router.replace('/(tabs)')
+        //navigation.navigate('Home')
     }
 
 
@@ -1080,6 +1083,5 @@ const styles = StyleSheet.create({
     },
 });
 
-export default Onboarding;
 
 

@@ -5,7 +5,6 @@ import Spacer from "./Spacer";
 import React, { useEffect, useRef, useState, useLayoutEffect } from 'react';
 import { Colors } from '@/constants/Colors';
 import { defaultStyles } from '@/constants/Styles';
-import { router } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { getData } from '@/utils/storage';
 
@@ -80,7 +79,7 @@ export default function SurfButtomSheet({ closeAction }) {
 
                     <Spacer height={24} />
 
-                    <ListItem onPress={() => router.push('(modals)/setGenderPreference')} style={[styles.bottomSheetListItem, styles.firstItem]}>
+                    <ListItem onPress={() => console.log('(modals)/setGenderPreference')} style={[styles.bottomSheetListItem, styles.firstItem]}>
                         <ListItem.Part containerStyle={styles.bottomSheetListItemInner}>
                             <Text style={styles.listItemLabel}>Gender</Text>
                             <Text style={[styles.listItemLabel, styles.active]}>{genderPreferenceValue}</Text>

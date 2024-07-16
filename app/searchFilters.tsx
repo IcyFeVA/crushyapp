@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { Colors } from '@/constants/Colors'
 import { Button, Card, ListItem } from 'react-native-ui-lib'
 import Spacer from '@/components/Spacer'
-import { router, useFocusEffect } from 'expo-router'
+import { useFocusEffect } from 'expo-router'
 import { defaultStyles } from '@/constants/Styles'
 import { getData, resetUserSearchFilters } from '@/utils/storage'
 import AsyncStorage from '@react-native-async-storage/async-storage'
@@ -124,7 +124,7 @@ export default function SearchFilters() {
                     <Button onPress={() => resetSettings()} style={[defaultStyles.button, defaultStyles.buttonShadow, { flex: 1 }]}>
                         <Text style={defaultStyles.buttonLabel}>Reset</Text>
                     </Button>
-                    <Button onPress={() => router.dismiss()} style={[defaultStyles.button, defaultStyles.buttonShadow, { flex: 1 }]}>
+                    <Button onPress={() => { }} style={[defaultStyles.button, defaultStyles.buttonShadow, { flex: 1 }]}>
                         <Text style={defaultStyles.buttonLabel}>Save</Text>
                     </Button>
                 </View>

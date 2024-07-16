@@ -2,7 +2,6 @@ import React, { useCallback } from 'react';
 import { Text, View, FlatList, StyleSheet } from 'react-native';
 import { RadioButton } from "react-native-ui-lib";
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
 import { storeData } from '@/utils/storage';
 import { Colors } from '@/constants/Colors';
 import { defaultStyles } from '@/constants/Styles';
@@ -40,7 +39,7 @@ export default function FilterStarSign() {
         storeData('starSignPreference', { key, value })
             .then(() => {
                 console.log('starSignPreference:', key, value);
-                setTimeout(() => router.dismiss(), 250);
+                // setTimeout(() => router.dismiss(), 250);
             })
             .catch(error => console.error('Failed to save star sign preference:', error));
     }, [setSearchFilters]);

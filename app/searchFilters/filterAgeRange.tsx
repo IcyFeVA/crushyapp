@@ -1,7 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { Text, View, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
 import { storeData } from '@/utils/storage';
 import { Colors } from '@/constants/Colors';
 import { defaultStyles } from '@/constants/Styles';
@@ -43,7 +42,7 @@ export default function FilterAgeRange() {
         storeData('ageRange', { min: localMinAge, max: localMaxAge })
             .then(() => {
                 console.log('ageRange:', ageRangeValue);
-                router.dismiss();
+                // router.dismiss();
             })
             .catch(error => console.error('Failed to save age range:', error));
     }, [localMinAge, localMaxAge]);

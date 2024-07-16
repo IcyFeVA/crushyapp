@@ -1,7 +1,6 @@
 import { Colors } from '@/constants/Colors';
 import { defaultStyles } from '@/constants/Styles';
 import { Ionicons } from '@expo/vector-icons';
-import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { Image, View, Text, StyleSheet, ScrollView, Pressable, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -22,7 +21,6 @@ export default function DetailsScreen() {
     const [hasSharedInterests, setHasSharedInterests] = useState<boolean>(false);
     const [myData, setMyData] = useState<any>({});
     const route = useRoute();
-    const { id } = route.params;
 
     useEffect(() => {
         const fetchMe = async () => {
@@ -146,7 +144,7 @@ Let me know what  you like and let’s get connected here on this cool platform!
                 {loading && <ActivityIndicator size="large" color={Colors.light.accent} style={{ position: 'absolute', top: 32, left: 32, zIndex: 2 }} />}
                 <View style={styles.imageContainer}>
                     <Image source={{ uri: imageUrl }} style={styles.image} />
-                    <Pressable onPress={() => { router.dismiss(1) }} style={[styles.buttonCollapse, defaultStyles.buttonShadow]} >
+                    <Pressable onPress={() => { }} style={[styles.buttonCollapse, defaultStyles.buttonShadow]} >
                         <Ionicons name="chevron-up" size={24} color={Colors.light.accent} />
                     </Pressable>
                 </View>
