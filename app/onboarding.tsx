@@ -23,6 +23,9 @@ import * as ImageManipulator from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
 import { useNavigation } from '@react-navigation/native'
+import { useAppContext } from '@/providers/AppProvider';
+import { storeData } from '@/utils/storage';
+import { isLoading } from 'expo-font';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -53,6 +56,7 @@ export default function Onboarding() {
     const session = useAuth();
     const [currentStep, setCurrentStep] = useState(0);
     const flatListRef = useRef(null);
+    const { isLoading, setIsLoading } = useAppContext();
     const [listKey, setListKey] = useState(0); // used to force re-render of FlatList
     const [name, age, gender, pronouns, relationship, genderPreferences, interests, photoUploaded, dataUploaded, onboardingCompleted] = useOnboardingStore(
         useShallow((state) => [state.name, state.age, state.gender, state.pronouns, state.relationship, state.genderPreferences, state.interests, state.photoUploaded, state.dataUploaded, state.onboardingCompleted]),
@@ -260,13 +264,13 @@ export default function Onboarding() {
                         />
                         <View style={styles.buttonContainer}>
                             {currentStep > 0 ? (
-                                <Button onPress={handleBack} style={[defaultStyles.buttonSecondary, defaultStyles.buttonShadow]}>
+                                <Button onPress={handleBack} style={[defaultStyles.buttonSecondary, defaultStyles.buttonShadow]} disabled={isLoading}>
                                     <Text style={defaultStyles.buttonSecondaryLabel}>Back</Text>
                                 </Button>
                             ) : (
                                 <View style={{ width: 16 }}></View>
                             )}
-                            <Button onPress={handleNext} style={[defaultStyles.button, defaultStyles.buttonShadow]}>
+                            <Button onPress={handleNext} style={[defaultStyles.button, defaultStyles.buttonShadow]} disabled={isLoading}>
                                 <Text style={defaultStyles.buttonLabel}>Next</Text>
                             </Button>
                         </View>
@@ -274,7 +278,7 @@ export default function Onboarding() {
                 )}
                 <Toast config={toastConfig} />
             </View>
-        </SafeAreaView>
+        </SafeAreaView >
     );
 };
 
@@ -685,7 +689,7 @@ const StepInterests = () => {
 
 
 const StepPhoto = () => {
-    const [loading, setLoading] = useState(false);
+    const { isLoading, setIsLoading } = useAppContext();
     const [avatarUrl, setAvatarUrl] = useState('');
     const session = useAuth();
 
@@ -728,7 +732,7 @@ const StepPhoto = () => {
         avatar_pixelated_url: string;
     }) {
         try {
-            setLoading(true);
+            setIsLoading(true);
             if (!session?.user) throw new Error('No user on the session!');
 
             const updates = {
@@ -751,13 +755,13 @@ const StepPhoto = () => {
             }
             throw error;
         } finally {
-            setLoading(false);
+            setIsLoading(false);
         }
     }
 
     const handleUpload = async () => {
         try {
-            setLoading(true);
+            setIsLoading(true);
 
             const result = await ImagePicker.launchImageLibraryAsync({
                 mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -767,7 +771,7 @@ const StepPhoto = () => {
             });
 
             if (result.canceled || !result.assets || result.assets.length === 0) {
-                setLoading(false);
+                setIsLoading(false);
                 return;
             }
 
@@ -828,7 +832,7 @@ const StepPhoto = () => {
             }
             console.error('Error in handleUpload:', error);
         } finally {
-            setLoading(false);
+            setIsLoading(false);
         }
     };
 
@@ -875,9 +879,9 @@ const StepPhoto = () => {
                         style={styles.avatar}
                     />
                 ) : (
-                    <TouchableOpacity onPress={handleUpload} disabled={loading}>
+                    <TouchableOpacity onPress={handleUpload} disabled={isLoading}>
                         <View style={styles.placeholderAvatar}>
-                            <Text>{loading ? 'Uploading...' : 'Tap to upload'}</Text>
+                            <Text>{isLoading ? 'Uploading...' : 'Tap to upload'}</Text>
                         </View>
                     </TouchableOpacity>
                 )}
@@ -894,7 +898,8 @@ const StepPhoto = () => {
 
 
 const StepFinal = () => {
-    //const navigation = useNavigation();
+    const navigation = useNavigation();
+    const { showOnboarding, setShowOnboarding } = useAppContext();
 
 
     const [relationshipType] = useOnboardingStore(
@@ -970,12 +975,12 @@ const StepFinal = () => {
         );
     };
 
-    const handleDone = () => {
-        useOnboardingStore.setState({ dataUploaded: true })
+    const handleDone = async () => {
+        useOnboardingStore.setState({ dataUploaded: true, onboardingCompleted: true });
 
-        // TODO: save in local storage
-
-        //navigation.navigate('Home')
+        console.log('onboarding done, saving it in storage');
+        await storeData('onboardingComplete', true);
+        setShowOnboarding(false)
     }
 
 

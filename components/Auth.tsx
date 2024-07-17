@@ -23,7 +23,7 @@ export default function Auth({ onboarding }: any) {
     const { colorScheme, setColorScheme } = useColorScheme();
 
     const [mode, setMode] = useState('welcome');
-    const [email, setEmail] = useState('onboarding@crushy.ca')
+    const [email, setEmail] = useState('android@mail.com')
     const [password, setPassword] = useState('Marsmx23!')
     const [loading, setLoading] = useState(false)
     const [showPassword, setShowPassword] = useState(false)

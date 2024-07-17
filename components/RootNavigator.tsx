@@ -8,6 +8,12 @@ import { useNavigation } from '@react-navigation/native'
 // import { BlurView } from 'expo-blur';
 import Me from '@/components/tabs/me';
 import Surf from '@/components/tabs/surf';
+import Onboarding from '@/app/onboarding';
+import { useProfile } from '@/hooks/useProfile';
+import { useAppContext } from '@/providers/AppProvider';
+import { clearAllStorage, getData, storeData } from '@/utils/storage';
+import { useEffect } from 'react';
+import { supabase } from '@/lib/supabase';
 
 const tabIcons = {
     homeActive: require('@/assets/images/icons/tab-home-active.png'),
@@ -88,10 +94,62 @@ function TabNavigator() {
 }
 
 export default function RootNavigator({ session }) {
+    const { showOnboarding, setShowOnboarding } = useAppContext();
+
+    useEffect(() => {
+        // clearAllStorage()
+        // return;
+
+        const checkIfOnboardingDone = async () => {
+            try {
+                const onboardingComplete = await getData('onboardingComplete');
+
+                if (onboardingComplete === undefined) {
+                    console.log('onboarding status undefined in storage');
+
+                    const getProfile = async () => {
+                        try {
+                            const { data } = await supabase
+                                .from('profiles_test')
+                                .select('name')
+                                .eq('id', session?.user.id)
+                                .single();
+
+                            if (data) {
+                                if (data?.name != null) {
+                                    console.log('onboarding done, saving it in storage');
+                                    await storeData('onboardingComplete', true);
+                                } else {
+                                    console.log('onboarding not done');
+                                    setShowOnboarding(true);
+                                }
+                            }
+
+                        } catch (error: any) {
+                            console.log('Error getting profile:', error);
+                        }
+                    };
+
+                    getProfile();
+
+
+                } else {
+                    console.log('onboarding status found in storage', onboardingComplete);
+                }
+            } catch (error) {
+                console.error('Error checking onboarding status:', error);
+            }
+        };
+
+        if (session) {
+            checkIfOnboardingDone();
+        }
+    }, [session?.user.id]);
+
     return (
-        <Stack.Navigator>
+        <Stack.Navigator initialRouteName='Main'>
             {session ? (
-                <Stack.Screen name="Main" component={TabNavigator} options={{ headerShown: false }} />
+                showOnboarding === true ? <Stack.Screen name="Onboarding" component={Onboarding} options={{ headerShown: false }} /> : <Stack.Screen name="Main" component={TabNavigator} options={{ headerShown: false }} />
             ) : (
                 <Stack.Screen name="Auth" component={Auth} options={{ headerShown: false }} />
             )}

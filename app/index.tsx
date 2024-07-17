@@ -14,8 +14,8 @@ import { Platform } from 'react-native';
 import { MMKV } from 'react-native-mmkv'
 import hobbiesInterests from '@/constants/Interests'
 import { useNotifications } from '@/hooks/useNotifications';
-import { clearAllStorage, getData, resetUserSearchFilters } from '@/utils/storage';
-import { AppProvider } from '@/providers/AppProvider';
+import { clearAllStorage, getData, storeData, resetUserSearchFilters } from '@/utils/storage';
+import { AppProvider, useAppContext } from '@/providers/AppProvider';
 import { supabase } from '@/lib/supabase';
 import { get } from 'react-native/Libraries/TurboModule/TurboModuleRegistry';
 import ErrorBoundary from '@/components/ErrorBoundary';
@@ -32,7 +32,7 @@ if (Platform.OS != 'ios') {
 
 export default function RootLayout() {
     const session = useAuth();
-    const [showOnboarding, setShowOnboarding] = useState(useProfile(session));
+    const [onboardingDone, setOnboardingDone] = useState(false);
     const { expoPushToken, notification, matchNotifications } = useNotifications();
     const [loaded, error] = useFonts({
         HeadingBold: require('@/assets/fonts/RobotoSlab-Bold.ttf'),
@@ -53,11 +53,18 @@ export default function RootLayout() {
         if (error) throw error;
     }, [error]);
 
+
+
+
+
+
+
     useEffect(() => {
         if (loaded) {
             SplashScreen.hideAsync();
 
-            //clearAllStorage()
+            // clearAllStorage()
+            // return;
 
             getData('genderPreference').then(genderPreference => {
                 if (genderPreference === undefined) {
@@ -67,7 +74,6 @@ export default function RootLayout() {
                     console.log('search preferences found', genderPreference)
                 }
             })
-
 
         }
     }, [loaded]);
@@ -85,6 +91,7 @@ export default function RootLayout() {
         return null;
     }
 
+
     return (
         <AppProvider>
             <GestureHandlerRootView style={{ flex: 1 }}>
@@ -93,8 +100,6 @@ export default function RootLayout() {
                         {/* <NavigationContainer> */}
                         <RootNavigator
                             session={session}
-                            showOnboarding={showOnboarding}
-                            setShowOnboarding={setShowOnboarding}
                         />
                         {/* </NavigationContainer> */}
                     </SafeAreaProvider>

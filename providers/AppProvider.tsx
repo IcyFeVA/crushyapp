@@ -15,10 +15,18 @@ interface SearchFilters {
   starSignPreference: FilterPreference;
 }
 
+
+
 interface AppContextType {
   searchFilters: SearchFilters;
   setSearchFilters: React.Dispatch<React.SetStateAction<SearchFilters>>;
   resetFilters: () => void;
+
+  showOnboarding: boolean;
+  setShowOnboarding: React.Dispatch<React.SetStateAction<boolean>>;
+
+  isLoading: boolean;
+  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const defaultSearchFilters: SearchFilters = {
@@ -32,6 +40,8 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [searchFilters, setSearchFilters] = useState<SearchFilters>(defaultSearchFilters);
+  const [showOnboarding, setShowOnboarding] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const resetFilters = () => {
     console.log('Resetting filters');
@@ -43,6 +53,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       searchFilters,
       setSearchFilters,
       resetFilters,
+      showOnboarding,
+      setShowOnboarding,
+      isLoading,
+      setIsLoading,
     }}>
       {children}
     </AppContext.Provider>

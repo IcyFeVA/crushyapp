@@ -5,7 +5,7 @@ import { Alert } from 'react-native';
 import { Session } from '@supabase/supabase-js';
 
 export const useProfile = (session: Session | null) => {
-    const [showOnboarding, setShowOnboarding] = useState<boolean | null>(null);
+    const [onboardingDone, setOnboardingDone] = useState<boolean>(false);
 
     useEffect(() => {
         if (session) {
@@ -13,12 +13,16 @@ export const useProfile = (session: Session | null) => {
                 try {
                     const { data } = await supabase
                         .from('profiles_test')
-                        .select('name, avatar_url')
+                        .select('name')
                         .eq('id', session?.user.id)
                         .single();
 
-                    setShowOnboarding(data?.name === null);
-                } catch (error: any) {
+                        if(data) {
+                            console.log('database data received', data)
+                            setOnboardingDone(data?.name != null);
+                        }
+                    
+                } catch (error: any) { 
                     Alert.alert(error.message);
                 }
             };
@@ -27,5 +31,5 @@ export const useProfile = (session: Session | null) => {
         }
     }, [session]);
 
-    return showOnboarding;
+    return onboardingDone;
 };
