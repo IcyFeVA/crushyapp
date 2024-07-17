@@ -7,6 +7,7 @@ import { defaultStyles } from '@/constants/Styles';
 import Spacer from "@/components/Spacer";
 import { Button, Slider } from 'react-native-ui-lib';
 import { useAppContext } from '@/providers/AppProvider';
+import { useNavigation } from '@react-navigation/native';
 
 const MIN_AGE = 18;
 const MAX_AGE = 100;
@@ -15,6 +16,7 @@ export default function FilterAgeRange() {
     const { searchFilters, setSearchFilters } = useAppContext();
     const [localMinAge, setLocalMinAge] = useState(searchFilters?.ageRange?.min ?? MIN_AGE);
     const [localMaxAge, setLocalMaxAge] = useState(searchFilters?.ageRange?.max ?? MAX_AGE);
+    const navigation = useNavigation();
 
     useEffect(() => {
         if (searchFilters?.ageRange.min && searchFilters?.ageRange.max) {
@@ -42,7 +44,7 @@ export default function FilterAgeRange() {
         storeData('ageRange', { min: localMinAge, max: localMaxAge })
             .then(() => {
                 console.log('ageRange:', ageRangeValue);
-                // router.dismiss();
+                navigation.goBack();
             })
             .catch(error => console.error('Failed to save age range:', error));
     }, [localMinAge, localMaxAge]);

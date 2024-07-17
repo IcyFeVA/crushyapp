@@ -7,6 +7,7 @@ import { Colors } from '@/constants/Colors';
 import { defaultStyles } from '@/constants/Styles';
 import Spacer from "@/components/Spacer";
 import { useAppContext } from '@/providers/AppProvider';
+import { useNavigation } from '@react-navigation/native'
 
 type ItemData = {
     id: string;
@@ -28,6 +29,7 @@ const DATA: ItemData[] = [
 export default function FilterGenderPreference() {
     const { searchFilters, setSearchFilters } = useAppContext();
     const [selectedItems, setSelectedItems] = useState<string[]>([]);
+    const navigation = useNavigation();
 
     useEffect(() => {
         const getSelectedItems = async () => {
@@ -57,7 +59,7 @@ export default function FilterGenderPreference() {
         storeData('genderPreference', { key: '', value: selectedItems })
             .then(() => {
                 console.log('genderPreference:', selectedItems);
-                // setTimeout(() => router.dismiss(), 250);
+                setTimeout(() => navigation.goBack(), 250);
             })
             .catch(error => console.error('Failed to save gender preference:', error));
     }, [selectedItems, setSearchFilters]);

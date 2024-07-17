@@ -7,6 +7,7 @@ import { Colors } from '@/constants/Colors';
 import { defaultStyles } from '@/constants/Styles';
 import Spacer from "@/components/Spacer";
 import { useAppContext } from '@/providers/AppProvider';
+import { useNavigation } from '@react-navigation/native'
 
 type ItemData = {
     id: string;
@@ -30,6 +31,7 @@ const DATA: ItemData[] = [
 
 export default function FilterStarSign() {
     const { searchFilters, setSearchFilters } = useAppContext();
+    const navigation = useNavigation();
 
     const handlePress = useCallback((key: string, value: string) => {
         setSearchFilters(prevFilters => ({
@@ -39,7 +41,7 @@ export default function FilterStarSign() {
         storeData('starSignPreference', { key, value })
             .then(() => {
                 console.log('starSignPreference:', key, value);
-                // setTimeout(() => router.dismiss(), 250);
+                setTimeout(() => navigation.goBack(), 250);
             })
             .catch(error => console.error('Failed to save star sign preference:', error));
     }, [setSearchFilters]);

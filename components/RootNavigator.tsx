@@ -1,5 +1,5 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { createStackNavigator } from '@react-navigation/stack';
+import { createStackNavigator, TransitionPresets } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
 import Auth from '@/components/Auth';
 import { View, Text, Image, Pressable, Platform } from 'react-native';
@@ -9,6 +9,10 @@ import { useNavigation } from '@react-navigation/native'
 import Me from '@/components/tabs/me';
 import Surf from '@/components/tabs/surf';
 import Onboarding from '@/app/onboarding';
+import SearchFilters from '@/app/searchFilters';
+import FilterGenderPreference from '@/app/searchFilters/filterGenderPreference';
+import FilterStarsign from '@/app/searchFilters/filterStarsign';
+import FilterAgeRange from '@/app/searchFilters/filterAgeRange';
 import { useProfile } from '@/hooks/useProfile';
 import { useAppContext } from '@/providers/AppProvider';
 import { clearAllStorage, getData, storeData } from '@/utils/storage';
@@ -36,6 +40,10 @@ function HomeScreen() {
     );
 }
 
+function DummySurf() {
+    return <View />;
+}
+
 function SettingsScreen() {
     return (
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
@@ -43,6 +51,18 @@ function SettingsScreen() {
         </View>
     );
 }
+
+const SettingsStack = createStackNavigator();
+
+function SettingsStackScreen() {
+    return (
+        <SettingsStack.Navigator>
+            <SettingsStack.Screen name="Settings" component={SettingsScreen} />
+            <SettingsStack.Screen name="Details" component={SettingsScreen} />
+        </SettingsStack.Navigator>
+    );
+}
+
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -68,7 +88,7 @@ function TabNavigator() {
                         iconSource = focused ? tabIcons.meActive : tabIcons.meInactive;
                     } else if (route.name === 'Explore') {
                         return (
-                            <Pressable style={{ marginTop: Platform.OS === 'ios' ? 0 : -4 }} onPress={() => { navigation.navigate('Explore') }}>
+                            <Pressable style={{ marginTop: Platform.OS === 'ios' ? 0 : -4 }} onPress={() => { navigation.navigate('Surf') }}>
                                 <Image source={require('@/assets/images/icons/tab-explore.png')} />
                             </Pressable>
                         )
@@ -86,7 +106,7 @@ function TabNavigator() {
         >
             <Tab.Screen name="Home" component={HomeScreen} />
             <Tab.Screen name="History" component={SettingsScreen} />
-            <Tab.Screen name="Explore" component={Surf} />
+            <Tab.Screen name="Explore" component={DummySurf} />
             <Tab.Screen name="Inbox" component={SettingsScreen} options={{ tabBarBadge: 6 }} />
             <Tab.Screen name="Me" component={Me} />
         </Tab.Navigator>
@@ -149,7 +169,29 @@ export default function RootNavigator({ session }) {
     return (
         <Stack.Navigator initialRouteName='Main'>
             {session ? (
-                showOnboarding === true ? <Stack.Screen name="Onboarding" component={Onboarding} options={{ headerShown: false }} /> : <Stack.Screen name="Main" component={TabNavigator} options={{ headerShown: false }} />
+                showOnboarding === true ? <Stack.Screen name="Onboarding" component={Onboarding} options={{ headerShown: false }} /> : (
+                    <Stack.Group>
+                        <Stack.Group screenOptions={{ headerShown: false, ...TransitionPresets.BottomSheetAndroid }}>
+                            <Stack.Screen name="Main" component={TabNavigator} />
+                            <Stack.Screen name="Surf" component={Surf} />
+                            <Stack.Screen name="SearchFilters" component={SearchFilters} />
+                        </Stack.Group>
+                        <Stack.Group screenOptions={{ headerShown: false, ...TransitionPresets.SlideFromRightIOS }}>
+                            <Stack.Screen
+                                name="filterGenderPreference"
+                                component={FilterGenderPreference}
+                            />
+                            <Stack.Screen
+                                name="filterStarsign"
+                                component={FilterStarsign}
+                            />
+                            <Stack.Screen
+                                name="filterAgeRange"
+                                component={FilterAgeRange}
+                            />
+                        </Stack.Group>
+                    </Stack.Group>
+                )
             ) : (
                 <Stack.Screen name="Auth" component={Auth} options={{ headerShown: false }} />
             )}

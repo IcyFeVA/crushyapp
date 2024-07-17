@@ -124,7 +124,7 @@ export default function SearchFilters() {
                     <Button onPress={() => resetSettings()} style={[defaultStyles.button, defaultStyles.buttonShadow, { flex: 1 }]}>
                         <Text style={defaultStyles.buttonLabel}>Reset</Text>
                     </Button>
-                    <Button onPress={() => { }} style={[defaultStyles.button, defaultStyles.buttonShadow, { flex: 1 }]}>
+                    <Button onPress={() => { navigation.goBack() }} style={[defaultStyles.button, defaultStyles.buttonShadow, { flex: 1 }]}>
                         <Text style={defaultStyles.buttonLabel}>Save</Text>
                     </Button>
                 </View>

@@ -219,12 +219,12 @@ export default function Surf() {
                     <Image source={require('@/assets/images/logo/logo_crushy.png')} style={styles.logo} />
 
                     <View style={{ display: 'flex', flexDirection: 'row', gap: 16 }}>
-                        <Pressable style={[styles.buttonFilter, defaultStyles.buttonShadow]} onPress={() => { navigation.navigate('searchFilters') }}>
+                        <Pressable style={[styles.buttonFilter, defaultStyles.buttonShadow]} onPress={() => { navigation.navigate('SearchFilters') }}>
                             <Ionicons name="search" size={12} color={Colors.light.text} style={{ marginTop: 2 }} />
                             <Text style={styles.buttonFilterText}>Search Filters</Text>
                         </Pressable>
 
-                        <Pressable style={[styles.buttonFilter, defaultStyles.buttonShadow]} onPress={() => { }}>
+                        <Pressable style={[styles.buttonFilter, defaultStyles.buttonShadow]} onPress={() => { navigation.goBack() }}>
                             <Ionicons name="home" size={16} color={Colors.light.text} style={{ marginTop: 2 }} />
                         </Pressable>
                     </View>
