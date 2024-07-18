@@ -8,6 +8,7 @@ import { useNavigation } from '@react-navigation/native'
 // import { BlurView } from 'expo-blur';
 import Me from '@/components/tabs/me';
 import Surf from '@/components/tabs/surf';
+import Dive from '@/components/tabs/dive';
 import Profile from '@/app/profile';
 import Onboarding from '@/app/onboarding';
 import SearchFilters from '@/app/searchFilters';
@@ -89,7 +90,7 @@ function TabNavigator() {
                         iconSource = focused ? tabIcons.meActive : tabIcons.meInactive;
                     } else if (route.name === 'Explore') {
                         return (
-                            <Pressable style={{ marginTop: Platform.OS === 'ios' ? 0 : -4 }} onPress={() => { navigation.navigate('Surf') }}>
+                            <Pressable style={{ marginTop: Platform.OS === 'ios' ? 0 : -4 }} onPress={() => { navigation.navigate('Dive') }}>
                                 <Image source={require('@/assets/images/icons/tab-explore.png')} />
                             </Pressable>
                         )
@@ -175,6 +176,7 @@ export default function RootNavigator({ session }) {
                         <Stack.Group screenOptions={{ headerShown: false, ...TransitionPresets.BottomSheetAndroid }}>
                             <Stack.Screen name="Main" component={TabNavigator} />
                             <Stack.Screen name="Surf" component={Surf} options={{ gestureEnabled: true, gestureDirection: 'vertical', gestureResponseDistance: 400 }} />
+                            <Stack.Screen name="Dive" component={Dive} />
                             <Stack.Screen name="Profile" component={Profile} />
                             <Stack.Screen name="SearchFilters" component={SearchFilters} options={{ gestureEnabled: true, gestureDirection: 'vertical', gestureResponseDistance: 400 }} />
                         </Stack.Group>

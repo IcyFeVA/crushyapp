@@ -33,6 +33,16 @@ export const api = {
     return data;
   },
 
+  getPotentialDiveMatches: async (userId: string, limit: number) => {
+    const { data, error } = await supabase.rpc('get_potential_dive_matches', {
+      user_id: userId,
+      limit_count: limit,
+    });
+    
+    if (error) throw error;
+    return data;
+  },
+
   recordMatchAction: async (userId: string, matchedUserId: string, action: 'like' | 'dislike') => {
     const { data, error } = await supabase
       .rpc('handle_match_action', { 

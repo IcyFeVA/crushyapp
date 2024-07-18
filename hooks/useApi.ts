@@ -58,6 +58,19 @@ export const usePotentialMatches = () => {
     }
   }, [session]);
 
+  const fetchDiveMatches = useCallback(async (limit = 10) => {
+    if (!session?.user?.id) return;
+    setLoading(true);
+    try {
+      const data = await api.getPotentialDiveMatches(session.user.id, limit);
+      setMatches(data);
+    } catch (err) {
+      setError(err);
+    } finally {
+      setLoading(false);
+    }
+  }, [session]);
+
   const recordAction = useCallback(async (matchedUserId: string, action: 'like' | 'dislike') => {
     if (!session?.user?.id) return;
     try {
@@ -67,6 +80,6 @@ export const usePotentialMatches = () => {
     }
   }, [session]);
 
-  return { matches, loading, error, fetchMatches, recordAction };
+  return { matches, loading, error, fetchMatches, fetchDiveMatches, recordAction };
 };
 
