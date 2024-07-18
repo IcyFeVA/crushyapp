@@ -12,15 +12,15 @@ import Spacer from '@/components/Spacer';
 import { useRoute } from '@react-navigation/native';
 
 
-export default function DetailsScreen() {
+export default function Profile({ route, navigation }) {
     const session = useAuth();
-    const { imageUrl } = useLocalSearchParams();
+    const { id, imageUrl } = route.params;
     const [loading, setLoading] = useState<boolean>(false);
     const [user, setUser] = useState<any[]>({ name: '', age: '0', interests: [] });
     const interestsList = useMemo(() => flattenArray(hobbiesInterests), []);
     const [hasSharedInterests, setHasSharedInterests] = useState<boolean>(false);
     const [myData, setMyData] = useState<any>({});
-    const route = useRoute();
+
 
     useEffect(() => {
         const fetchMe = async () => {
@@ -144,7 +144,7 @@ Let me know what  you like and let’s get connected here on this cool platform!
                 {loading && <ActivityIndicator size="large" color={Colors.light.accent} style={{ position: 'absolute', top: 32, left: 32, zIndex: 2 }} />}
                 <View style={styles.imageContainer}>
                     <Image source={{ uri: imageUrl }} style={styles.image} />
-                    <Pressable onPress={() => { }} style={[styles.buttonCollapse, defaultStyles.buttonShadow]} >
+                    <Pressable onPress={() => { navigation.pop() }} style={[styles.buttonCollapse, defaultStyles.buttonShadow]} >
                         <Ionicons name="chevron-up" size={24} color={Colors.light.accent} />
                     </Pressable>
                 </View>

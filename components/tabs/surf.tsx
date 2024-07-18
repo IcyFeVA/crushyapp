@@ -240,11 +240,11 @@ export default function Surf() {
                         }}
                     />
 
-                    <Pressable onPress={() => { navigation.navigate('Profile', { id: currentMatch.id, imageUrl: imageUrl }) }} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'absolute', left: 0, top: 0, width: '100%', height: '100%' }}>
+                    {/* <Pressable onPress={() => { navigation.navigate('Profile', { id: currentMatch.id, imageUrl: imageUrl }) }} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'absolute', left: 0, top: 0, width: '100%', height: '100%' }}>
                         <View style={{ width: '100%', height: '66%' }} />
-                    </Pressable>
+                    </Pressable> */}
 
-                    <Fader visible position={Fader.position.BOTTOM} tintColor={'#282828'} size={150} />
+                    <Fader visible position={Fader.position.BOTTOM} tintColor={'#282828'} size={222} />
 
                     {loading && <ActivityIndicator size="large" color={Colors.light.primary} style={styles.loader} />}
 

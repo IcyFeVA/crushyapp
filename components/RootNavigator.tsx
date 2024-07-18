@@ -8,6 +8,7 @@ import { useNavigation } from '@react-navigation/native'
 // import { BlurView } from 'expo-blur';
 import Me from '@/components/tabs/me';
 import Surf from '@/components/tabs/surf';
+import Profile from '@/app/profile';
 import Onboarding from '@/app/onboarding';
 import SearchFilters from '@/app/searchFilters';
 import FilterGenderPreference from '@/app/searchFilters/filterGenderPreference';
@@ -173,8 +174,9 @@ export default function RootNavigator({ session }) {
                     <Stack.Group>
                         <Stack.Group screenOptions={{ headerShown: false, ...TransitionPresets.BottomSheetAndroid }}>
                             <Stack.Screen name="Main" component={TabNavigator} />
-                            <Stack.Screen name="Surf" component={Surf} />
-                            <Stack.Screen name="SearchFilters" component={SearchFilters} />
+                            <Stack.Screen name="Surf" component={Surf} options={{ gestureEnabled: true, gestureDirection: 'vertical', gestureResponseDistance: 400 }} />
+                            <Stack.Screen name="Profile" component={Profile} />
+                            <Stack.Screen name="SearchFilters" component={SearchFilters} options={{ gestureEnabled: true, gestureDirection: 'vertical', gestureResponseDistance: 400 }} />
                         </Stack.Group>
                         <Stack.Group screenOptions={{ headerShown: false, ...TransitionPresets.SlideFromRightIOS }}>
                             <Stack.Screen
