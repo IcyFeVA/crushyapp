@@ -144,11 +144,30 @@ export default function Dive() {
 
 
 
+    const bioText = `I\’m looking for a new partner, perhaps a partner for life. I never used a dating app before, but I heard good things about this one.
+
+I\’m a great listener, and a fantastic cook. I love walking along the beach, and deep conversations.
+\nTalking is important to me. I need to be able to talk about anything with you.
+
+I also love dogs and cats, though I don’t have any pets at the moment. But please keep away snakes, spiders and any kind of insects! I\’m afraid I will get a heart attack with those.
+
+Videogames is also something that is important to me. I play mostly online, to not feel alone all the time. I enjoy board games as well, and TCG\’s.
+
+When it comes to music, I like most pop bands and dance music. My favorite are Christina Aguilera, Taylor Swift, and the Woodys.
+
+Let me know what  you like and let’s get connected here on this cool platform!`
+
+
+
+
+
+
+
     if (error) {
         return (
             <SafeAreaView style={styles.container}>
                 <View style={styles.errorContainer}>
-                    <Text style={styles.errorText}>An error occurred. Please try again later.</Text>
+                    <Text style={styles.errorText}>`An error occurred. Please try again later. ${error}`</Text>
                 </View>
             </SafeAreaView>
         );
@@ -174,61 +193,78 @@ export default function Dive() {
 
     return (
         <SafeAreaView style={styles.container}>
+
             <View style={styles.innerContainer}>
                 <View style={styles.header}>
                     <Image source={require('@/assets/images/logo/logo_crushy.png')} style={styles.logo} />
 
-                    <View style={{ display: 'flex', flexDirection: 'row', gap: 16 }}>
-                        <Pressable style={[styles.buttonFilter, defaultStyles.buttonShadow]} onPress={() => { navigation.navigate('SearchFilters') }}>
+                    <View style={{ display: 'flex', flexDirection: 'row', gap: 8 }}>
+                        <Pressable style={[styles.buttonFilter]} onPress={() => { navigation.navigate('SearchFilters') }}>
                             <Ionicons name="search" size={12} color={Colors.light.text} style={{ marginTop: 2 }} />
                             <Text style={styles.buttonFilterText}>Search Filters</Text>
                         </Pressable>
 
-                        <Pressable style={[styles.buttonFilter, defaultStyles.buttonShadow]} onPress={() => { navigation.goBack() }}>
-                            <Ionicons name="home" size={16} color={Colors.light.text} style={{ marginTop: 2 }} />
+                        <Pressable style={[styles.buttonFilter]} onPress={() => { navigation.goBack() }}>
+                            <Image source={require('@/assets/images/icons/tab-home.png')} style={{ width: 32, aspectRatio: '1' }} />
                         </Pressable>
                     </View>
                 </View>
+            </View>
+
+
+
+            <ScrollView style={styles.pageContent}>
 
                 <View style={styles.personContainer}>
-                    <Image
-                        source={typeof imageUrl === 'string' ? { uri: imageUrl } : imageUrl}
-                        style={styles.person}
-                        onError={() => {
-                            console.log('Error loading image, setting default');
-                            setImageUrl(require('@/assets/images/react-logo.png'));
-                        }}
-                    />
-
-                    {/* <Pressable onPress={() => { navigation.navigate('Profile', { id: currentMatch.id, imageUrl: imageUrl }) }} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'absolute', left: 0, top: 0, width: '100%', height: '100%' }}>
-                        <View style={{ width: '100%', height: '66%' }} />
-                    </Pressable> */}
-
-                    <Fader visible position={Fader.position.BOTTOM} tintColor={'#282828'} size={222} />
-
-                    {loading && <ActivityIndicator size="large" color={Colors.light.primary} style={styles.loader} />}
+                    <View style={{ flexDirection: 'row', justifyContent: 'center' }}>
+                        <Image
+                            source={typeof imageUrl === 'string' ? { uri: imageUrl } : imageUrl}
+                            style={styles.person}
+                            onError={() => {
+                                console.log('Error loading image, setting default');
+                                setImageUrl(require('@/assets/images/react-logo.png'));
+                            }}
+                        />
+                    </View>
 
                     {!loading && (
-                        <View style={{ width: '78%' }}>
+                        <View style={{ marginTop: 16 }}>
                             <View style={styles.personInfo}>
-                                <TypewriterEffect
-                                    key={typewriterKey.current}
-                                    text={currentMatch.name + ', ' + currentMatch.age.toString()}
-                                    style={styles.personName}
-                                    delay={12}
-                                    numberOfLines={1}
-                                    adjustsFontSizeToFit={true}
-                                />
+                                <Text style={styles.personName}>{currentMatch.name}, {currentMatch.age.toString()}</Text>
                             </View>
                         </View>
                     )}
 
 
+                    {/* {hasSharedInterests === true && (
+                        <View>
+                            <Spacer height={32} />
 
-                    <Pressable onPress={() => { navigation.navigate('Profile', { id: currentMatch.id, imageUrl: imageUrl }) }} style={[styles.buttonExpand, defaultStyles.buttonShadow]}>
-                        <Ionicons name="chevron-down" size={24} color={Colors.light.accent} />
-                    </Pressable>
+                            <Text style={{ fontFamily: 'HeadingBold', fontSize: 22, color: Colors.light.text, marginTop: 16 }}>Shared Hobbies & Interests</Text>
+                            <View style={styles.chipsContainer}>
+                                {renderInterestChips('shared')}
+                            </View>
+                        </View>
+                    )} */}
+
+                    <Spacer height={32} />
+
+                    <View style={{ paddingHorizontal: 16 }}>
+                        <Text style={{ fontFamily: 'HeadingBold', fontSize: 22, color: Colors.light.text, marginTop: 16 }}>Bio</Text>
+                        <Spacer height={8} />
+                        <Text style={{ fontFamily: 'BodyRegular', fontSize: 18, lineHeight: 26 }}>{bioText}</Text>
+                    </View>
+
+                    <Spacer height={32} />
+
+                    <View style={{ paddingHorizontal: 16 }}>
+                        <Text style={{ fontFamily: 'HeadingBold', fontSize: 22, color: Colors.light.text, marginTop: 16 }}>Other Hobbies & Interests</Text>
+                        <View style={styles.chipsContainer}>
+                            {/* {renderInterestChips()} */}
+                        </View>
+                    </View>
                 </View>
+
                 <View style={styles.buttonsMatching}>
                     <Pressable onPress={handleDislike} disabled={loading}>
                         <Image source={require('@/assets/images/buttons/buttonMatchingDislike.png')} style={styles.buttonsMatchingSecondary} />
@@ -240,7 +276,11 @@ export default function Dive() {
                         <Image source={require('@/assets/images/buttons/buttonMatchingChat.png')} style={styles.buttonsMatchingSecondary} />
                     </Pressable>
                 </View>
-            </View>
+
+                {loading && <ActivityIndicator size="small" color={Colors.light.accent} style={styles.loader} />}
+
+            </ScrollView>
+
         </SafeAreaView>
     );
 }
@@ -252,8 +292,10 @@ const styles = StyleSheet.create({
         backgroundColor: Colors.light.background,
     },
     innerContainer: {
-        flex: 1,
         padding: 16,
+    },
+    pageContent: {
+
     },
     header: {
         width: '100%',
@@ -286,47 +328,39 @@ const styles = StyleSheet.create({
         color: Colors.light.text,
     },
     personContainer: {
-        flex: 1,
-        borderRadius: 20,
-        overflow: 'hidden',
-        width: '100%',
-        height: '100%',
+        // flex: 1,
+        marginTop: 24,
     },
     person: {
-        width: '100%',
-        height: '100%',
+        width: 80,
+        height: 80,
         resizeMode: 'cover',
-        backgroundColor: Colors.light.backgroundSecondary,
+        borderRadius: 80,
+        backgroundColor: Colors.light.tertiary,
     },
-
     loader: {
         position: 'absolute',
-        top: 32,
-        left: 32,
+        top: 8,
+        left: 16,
         zIndex: 5,
     },
     personInfo: {
         flexDirection: 'row',
-        alignItems: 'flex-end',
-        gap: 8,
-        position: 'absolute',
-        bottom: 64,
-        left: 16,
+        justifyContent: 'center',
     },
     personName: {
         fontFamily: 'HeadingBold',
         fontSize: 32,
-        color: Colors.light.white,
+        color: Colors.light.text,
     },
     personAge: {
         fontFamily: 'HeadingBold',
         fontSize: 32,
-        color: Colors.light.white,
+        color: Colors.light.text,
         opacity: 0.7
     },
     chipsContainer: {
         flex: 1,
-        position: 'absolute',
         bottom: 16,
         paddingHorizontal: 16,
     },
@@ -342,34 +376,6 @@ const styles = StyleSheet.create({
         color: Colors.light.text,
         fontSize: 13,
         fontFamily: 'BodyRegular',
-    },
-    buttonClose: {
-        backgroundColor: Colors.light.white,
-        width: 32,
-        height: 32,
-        borderWidth: 1,
-        borderColor: Colors.light.tertiary,
-        borderRadius: 99,
-        justifyContent: 'center',
-        alignItems: 'center',
-        shadowColor: Colors.light.black,
-        position: 'absolute',
-        top: 16,
-        right: 16,
-    },
-    buttonExpand: {
-        backgroundColor: Colors.light.white,
-        width: 32,
-        height: 32,
-        borderWidth: 1,
-        borderColor: Colors.light.tertiary,
-        borderRadius: 99,
-        justifyContent: 'center',
-        alignItems: 'center',
-        shadowColor: Colors.light.black,
-        position: 'absolute',
-        bottom: 68,
-        right: 16,
     },
     buttonsMatching: {
         flexDirection: 'row',

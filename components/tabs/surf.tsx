@@ -218,14 +218,14 @@ export default function Surf() {
                 <View style={styles.header}>
                     <Image source={require('@/assets/images/logo/logo_crushy.png')} style={styles.logo} />
 
-                    <View style={{ display: 'flex', flexDirection: 'row', gap: 16 }}>
-                        <Pressable style={[styles.buttonFilter, defaultStyles.buttonShadow]} onPress={() => { navigation.navigate('SearchFilters') }}>
+                    <View style={{ display: 'flex', flexDirection: 'row', gap: 8 }}>
+                        <Pressable style={[styles.buttonFilter]} onPress={() => { navigation.navigate('SearchFilters') }}>
                             <Ionicons name="search" size={12} color={Colors.light.text} style={{ marginTop: 2 }} />
                             <Text style={styles.buttonFilterText}>Search Filters</Text>
                         </Pressable>
 
-                        <Pressable style={[styles.buttonFilter, defaultStyles.buttonShadow]} onPress={() => { navigation.goBack() }}>
-                            <Ionicons name="home" size={16} color={Colors.light.text} style={{ marginTop: 2 }} />
+                        <Pressable style={[styles.buttonFilter]} onPress={() => { navigation.goBack() }}>
+                            <Image source={require('@/assets/images/icons/tab-home.png')} style={{ width: 32, aspectRatio: '1' }} />
                         </Pressable>
                     </View>
                 </View>
@@ -245,8 +245,6 @@ export default function Surf() {
                     </Pressable> */}
 
                     <Fader visible position={Fader.position.BOTTOM} tintColor={'#282828'} size={222} />
-
-                    {loading && <ActivityIndicator size="large" color={Colors.light.primary} style={styles.loader} />}
 
                     {!loading && (
                         <View style={{ width: '78%' }}>
@@ -282,6 +280,8 @@ export default function Surf() {
                         <Image source={require('@/assets/images/buttons/buttonMatchingChat.png')} style={styles.buttonsMatchingSecondary} />
                     </Pressable>
                 </View>
+
+                {loading && <ActivityIndicator size="small" color={Colors.light.accent} style={styles.loader} />}
             </View>
         </SafeAreaView>
     );
@@ -343,8 +343,8 @@ const styles = StyleSheet.create({
 
     loader: {
         position: 'absolute',
-        top: 32,
-        left: 32,
+        top: 8,
+        left: 16,
         zIndex: 5,
     },
     personInfo: {
