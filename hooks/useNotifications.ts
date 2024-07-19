@@ -111,7 +111,7 @@ async function registerForPushNotificationsAsync() {
         }
         token = (await Notifications.getExpoPushTokenAsync({ projectId: Constants.expoConfig.extra.eas.projectId })).data;
     } else {
-        alert('Must use physical device for Push Notifications');
+        console.log('Must use physical device for Push Notifications');
     }
     console.log('token', token)
     // Store the token in Supabase

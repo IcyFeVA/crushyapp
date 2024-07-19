@@ -17,7 +17,7 @@ export default function SearchFilters() {
 
     const getMultiple = async () => {
         try {
-            const values = await AsyncStorage.multiGet(['genderPreference', 'ageRange', 'distance', 'starSignPreference'])
+            const values = await AsyncStorage.multiGet(['genderPreference', 'ageRange', 'distance', 'starSignPreference', 'bodyTypePreference']);
             const newFilters = { ...searchFilters };
             values.forEach(([key, value]) => {
                 if (value) {
@@ -76,9 +76,9 @@ export default function SearchFilters() {
                         <Text style={defaultStyles.settingListButtonLabel}>Interests</Text>
                         <Text style={[defaultStyles.settingListButtonLabel, styles.active]}>Basketball +2</Text>
                     </Button>
-                    <Button onPress={() => console.log('pressed')} style={[defaultStyles.settingListButton, defaultStyles.noRadius]}>
-                        <Text style={defaultStyles.settingListButtonLabel}>Has a bio</Text>
-                        <Text style={[defaultStyles.settingListButtonLabel, styles.active]}>-</Text>
+                    <Button onPress={() => navigation.navigate('filterBodyType')} style={[defaultStyles.settingListButton, defaultStyles.noRadius]}>
+                        <Text style={defaultStyles.settingListButtonLabel}>Body Type</Text>
+                        <Text style={[defaultStyles.settingListButtonLabel, styles.active]}>{searchFilters.bodyTypePreference.value}</Text>
                     </Button>
                     <Button onPress={() => console.log('pressed')} style={[defaultStyles.settingListButton, defaultStyles.noRadius]}>
                         <Text style={defaultStyles.settingListButtonLabel}>Pronounce</Text>

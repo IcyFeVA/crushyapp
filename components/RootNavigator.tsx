@@ -15,6 +15,7 @@ import SearchFilters from '@/app/searchFilters';
 import FilterGenderPreference from '@/app/searchFilters/filterGenderPreference';
 import FilterStarsign from '@/app/searchFilters/filterStarsign';
 import FilterAgeRange from '@/app/searchFilters/filterAgeRange';
+import FilterBodyType from '@/app/searchFilters/filterBodyType';
 import { useProfile } from '@/hooks/useProfile';
 import { useAppContext } from '@/providers/AppProvider';
 import { clearAllStorage, getData, storeData } from '@/utils/storage';
@@ -178,7 +179,7 @@ export default function RootNavigator({ session }) {
                             <Stack.Screen name="Surf" component={Surf} options={{ gestureEnabled: true, gestureDirection: 'vertical', gestureResponseDistance: 400 }} />
                             <Stack.Screen name="Dive" component={Dive} />
                             <Stack.Screen name="Profile" component={Profile} />
-                            <Stack.Screen name="SearchFilters" component={SearchFilters} options={{ gestureEnabled: true, gestureDirection: 'vertical', gestureResponseDistance: 400 }} />
+                            <Stack.Screen name="SearchFilters" component={SearchFilters} />
                         </Stack.Group>
                         <Stack.Group screenOptions={{ headerShown: false, ...TransitionPresets.SlideFromRightIOS }}>
                             <Stack.Screen
@@ -192,6 +193,10 @@ export default function RootNavigator({ session }) {
                             <Stack.Screen
                                 name="filterAgeRange"
                                 component={FilterAgeRange}
+                            />
+                            <Stack.Screen
+                                name="filterBodyType"
+                                component={FilterBodyType}
                             />
                         </Stack.Group>
                     </Stack.Group>

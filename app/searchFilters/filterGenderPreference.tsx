@@ -59,7 +59,7 @@ export default function FilterGenderPreference() {
         storeData('genderPreference', { key: '', value: selectedItems })
             .then(() => {
                 console.log('genderPreference:', selectedItems);
-                setTimeout(() => navigation.goBack(), 250);
+                setTimeout(() => navigation.goBack(), 50);
             })
             .catch(error => console.error('Failed to save gender preference:', error));
     }, [selectedItems, setSearchFilters]);

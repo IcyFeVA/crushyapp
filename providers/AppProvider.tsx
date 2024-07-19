@@ -13,6 +13,7 @@ interface SearchFilters {
   };
   distance: FilterPreference;
   starSignPreference: FilterPreference;
+  bodyTypePreference: FilterPreference;
 }
 
 
@@ -34,6 +35,7 @@ const defaultSearchFilters: SearchFilters = {
   ageRange: { min: 18, max: 35 },
   distance: { key: '', value: '' },
   starSignPreference: { key: '', value: '' },
+  bodyTypePreference: { key: '', value: '' },
 };
 
 const AppContext = createContext<AppContextType | undefined>(undefined);

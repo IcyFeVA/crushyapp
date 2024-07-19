@@ -41,7 +41,7 @@ export default function FilterStarSign() {
         storeData('starSignPreference', { key, value })
             .then(() => {
                 console.log('starSignPreference:', key, value);
-                setTimeout(() => navigation.goBack(), 250);
+                setTimeout(() => navigation.goBack(), 50);
             })
             .catch(error => console.error('Failed to save star sign preference:', error));
     }, [setSearchFilters]);

@@ -251,7 +251,7 @@ export default function Dive() {
                 if (!isActive) {
                     return (
                         <Chip
-                            key={interest.id}
+                            key={index}
                             label={interestObject.label}
                             labelStyle={[styles.chipLabel]}
                             containerStyle={[styles.chip]}
@@ -381,7 +381,7 @@ Let me know what  you like and let’s get connected here on this cool platform!
                     <View style={{ paddingHorizontal: 16 }}>
                         <Text style={{ fontFamily: 'HeadingBold', fontSize: 22, color: Colors.light.text, marginTop: 16 }}>Other Hobbies & Interests</Text>
                         <View style={styles.chipsContainer}>
-                            {renderInterestChips()}
+                            {renderInterestChips('')}
                         </View>
                     </View>
                 </View>
@@ -551,11 +551,5 @@ const styles = StyleSheet.create({
         fontSize: 18,
         color: Colors.light.accent,
     },
-    sharedChip: {
-        paddingLeft: 12,
-        backgroundColor: Colors.light.white,
-    },
-    sharedChipLabel: {
-        color: Colors.light.text,
-    },
+
 });

@@ -33,7 +33,7 @@ if (Platform.OS != 'ios') {
 export default function RootLayout() {
     const session = useAuth();
     const [onboardingDone, setOnboardingDone] = useState(false);
-    const { expoPushToken, notification, matchNotifications } = useNotifications();
+    // const { expoPushToken, notification, matchNotifications } = useNotifications();
     const [loaded, error] = useFonts({
         HeadingBold: require('@/assets/fonts/RobotoSlab-Bold.ttf'),
         HeadingRegular: require('@/assets/fonts/RobotoSlab-Regular.ttf'),
@@ -79,12 +79,12 @@ export default function RootLayout() {
     }, [loaded]);
 
 
-    useEffect(() => {
-        if (matchNotifications.length > 0) {
-            console.log('You have new matches!', matchNotifications);
-            // Here you can update UI, show a notification, etc.
-        }
-    }, [matchNotifications]);
+    // useEffect(() => {
+    //     if (matchNotifications.length > 0) {
+    //         console.log('You have new matches!', matchNotifications);
+    //         // Here you can update UI, show a notification, etc.
+    //     }
+    // }, [matchNotifications]);
 
 
     if (!loaded) {
