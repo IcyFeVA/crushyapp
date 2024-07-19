@@ -35,8 +35,15 @@ const resetUserSearchFilters = async () => {
     const distanceSet = ['distance', JSON.stringify({ key: '40', value: '40' })]
     const starSignPreference = ['starSignPreference', JSON.stringify({ key: '', value: '-' })]
     const bodyTypePreference = ['bodyTypePreference', JSON.stringify({ key: '', value: '-' })]
+    const exerciseFrequency = ['exerciseFrequency', JSON.stringify({ key: '', value: '-' })]
+    const smokingFrequency = ['smokingFrequency', JSON.stringify({ key: '', value: '-' })]
+    const drinkingFrequency = ['drinkingFrequency', JSON.stringify({ key: '', value: '-' })]
+    const cannabisFrequency = ['cannabisFrequency', JSON.stringify({ key: '', value: '-' })]
+    const dietPreference = ['dietPreference', JSON.stringify({ key: '', value: '-' })]
+
     try {
-        await AsyncStorage.multiSet([genderPreferencesSet, ageRangeSet, distanceSet, starSignPreference, bodyTypePreference])
+        await AsyncStorage.multiSet([genderPreferencesSet, ageRangeSet, distanceSet, starSignPreference, bodyTypePreference,
+            exerciseFrequency, smokingFrequency, drinkingFrequency, cannabisFrequency, dietPreference])
     } catch (e) {
         //save error
     }

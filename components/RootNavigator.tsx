@@ -16,6 +16,11 @@ import FilterGenderPreference from '@/app/searchFilters/filterGenderPreference';
 import FilterStarsign from '@/app/searchFilters/filterStarsign';
 import FilterAgeRange from '@/app/searchFilters/filterAgeRange';
 import FilterBodyType from '@/app/searchFilters/filterBodyType';
+import FilterExerciseFrequency from '@/app/searchFilters/filterExerciseFrequency';
+import FilterSmokingFrequency from '@/app/searchFilters/filterSmoking';
+import FilterDrinkingFrequency from '@/app/searchFilters/filterDrinking';
+import FilterCannabisFrequency from '@/app/searchFilters/filterCannabis';
+import FilterDietPreference from '@/app/searchFilters/filterDietPreference';
 import { useProfile } from '@/hooks/useProfile';
 import { useAppContext } from '@/providers/AppProvider';
 import { clearAllStorage, getData, storeData } from '@/utils/storage';
@@ -197,6 +202,26 @@ export default function RootNavigator({ session }) {
                             <Stack.Screen
                                 name="filterBodyType"
                                 component={FilterBodyType}
+                            />
+                            <Stack.Screen
+                                name="filterExerciseFrequency"
+                                component={FilterExerciseFrequency}
+                            />
+                            <Stack.Screen
+                                name="filterSmokingFrequency"
+                                component={FilterSmokingFrequency}
+                            />
+                            <Stack.Screen
+                                name="filterDrinkingFrequency"
+                                component={FilterDrinkingFrequency}
+                            />
+                            <Stack.Screen
+                                name="filterCannabisFrequency"
+                                component={FilterCannabisFrequency}
+                            />
+                            <Stack.Screen
+                                name="filterDietPreference"
+                                component={FilterDietPreference}
                             />
                         </Stack.Group>
                     </Stack.Group>

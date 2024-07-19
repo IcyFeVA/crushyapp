@@ -14,6 +14,11 @@ interface SearchFilters {
   distance: FilterPreference;
   starSignPreference: FilterPreference;
   bodyTypePreference: FilterPreference;
+  exerciseFrequency: FilterPreference;
+  smokingFrequency: FilterPreference;
+  drinkingFrequency: FilterPreference;
+  cannabisFrequency: FilterPreference;
+  dietPreference: FilterPreference;
 }
 
 
@@ -36,6 +41,11 @@ const defaultSearchFilters: SearchFilters = {
   distance: { key: '', value: '' },
   starSignPreference: { key: '', value: '' },
   bodyTypePreference: { key: '', value: '' },
+  exerciseFrequency: { key: '', value: '' },
+  smokingFrequency: { key: '', value: '' },
+  drinkingFrequency: { key: '', value: '' },
+  cannabisFrequency: { key: '', value: '' },
+  dietPreference: { key: '', value: '' },
 };
 
 const AppContext = createContext<AppContextType | undefined>(undefined);

@@ -17,7 +17,9 @@ export default function SearchFilters() {
 
     const getMultiple = async () => {
         try {
-            const values = await AsyncStorage.multiGet(['genderPreference', 'ageRange', 'distance', 'starSignPreference', 'bodyTypePreference']);
+            const values = await AsyncStorage.multiGet(['genderPreference', 'ageRange', 'distance', 'starSignPreference',
+                'bodyTypePreference', 'exerciseFrequency', 'smokingFrequency', 'drinkingFrequency', 'cannabisFrequency', 'dietPreference']);
+
             const newFilters = { ...searchFilters };
             values.forEach(([key, value]) => {
                 if (value) {
@@ -72,6 +74,7 @@ export default function SearchFilters() {
                     <Spacer height={32} />
                     <Text style={{ fontFamily: 'BodyBold', fontSize: 14, lineHeight: 22, color: Colors.light.textSecondary, textAlign: 'center' }}>MORE ABOUT YOUR IDEAL MATCH</Text>
                     <Spacer height={8} />
+
                     <Button onPress={() => console.log('pressed')} style={[defaultStyles.settingListButton, defaultStyles.noRadius, styles.firstItem]}>
                         <Text style={defaultStyles.settingListButtonLabel}>Interests</Text>
                         <Text style={[defaultStyles.settingListButtonLabel, styles.active]}>Basketball +2</Text>
@@ -80,42 +83,31 @@ export default function SearchFilters() {
                         <Text style={defaultStyles.settingListButtonLabel}>Body Type</Text>
                         <Text style={[defaultStyles.settingListButtonLabel, styles.active]}>{searchFilters.bodyTypePreference.value}</Text>
                     </Button>
-                    <Button onPress={() => console.log('pressed')} style={[defaultStyles.settingListButton, defaultStyles.noRadius]}>
-                        <Text style={defaultStyles.settingListButtonLabel}>Pronounce</Text>
-                        <Text style={[defaultStyles.settingListButtonLabel, styles.active]}>-</Text>
-                    </Button>
-                    <Button onPress={() => console.log('pressed')} style={[defaultStyles.settingListButton, defaultStyles.noRadius]}>
-                        <Text style={defaultStyles.settingListButtonLabel}>Sexual Orientation</Text>
-                        <Text style={[defaultStyles.settingListButtonLabel, styles.active]}>-</Text>
-                    </Button>
                     <Button onPress={() => navigation.navigate('filterStarsign')} style={[defaultStyles.settingListButton, defaultStyles.noRadius]}>
                         <Text style={defaultStyles.settingListButtonLabel}>Star Sign</Text>
                         <Text style={[defaultStyles.settingListButtonLabel, styles.active]}>{searchFilters.starSignPreference.value}</Text>
                     </Button>
-                    <Button onPress={() => console.log('pressed')} style={[defaultStyles.settingListButton, defaultStyles.noRadius]}>
-                        <Text style={defaultStyles.settingListButtonLabel}>Accendant</Text>
-                        <Text style={[defaultStyles.settingListButtonLabel, styles.active]}>-</Text>
+                    <Button onPress={() => navigation.navigate('filterExerciseFrequency')} style={[defaultStyles.settingListButton, defaultStyles.noRadius]}>
+                        <Text style={defaultStyles.settingListButtonLabel}>Working out</Text>
+                        <Text style={[defaultStyles.settingListButtonLabel, styles.active]}>{searchFilters.exerciseFrequency.value}</Text>
                     </Button>
-                    <Button onPress={() => console.log('pressed')} style={[defaultStyles.settingListButton, defaultStyles.noRadius]}>
-                        <Text style={defaultStyles.settingListButtonLabel}>Some more here</Text>
-                        <Text style={[defaultStyles.settingListButtonLabel, styles.active]}>-</Text>
+                    <Button onPress={() => navigation.navigate('filterSmokingFrequency')} style={[defaultStyles.settingListButton, defaultStyles.noRadius]}>
+                        <Text style={defaultStyles.settingListButtonLabel}>Smoking</Text>
+                        <Text style={[defaultStyles.settingListButtonLabel, styles.active]}>{searchFilters.smokingFrequency.value}</Text>
                     </Button>
-                    <Button onPress={() => console.log('pressed')} style={[defaultStyles.settingListButton, defaultStyles.noRadius]}>
-                        <Text style={defaultStyles.settingListButtonLabel}>And there</Text>
-                        <Text style={[defaultStyles.settingListButtonLabel, styles.active]}>-</Text>
+                    <Button onPress={() => navigation.navigate('filterDrinkingFrequency')} style={[defaultStyles.settingListButton, defaultStyles.noRadius]}>
+                        <Text style={defaultStyles.settingListButtonLabel}>Drinking</Text>
+                        <Text style={[defaultStyles.settingListButtonLabel, styles.active]}>{searchFilters.drinkingFrequency.value}</Text>
                     </Button>
-                    <Button onPress={() => console.log('pressed')} style={[defaultStyles.settingListButton, defaultStyles.noRadius]}>
-                        <Text style={defaultStyles.settingListButtonLabel}>Everywhere</Text>
-                        <Text style={[defaultStyles.settingListButtonLabel, styles.active]}>-</Text>
+                    <Button onPress={() => navigation.navigate('filterCannabisFrequency')} style={[defaultStyles.settingListButton, defaultStyles.noRadius]}>
+                        <Text style={defaultStyles.settingListButtonLabel}>Cannabis</Text>
+                        <Text style={[defaultStyles.settingListButtonLabel, styles.active]}>{searchFilters.cannabisFrequency.value}</Text>
                     </Button>
-                    <Button onPress={() => console.log('pressed')} style={[defaultStyles.settingListButton, defaultStyles.noRadius]}>
-                        <Text style={defaultStyles.settingListButtonLabel}>All at</Text>
-                        <Text style={[defaultStyles.settingListButtonLabel, styles.active]}>-</Text>
+                    <Button onPress={() => navigation.navigate('filterDietPreference')} style={[defaultStyles.settingListButton, defaultStyles.noRadius]}>
+                        <Text style={defaultStyles.settingListButtonLabel}>Diet</Text>
+                        <Text style={[defaultStyles.settingListButtonLabel, styles.active]}>{searchFilters.dietPreference.value}</Text>
                     </Button>
-                    <Button onPress={() => console.log('pressed')} style={[defaultStyles.settingListButton, defaultStyles.noRadius, styles.lastItem]}>
-                        <Text style={defaultStyles.settingListButtonLabel}>Once</Text>
-                        <Text style={[defaultStyles.settingListButtonLabel, styles.active]}>-</Text>
-                    </Button>
+
                 </ScrollView>
 
                 <Spacer height={16} />
