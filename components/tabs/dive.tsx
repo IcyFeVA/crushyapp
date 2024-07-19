@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { View, Text, Image, StyleSheet, Pressable, ScrollView, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -34,6 +34,12 @@ export default function Dive() {
     const [imageUrl, setImageUrl] = useState<string | number>(require('@/assets/images/react-logo.png'));
     const navigation = useNavigation();
     const typewriterKey = useRef(0);
+
+
+    const [user, setUser] = useState<any[]>({ name: '', age: '0', interests: [] });
+    const interestsList = useMemo(() => flattenArray(hobbiesInterests), []);
+    const [hasSharedInterests, setHasSharedInterests] = useState<boolean>(false);
+    const [myData, setMyData] = useState<any>({});
 
     useEffect(() => {
         if (session?.user?.id) {
@@ -144,6 +150,121 @@ export default function Dive() {
 
 
 
+
+
+
+
+
+
+
+
+
+    useEffect(() => {
+        const fetchMe = async () => {
+
+            //setLoading(true)
+
+            const { data } = await supabase
+                .from('profiles_test')
+                .select('*')
+                .eq('id', session?.user.id);
+            if (data) {
+                setMyData(data[0])
+                // setLoading(false)
+            }
+        }
+
+        fetchMe();
+
+    }, [session]);
+
+
+    useEffect(() => {
+
+        const fetchUser = async () => {
+
+            // setLoading(true)
+
+            const { data } = await supabase
+                .from('profiles_test')
+                .select('*')
+                .eq('id', currentMatch.id)
+            if (data) {
+                console.log('User data:', data[0]);
+                setUser(data[0]);
+                // setLoading(false)
+            }
+
+        }
+
+        if (currentMatch?.id && session?.user?.id) {
+            fetchUser();
+        }
+
+    }, [currentMatch]);
+
+
+    function flattenArray(arr: any[]): any[] {
+        return arr.flat();
+    }
+
+    const sortInterests = (a: string, b: string) => {
+        const aIncluded = myData.interests?.includes(parseInt(a));
+        const bIncluded = myData.interests?.includes(parseInt(b));
+        if (aIncluded && !bIncluded) return -1;
+        if (!aIncluded && bIncluded) return 1;
+        return 0;
+    };
+
+    const renderInterestChips = (type: string) => {
+
+        if (!user.interests || !myData.interests) return null;
+
+        const sortedInterests = [...user.interests].sort(sortInterests);
+
+        return sortedInterests.map((interest: string, index: number) => {
+
+            const interestObject = interestsList.find(item => item.value === interest.toString());
+
+            if (!interestObject) {
+                console.error(`No label found for interest: ${interest}`);
+                return null;
+            }
+
+            const isActive = myData.interests.includes(parseInt(interestObject.value));
+            if (!hasSharedInterests && isActive) {
+                setHasSharedInterests(true);
+            }
+            if (type === 'shared') {
+                if (isActive) {
+                    return (
+                        <Chip
+                            key={index}
+                            label={interestObject.label}
+                            labelStyle={[styles.chipLabel, styles.sharedChipLabel]}
+                            containerStyle={[styles.chip, styles.sharedChip]}
+                            iconSource={require('@/assets/images/icons/iconSharedInterest.png')}
+                        />
+                    );
+                }
+            } else {
+                if (!isActive) {
+                    return (
+                        <Chip
+                            key={interest.id}
+                            label={interestObject.label}
+                            labelStyle={[styles.chipLabel]}
+                            containerStyle={[styles.chip]}
+                        />
+                    );
+                }
+            }
+        });
+    };
+
+
+
+
     const bioText = `I\’m looking for a new partner, perhaps a partner for life. I never used a dating app before, but I heard good things about this one.
 
 I\’m a great listener, and a fantastic cook. I love walking along the beach, and deep conversations.
@@ -194,6 +315,8 @@ Let me know what  you like and let’s get connected here on this cool platform!
     return (
         <SafeAreaView style={styles.container}>
 
+            {loading && <ActivityIndicator size="small" color={Colors.light.accent} style={styles.loader} />}
+
             <View style={styles.innerContainer}>
                 <View style={styles.header}>
                     <Image source={require('@/assets/images/logo/logo_crushy.png')} style={styles.logo} />
@@ -227,17 +350,15 @@ Let me know what  you like and let’s get connected here on this cool platform!
                         />
                     </View>
 
-                    {!loading && (
-                        <View style={{ marginTop: 16 }}>
-                            <View style={styles.personInfo}>
-                                <Text style={styles.personName}>{currentMatch.name}, {currentMatch.age.toString()}</Text>
-                            </View>
+                    <View style={{ marginTop: 16 }}>
+                        <View style={styles.personInfo}>
+                            <Text style={styles.personName}>{!loading ? `${currentMatch.name}, ${currentMatch.age}` : '...'}</Text>
                         </View>
-                    )}
+                    </View>
 
 
-                    {/* {hasSharedInterests === true && (
-                        <View>
+                    {hasSharedInterests === true && (
+                        <View style={{ paddingHorizontal: 16 }}>
                             <Spacer height={32} />
 
                             <Text style={{ fontFamily: 'HeadingBold', fontSize: 22, color: Colors.light.text, marginTop: 16 }}>Shared Hobbies & Interests</Text>
@@ -245,7 +366,7 @@ Let me know what  you like and let’s get connected here on this cool platform!
                                 {renderInterestChips('shared')}
                             </View>
                         </View>
-                    )} */}
+                    )}
 
                     <Spacer height={32} />
 
@@ -260,7 +381,7 @@ Let me know what  you like and let’s get connected here on this cool platform!
                     <View style={{ paddingHorizontal: 16 }}>
                         <Text style={{ fontFamily: 'HeadingBold', fontSize: 22, color: Colors.light.text, marginTop: 16 }}>Other Hobbies & Interests</Text>
                         <View style={styles.chipsContainer}>
-                            {/* {renderInterestChips()} */}
+                            {renderInterestChips()}
                         </View>
                     </View>
                 </View>
@@ -277,7 +398,7 @@ Let me know what  you like and let’s get connected here on this cool platform!
                     </Pressable>
                 </View>
 
-                {loading && <ActivityIndicator size="small" color={Colors.light.accent} style={styles.loader} />}
+
 
             </ScrollView>
 
@@ -292,7 +413,8 @@ const styles = StyleSheet.create({
         backgroundColor: Colors.light.background,
     },
     innerContainer: {
-        padding: 16,
+        paddingTop: 16,
+        paddingHorizontal: 16,
     },
     pageContent: {
 
@@ -300,10 +422,13 @@ const styles = StyleSheet.create({
     header: {
         width: '100%',
         marginTop: 16,
-        marginBottom: 16,
+        marginBottom: 0,
+        paddingBottom: 8,
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
+        borderBottomWidth: 1,
+        borderColor: Colors.light.tertiary,
     },
     logo: {
         width: 96,
@@ -329,7 +454,7 @@ const styles = StyleSheet.create({
     },
     personContainer: {
         // flex: 1,
-        marginTop: 24,
+        marginTop: 32,
     },
     person: {
         width: 80,
@@ -360,9 +485,12 @@ const styles = StyleSheet.create({
         opacity: 0.7
     },
     chipsContainer: {
+        display: 'flex',
         flex: 1,
-        bottom: 16,
-        paddingHorizontal: 16,
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        marginTop: 16,
+        rowGap: 8,
     },
     chip: {
         backgroundColor: Colors.light.white,
@@ -370,7 +498,14 @@ const styles = StyleSheet.create({
         paddingHorizontal: 4,
         marginRight: 8,
         borderRadius: 99,
-        borderWidth: 0,
+        shadowColor: Colors.light.black,
+    },
+    sharedChip: {
+        paddingLeft: 12,
+        backgroundColor: Colors.light.white,
+    },
+    sharedChipLabel: {
+        color: Colors.light.text,
     },
     chipLabel: {
         color: Colors.light.text,
@@ -382,7 +517,7 @@ const styles = StyleSheet.create({
         width: '100%',
         justifyContent: 'center',
         alignItems: 'center',
-        marginTop: 16,
+        marginTop: 40,
         marginBottom: 16,
     },
     buttonsMatchingPrimary: {
