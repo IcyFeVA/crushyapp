@@ -30,34 +30,37 @@ interface PotentialMatch {
 export default function Dive() {
     const session = useAuth();
     const { matches: potentialMatches, loading, error, fetchDiveMatches, recordAction } = usePotentialMatches();
+    const { profileDetails, fetchProfileDetails } = useProfile();
     const [currentMatchIndex, setCurrentMatchIndex] = useState(0);
     const [imageUrl, setImageUrl] = useState<string | number>(require('@/assets/images/react-logo.png'));
     const navigation = useNavigation();
     const typewriterKey = useRef(0);
+    const scrollViewRef = useRef<ScrollView>(null);
 
 
     const [user, setUser] = useState<any[]>({ name: '', age: '0', interests: [] });
+    const [userDetails, setUserDetails] = useState<any[]>();
     const interestsList = useMemo(() => flattenArray(hobbiesInterests), []);
     const [hasSharedInterests, setHasSharedInterests] = useState<boolean>(false);
     const [myData, setMyData] = useState<any>({});
 
     useEffect(() => {
         if (session?.user?.id) {
-            console.log('Potential Matches:', potentialMatches);
+            //console.log('Potential Matches:', potentialMatches);
             fetchDiveMatches();
         }
     }, [session, fetchDiveMatches]);
 
     useEffect(() => {
-        console.log('Current Match Index:', currentMatchIndex);
+        //console.log('Current Match Index:', currentMatchIndex);
         const currentMatch = potentialMatches[currentMatchIndex];
-        console.log('Current Match:', currentMatch);
+        //console.log('Current Match:', currentMatch);
 
         if (currentMatch?.avatar_pixelated_url) {
-            console.log('Setting image URL:', currentMatch.avatar_pixelated_url);
+            //console.log('Setting image URL:', currentMatch.avatar_pixelated_url);
             setImageUrl(currentMatch.avatar_pixelated_url);
         } else {
-            console.log('No avatar URL, setting default image');
+            //console.log('No avatar URL, setting default image');
             setImageUrl(require('@/assets/images/react-logo.png'));
         }
     }, [currentMatchIndex, potentialMatches]);
@@ -65,30 +68,32 @@ export default function Dive() {
     const currentMatch = potentialMatches[currentMatchIndex];
 
     const handleAction = useCallback(async (action: 'like' | 'dislike') => {
-        console.log('HandleAction called');
-        console.log('Session:', session);
-        console.log('Current Match:', currentMatch);
+        //console.log('HandleAction called');
+        //console.log('Session:', session);
+        //console.log('Current Match:', currentMatch);
+
+        scrollToTop()
 
         if (!session?.user?.id) {
-            console.log('No session, returning early');
+            //console.log('No session, returning early');
             return;
         }
 
         if (!currentMatch) {
-            console.log('No currentMatch, returning early');
+            //console.log('No currentMatch, returning early');
             return;
         }
 
         try {
-            console.log(`Recording action for match: ${currentMatch.id}`);
+            //console.log(`Recording action for match: ${currentMatch.id}`);
             await recordAction(currentMatch.id, action);
-            console.log('Action recorded successfully');
+            //console.log('Action recorded successfully');
 
             if (action === 'like') {
-                console.log('Checking for match');
+                //console.log('Checking for match');
                 const isMatch = await checkForMatch(session.user.id, currentMatch.id);
                 if (isMatch) {
-                    console.log("It's a match!");
+                    //console.log("It's a match!");
                     Alert.alert(
                         "It's a Match!",
                         `You and ${currentMatch.name} have liked each other!`,
@@ -97,7 +102,7 @@ export default function Dive() {
                 }
             }
 
-            console.log('Moving to next match');
+            //console.log('Moving to next match');
             moveToNextMatch();
         } catch (error) {
             console.error('Error in handleAction:', error);
@@ -105,16 +110,16 @@ export default function Dive() {
     }, [session, currentMatch, recordAction, checkForMatch, moveToNextMatch]);
 
     const moveToNextMatch = useCallback(() => {
-        console.log('moveToNextMatch called');
-        console.log(`Current index: ${currentMatchIndex}, Matches length: ${potentialMatches.length}`);
+        //console.log('moveToNextMatch called');
+        //console.log(`Current index: ${currentMatchIndex}, Matches length: ${potentialMatches.length}`);
         if (currentMatchIndex < potentialMatches.length - 1) {
-            console.log('Moving to next match in the list');
+            //console.log('Moving to next match in the list');
             setCurrentMatchIndex(prevIndex => {
-                console.log(`New index: ${prevIndex + 1}`);
+                //console.log(`New index: ${prevIndex + 1}`);
                 return prevIndex + 1;
             });
         } else {
-            console.log('Reached end of list, fetching new matches');
+            //console.log('Reached end of list, fetching new matches');
             fetchDiveMatches();
             setCurrentMatchIndex(0);
         }
@@ -182,15 +187,13 @@ export default function Dive() {
     useEffect(() => {
 
         const fetchUser = async () => {
-
             // setLoading(true)
-
             const { data } = await supabase
                 .from('profiles_test')
                 .select('*')
                 .eq('id', currentMatch.id)
             if (data) {
-                console.log('User data:', data[0]);
+                //console.log('User data:', data[0]);
                 setUser(data[0]);
                 // setLoading(false)
             }
@@ -199,6 +202,7 @@ export default function Dive() {
 
         if (currentMatch?.id && session?.user?.id) {
             fetchUser();
+            fetchProfileDetails(currentMatch.id)
         }
 
     }, [currentMatch]);
@@ -265,18 +269,18 @@ export default function Dive() {
 
 
 
-    const bioText = `I\’m looking for a new partner, perhaps a partner for life. I never used a dating app before, but I heard good things about this one.
+    const unescapeText = (text) => {
+        return text
+            .replace(/\\'/g, "'")
+            .replace(/\\n/g, '\n')
+            .replace(/\\\\/g, '\\');
+    };
 
-I\’m a great listener, and a fantastic cook. I love walking along the beach, and deep conversations.
-\nTalking is important to me. I need to be able to talk about anything with you.
 
-I also love dogs and cats, though I don’t have any pets at the moment. But please keep away snakes, spiders and any kind of insects! I\’m afraid I will get a heart attack with those.
 
-Videogames is also something that is important to me. I play mostly online, to not feel alone all the time. I enjoy board games as well, and TCG\’s.
-
-When it comes to music, I like most pop bands and dance music. My favorite are Christina Aguilera, Taylor Swift, and the Woodys.
-
-Let me know what  you like and let’s get connected here on this cool platform!`
+    const scrollToTop = () => {
+        scrollViewRef.current?.scrollTo({ x: 0, y: 0, animated: true });
+    };
 
 
 
@@ -341,7 +345,7 @@ Let me know what  you like and let’s get connected here on this cool platform!
 
 
 
-            <ScrollView style={styles.pageContent}>
+            <ScrollView ref={scrollViewRef} style={styles.pageContent}>
 
                 <View style={styles.personContainer}>
                     <View style={{ flexDirection: 'row', justifyContent: 'center' }}>
@@ -349,7 +353,7 @@ Let me know what  you like and let’s get connected here on this cool platform!
                             source={typeof imageUrl === 'string' ? { uri: imageUrl } : imageUrl}
                             style={styles.person}
                             onError={() => {
-                                console.log('Error loading image, setting default');
+                                //console.log('Error loading image, setting default');
                                 setImageUrl(require('@/assets/images/react-logo.png'));
                             }}
                         />
@@ -378,7 +382,7 @@ Let me know what  you like and let’s get connected here on this cool platform!
                     <View style={{ paddingHorizontal: 16 }}>
                         <Text style={{ fontFamily: 'HeadingBold', fontSize: 22, color: Colors.light.text, marginTop: 16 }}>Bio</Text>
                         <Spacer height={8} />
-                        <Text style={{ fontFamily: 'BodyRegular', fontSize: 18, lineHeight: 26 }}>{bioText}</Text>
+                        <Text style={{ fontFamily: 'BodyRegular', fontSize: 18, lineHeight: 26 }}>{profileDetails?.bio && unescapeText(profileDetails.bio)}</Text>
                     </View>
 
                     <Spacer height={32} />

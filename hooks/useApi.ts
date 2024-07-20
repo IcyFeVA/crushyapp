@@ -5,6 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 export const useProfile = () => {
   const session = useAuth();
   const [profile, setProfile] = useState(null);
+  const [profileDetails, setProfileDetails] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -14,6 +15,20 @@ export const useProfile = () => {
     try {
       const data = await api.getProfile(session.user.id);
       setProfile(data);
+    } catch (err) {
+      setError(err);
+    } finally {
+      setLoading(false);
+    }
+  }, [session]);
+
+
+  const fetchProfileDetails = useCallback(async (userId: string) => {
+    if (!session?.user?.id) return;
+    setLoading(true);
+    try {
+      const data = await api.getProfileDetails(userId);
+      setProfileDetails(data);
     } catch (err) {
       setError(err);
     } finally {
@@ -35,7 +50,7 @@ export const useProfile = () => {
     }
   }, [session]);
 
-  return { profile, loading, error, fetchProfile, updateProfile };
+  return { profile, profileDetails, loading, error, fetchProfile, fetchProfileDetails, updateProfile };
 };
 
 export const usePotentialMatches = () => {

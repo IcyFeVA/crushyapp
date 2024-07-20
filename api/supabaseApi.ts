@@ -13,6 +13,17 @@ export const api = {
     return data;
   },
 
+  getProfileDetails: async (userId: string) => {
+    const { data, error } = await supabase
+      .from('profile_details')
+      .select('*')
+      .eq('id', userId)
+      .single();
+    
+    if (error) throw error;
+    return data;
+  },
+
   updateProfile: async (userId: string, updates: any) => {
     const { data, error } = await supabase
       .from('profiles_test')
