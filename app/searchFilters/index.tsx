@@ -77,7 +77,7 @@ export default function SearchFilters() {
 
                     <Button onPress={() => console.log('pressed')} style={[defaultStyles.settingListButton, defaultStyles.noRadius, styles.firstItem]}>
                         <Text style={defaultStyles.settingListButtonLabel}>Interests</Text>
-                        <Text style={[defaultStyles.settingListButtonLabel, styles.active]}>Basketball +2</Text>
+                        <Text style={[defaultStyles.settingListButtonLabel, styles.active]}>-</Text>
                     </Button>
                     <Button onPress={() => navigation.navigate('filterBodyType')} style={[defaultStyles.settingListButton, defaultStyles.noRadius]}>
                         <Text style={defaultStyles.settingListButtonLabel}>Body Type</Text>

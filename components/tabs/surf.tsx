@@ -202,7 +202,12 @@ export default function Surf() {
                     <Ionicons name="albums-outline" size={64} color={Colors.light.primary} />
                     <Text style={styles.noMatchesTitle}>You've reached the end</Text>
                     <Text style={styles.noMatchesText}>No more potential matches to show.</Text>
-                    <Text style={styles.noMatchesText}>Check back later, or change the filters.</Text>
+                    <Text style={styles.noMatchesText}>Adjust search filters, or check back later.</Text>
+                    <Spacer height={40} />
+                    <Pressable style={[styles.buttonFilter]} onPress={() => { navigation.navigate('SearchFilters') }}>
+                        <Ionicons name="search" size={12} color={Colors.light.text} style={{ marginTop: 2 }} />
+                        <Text style={styles.buttonFilterText}>Search Filters</Text>
+                    </Pressable>
                     <Spacer height={40} />
                     <Pressable onPress={() => { navigation.dispatch(StackActions.popToTop()) }}>
                         <Text style={styles.refreshText}>Back Home</Text>
