@@ -2,27 +2,21 @@ import { supabase } from '@/lib/supabase';
 
 export const api = {
   
-  getProfile: async (userId: string) => {
+  getCurrentUserProfile: async (userId: string) => {
     const { data, error } = await supabase
-      .from('profiles_test')
-      .select('*')
-      .eq('id', userId)
-      .single();
+        .from('profiles_test')
+        .select('*')
+        .eq('id', userId)
+        .single();
     
-    if (error) throw error;
+    if (error) {
+        console.error('Error fetching current user profile:', error);
+        throw error;
+    }
+    console.log('Current User Profile Data:', data);
     return data;
-  },
+},
 
-  getProfileDetails: async (userId: string) => {
-    const { data, error } = await supabase
-      .from('profile_details')
-      .select('*')
-      .eq('id', userId)
-      .single();
-    
-    if (error) throw error;
-    return data;
-  },
 
   updateProfile: async (userId: string, updates: any) => {
     const { data, error } = await supabase
@@ -44,15 +38,35 @@ export const api = {
     return data;
   },
 
-  getPotentialDiveMatches: async (userId: string, limit: number) => {
-    const { data, error } = await supabase.rpc('get_potential_dive_matches', {
+
+  getProfileDetails: async (userId: string) => {
+    const { data, error } = await supabase
+        .from('profile_details')
+        .select('*')
+        .eq('id', userId)
+        .single();
+    
+    if (error) {
+        console.error('Error fetching profile details:', error);
+        throw error;
+    }
+    console.log('Profile Details Data:', data);
+    return data;
+},
+
+getPotentialDiveMatches: async (userId: string, limit: number) => {
+  const { data, error } = await supabase.rpc('get_potential_dive_matches', {
       user_id: userId,
       limit_count: limit,
-    });
-    
-    if (error) throw error;
-    return data;
-  },
+  });
+  
+  if (error) {
+      console.error('Error fetching potential dive matches:', error);
+      throw error;
+  }
+  console.log('Potential Dive Matches Data:', data);
+  return data;
+},
 
   recordMatchAction: async (userId: string, matchedUserId: string, action: 'like' | 'dislike') => {
     const { data, error } = await supabase

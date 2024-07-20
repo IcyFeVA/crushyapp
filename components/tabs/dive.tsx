@@ -12,6 +12,7 @@ import { usePotentialMatches, useProfile } from '@/hooks/useApi';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase';
 
+
 interface PotentialMatch {
     id: string;
     name: string;
@@ -25,12 +26,11 @@ export default function Dive() {
     const session = useAuth();
     const navigation = useNavigation();
     const { matches: potentialMatches, loading, error, fetchDiveMatches, recordAction } = usePotentialMatches();
-    const { profileDetails, fetchProfileDetails } = useProfile();
+    const { currentUserProfile, loading: profileLoading, error: profileError, fetchCurrentUserProfile, fetchProfileDetails } = useProfile();
     const [currentMatchIndex, setCurrentMatchIndex] = useState(0);
     const [imageUrl, setImageUrl] = useState<string | number>(require('@/assets/images/react-logo.png'));
     const scrollViewRef = useRef<ScrollView>(null);
-    const [user, setUser] = useState({ name: '', age: '0', interests: [] });
-    const [myData, setMyData] = useState({});
+    const [currentMatchProfile, setCurrentMatchProfile] = useState(null);
 
     const currentMatch = potentialMatches[currentMatchIndex];
 
@@ -39,9 +39,22 @@ export default function Dive() {
     useEffect(() => {
         if (session?.user?.id) {
             fetchDiveMatches();
-            fetchMyData();
+            fetchCurrentUserProfile();
         }
-    }, [session, fetchDiveMatches]);
+    }, [session, fetchDiveMatches, fetchCurrentUserProfile]);
+
+    useEffect(() => {
+        if (currentMatch?.id) {
+            fetchProfileDetails(currentMatch.id).then(setCurrentMatchProfile);
+        }
+    }, [currentMatch, fetchProfileDetails]);
+
+    useEffect(() => {
+        console.log('Current Match:', currentMatch);
+        console.log('Current User Profile:', currentUserProfile);
+        console.log('Current Match Profile:', currentMatchProfile);
+    }, [currentMatch, currentUserProfile, currentMatchProfile]);
+
 
     useEffect(() => {
         if (currentMatch?.avatar_pixelated_url) {
@@ -51,32 +64,26 @@ export default function Dive() {
         }
     }, [currentMatch]);
 
-    useEffect(() => {
-        if (currentMatch?.id && session?.user?.id) {
-            fetchUser();
-            fetchProfileDetails(currentMatch.id);
-        }
-    }, [currentMatch, session]);
 
-    const fetchMyData = useCallback(async () => {
-        const { data } = await supabase
-            .from('profiles_test')
-            .select('*')
-            .eq('id', session?.user.id);
-        if (data) {
-            setMyData(data[0]);
-        }
-    }, [session]);
 
-    const fetchUser = useCallback(async () => {
-        const { data } = await supabase
-            .from('profiles_test')
+
+    const checkForMatch = useCallback(async (currentUserId: string, likedUserId: string) => {
+        const { data, error } = await supabase
+            .from('matches')
             .select('*')
-            .eq('id', currentMatch.id);
-        if (data) {
-            setUser(data[0]);
+            .eq('user1_id', likedUserId)
+            .eq('user2_id', currentUserId)
+            .eq('user1_action', 1);
+
+        if (error && error.code !== 'PGRST116') {
+            console.error('Error checking for match:', error);
+            return false;
         }
-    }, [currentMatch]);
+
+        return data && data.length > 0;
+    }, []);
+
+
 
     const handleAction = useCallback(async (action: 'like' | 'dislike') => {
         if (!session?.user?.id || !currentMatch) return;
@@ -97,54 +104,49 @@ export default function Dive() {
                 }
             }
 
-            moveToNextMatch();
+            // Move to next match
+            if (currentMatchIndex < potentialMatches.length - 1) {
+                setCurrentMatchIndex(prevIndex => prevIndex + 1);
+            } else {
+                // Fetch new matches if we've reached the end
+                await fetchDiveMatches();
+                setCurrentMatchIndex(0);
+            }
+
         } catch (error) {
             console.error('Error in handleAction:', error);
         }
-    }, [session, currentMatch, recordAction, checkForMatch, moveToNextMatch]);
+    }, [session, currentMatch, recordAction, checkForMatch]);
 
-    const moveToNextMatch = useCallback(() => {
-        if (currentMatchIndex < potentialMatches.length - 1) {
-            setCurrentMatchIndex(prevIndex => prevIndex + 1);
-        } else {
-            fetchDiveMatches();
-            setCurrentMatchIndex(0);
-        }
-    }, [currentMatchIndex, potentialMatches.length, fetchDiveMatches]);
 
-    const checkForMatch = useCallback(async (currentUserId: string, likedUserId: string) => {
-        const { data, error } = await supabase
-            .from('matches')
-            .select('*')
-            .eq('user1_id', likedUserId)
-            .eq('user2_id', currentUserId)
-            .eq('user1_action', 1);
-
-        if (error && error.code !== 'PGRST116') {
-            console.error('Error checking for match:', error);
-            return false;
-        }
-
-        return data && data.length > 0;
-    }, []);
 
     const renderInterestChips = useCallback((type: string) => {
-        if (!user.interests || !myData.interests) return null;
+        console.log('Rendering Interest Chips:', type);
+        console.log('Current Match Interests:', currentMatch?.interests);
+        console.log('Current User Interests:', currentUserProfile?.interests);
 
-        const sortedInterests = [...user.interests].sort((a: number, b: number) => {
-            const aIncluded = myData.interests?.includes(a);
-            const bIncluded = myData.interests?.includes(b);
+        if (!currentMatch?.interests || !currentUserProfile?.interests) {
+            console.log('Interests not available');
+            return null;
+        }
+
+        const matchInterests = currentMatch.interests;
+        const userInterests = currentUserProfile.interests;
+
+        const sortedInterests = [...matchInterests].sort((a: number, b: number) => {
+            const aIncluded = userInterests.includes(a);
+            const bIncluded = userInterests.includes(b);
             if (aIncluded && !bIncluded) return -1;
             if (!aIncluded && bIncluded) return 1;
             return 0;
         });
 
         return sortedInterests.map((interest: number, index: number) => {
-            const interestObject = interestsList.find(item => item.value === interest.toString());
+            const interestObject = interestsList.find(item => parseInt(item.value) === interest);
             if (!interestObject) return null;
 
-            const isActive = myData.interests.includes(interest);
-            if (type === 'shared' && isActive) {
+            const isShared = userInterests.includes(interest);
+            if (type === 'shared' && isShared) {
                 return (
                     <Chip
                         key={index}
@@ -154,7 +156,7 @@ export default function Dive() {
                         iconSource={require('@/assets/images/icons/iconSharedInterest.png')}
                     />
                 );
-            } else if (type !== 'shared' && !isActive) {
+            } else if (type !== 'shared' && !isShared) {
                 return (
                     <Chip
                         key={index}
@@ -166,7 +168,8 @@ export default function Dive() {
             }
             return null;
         });
-    }, [user.interests, myData.interests, interestsList]);
+    }, [currentMatch, currentUserProfile, interestsList]);
+
 
     const unescapeText = useCallback((text: string) => {
         return text
@@ -246,7 +249,7 @@ export default function Dive() {
                         </View>
                     </View>
 
-                    {renderInterestChips('shared')?.some(Boolean) && (
+                    {currentMatch?.interests?.length > 0 && currentUserProfile?.interests?.length > 0 && (
                         <View style={{ paddingHorizontal: 16 }}>
                             <Spacer height={32} />
                             <Text style={styles.sectionTitle}>Shared Hobbies & Interests</Text>
@@ -258,21 +261,22 @@ export default function Dive() {
 
                     <Spacer height={32} />
 
-                    {profileDetails?.bio && (
+                    {currentMatchProfile?.bio && (
                         <View>
                             <View style={{ paddingHorizontal: 16 }}>
                                 <Text style={styles.sectionTitle}>Bio</Text>
                                 <Spacer height={8} />
-                                <Text style={styles.bioText}>{unescapeText(profileDetails.bio)}</Text>
+                                <Text style={styles.bioText}>{unescapeText(currentMatchProfile.bio)}</Text>
                             </View>
                             <Spacer height={32} />
                         </View>
                     )}
 
 
-                    {renderInterestChips('')?.some(Boolean) && (
+                    {currentMatch?.interests?.length > 0 && currentUserProfile?.interests?.length > 0 && (
                         <View style={{ paddingHorizontal: 16 }}>
-                            <Text style={styles.sectionTitle}>Other Hobbies & Interests</Text>
+                            <Spacer height={32} />
+                            <Text style={styles.sectionTitle}>Shared Hobbies & Interests</Text>
                             <View style={styles.chipsContainer}>
                                 {renderInterestChips('')}
                             </View>
