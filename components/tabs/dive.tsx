@@ -39,7 +39,7 @@ export default function Dive() {
 
 
     const [user, setUser] = useState<any[]>({ name: '', age: '0', interests: [] });
-    const [userDetails, setUserDetails] = useState<any[]>();
+    // const [userDetails, setUserDetails] = useState<any[]>();
     const interestsList = useMemo(() => flattenArray(hobbiesInterests), []);
     const [hasSharedInterests, setHasSharedInterests] = useState<boolean>(false);
     const [myData, setMyData] = useState<any>({});
@@ -53,8 +53,9 @@ export default function Dive() {
 
     useEffect(() => {
         //console.log('Current Match Index:', currentMatchIndex);
-        const currentMatch = potentialMatches[currentMatchIndex];
+        //const currentMatch = potentialMatches[currentMatchIndex];
         //console.log('Current Match:', currentMatch);
+
 
         if (currentMatch?.avatar_pixelated_url) {
             //console.log('Setting image URL:', currentMatch.avatar_pixelated_url);
@@ -113,11 +114,13 @@ export default function Dive() {
         //console.log('moveToNextMatch called');
         //console.log(`Current index: ${currentMatchIndex}, Matches length: ${potentialMatches.length}`);
         if (currentMatchIndex < potentialMatches.length - 1) {
+
             //console.log('Moving to next match in the list');
             setCurrentMatchIndex(prevIndex => {
                 //console.log(`New index: ${prevIndex + 1}`);
                 return prevIndex + 1;
             });
+
         } else {
             //console.log('Reached end of list, fetching new matches');
             fetchDiveMatches();
@@ -379,13 +382,16 @@ export default function Dive() {
 
                     <Spacer height={32} />
 
-                    <View style={{ paddingHorizontal: 16 }}>
-                        <Text style={{ fontFamily: 'HeadingBold', fontSize: 22, color: Colors.light.text, marginTop: 16 }}>Bio</Text>
-                        <Spacer height={8} />
-                        <Text style={{ fontFamily: 'BodyRegular', fontSize: 18, lineHeight: 26 }}>{profileDetails?.bio && unescapeText(profileDetails.bio)}</Text>
-                    </View>
-
-                    <Spacer height={32} />
+                    {profileDetails?.bio && (
+                        <View>
+                            <View style={{ paddingHorizontal: 16 }}>
+                                <Text style={{ fontFamily: 'HeadingBold', fontSize: 22, color: Colors.light.text, marginTop: 16 }}>Bio</Text>
+                                <Spacer height={8} />
+                                <Text style={{ fontFamily: 'BodyRegular', fontSize: 18, lineHeight: 26 }}>{unescapeText(profileDetails.bio)}</Text>
+                            </View>
+                            <Spacer height={32} />
+                        </View>
+                    )}
 
                     <View style={{ paddingHorizontal: 16 }}>
                         <Text style={{ fontFamily: 'HeadingBold', fontSize: 22, color: Colors.light.text, marginTop: 16 }}>Other Hobbies & Interests</Text>
