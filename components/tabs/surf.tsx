@@ -13,48 +13,27 @@ import { usePotentialMatches, useProfile } from '@/hooks/useApi';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase';
 
-interface Interest {
-    id: number;
-    isShared: boolean;
-}
-
-interface PotentialMatch {
-    id: string;
-    name: string;
-    age: number;
-    gender: number;
-    avatar_url: string;
-    interests: number[];
-}
-
 export default function Surf() {
     const session = useAuth();
     const { matches: potentialMatches, loading, error, fetchMatches, recordAction } = usePotentialMatches();
-    const { profile, fetchProfile } = useProfile();
+    const { currentUserProfile, fetchCurrentUserProfile } = useProfile();
     const [currentMatchIndex, setCurrentMatchIndex] = useState(0);
     const [imageUrl, setImageUrl] = useState<string | number>(require('@/assets/images/react-logo.png'));
     const navigation = useNavigation();
     const typewriterKey = useRef(0);
 
     useEffect(() => {
-        console.log('Session:', session);
-        console.log('Potential Matches:', potentialMatches);
         if (session?.user?.id) {
             fetchMatches();
-            fetchProfile();
+            fetchCurrentUserProfile();
         }
-    }, [session, fetchMatches, fetchProfile]);
+    }, [session, fetchMatches, fetchCurrentUserProfile]);
 
     useEffect(() => {
-        console.log('Current Match Index:', currentMatchIndex);
         const currentMatch = potentialMatches[currentMatchIndex];
-        console.log('Current Match:', currentMatch);
-
         if (currentMatch?.avatar_url) {
-            console.log('Setting image URL:', currentMatch.avatar_url);
             setImageUrl(currentMatch.avatar_url);
         } else {
-            console.log('No avatar URL, setting default image');
             setImageUrl(require('@/assets/images/react-logo.png'));
         }
     }, [currentMatchIndex, potentialMatches]);
@@ -62,30 +41,14 @@ export default function Surf() {
     const currentMatch = potentialMatches[currentMatchIndex];
 
     const handleAction = useCallback(async (action: 'like' | 'dislike') => {
-        console.log('HandleAction called');
-        console.log('Session:', session);
-        console.log('Current Match:', currentMatch);
-
-        if (!session?.user?.id) {
-            console.log('No session, returning early');
-            return;
-        }
-
-        if (!currentMatch) {
-            console.log('No currentMatch, returning early');
-            return;
-        }
+        if (!session?.user?.id || !currentMatch) return;
 
         try {
-            console.log(`Recording action for match: ${currentMatch.id}`);
             await recordAction(currentMatch.id, action);
-            console.log('Action recorded successfully');
 
             if (action === 'like') {
-                console.log('Checking for match');
                 const isMatch = await checkForMatch(session.user.id, currentMatch.id);
                 if (isMatch) {
-                    console.log("It's a match!");
                     Alert.alert(
                         "It's a Match!",
                         `You and ${currentMatch.name} have liked each other!`,
@@ -94,24 +57,16 @@ export default function Surf() {
                 }
             }
 
-            console.log('Moving to next match');
             moveToNextMatch();
         } catch (error) {
             console.error('Error in handleAction:', error);
         }
-    }, [session, currentMatch, recordAction, checkForMatch, moveToNextMatch]);
+    }, [session, currentMatch, recordAction]);
 
     const moveToNextMatch = useCallback(() => {
-        console.log('moveToNextMatch called');
-        console.log(`Current index: ${currentMatchIndex}, Matches length: ${potentialMatches.length}`);
         if (currentMatchIndex < potentialMatches.length - 1) {
-            console.log('Moving to next match in the list');
-            setCurrentMatchIndex(prevIndex => {
-                console.log(`New index: ${prevIndex + 1}`);
-                return prevIndex + 1;
-            });
+            setCurrentMatchIndex(prevIndex => prevIndex + 1);
         } else {
-            console.log('Reached end of list, fetching new matches');
             fetchMatches();
             setCurrentMatchIndex(0);
         }
@@ -119,17 +74,10 @@ export default function Surf() {
         typewriterKey.current += 1;
     }, [currentMatchIndex, potentialMatches.length, fetchMatches]);
 
-
-
-
-
     const handleLike = () => handleAction('like');
     const handleDislike = () => handleAction('dislike');
 
-
-
     const checkForMatch = async (currentUserId: string, likedUserId: string) => {
-        // This function should be moved to the API layer in a future refactoring
         const { data, error } = await supabase
             .from('matches')
             .select('*')
@@ -146,12 +94,11 @@ export default function Surf() {
     };
 
     const renderInterestChips = useCallback(() => {
-        if (!currentMatch || !profile?.interests) return null;
+        if (!currentMatch || !currentUserProfile?.interests) return null;
 
-        // Sort interests: shared interests first, then non-shared
         const sortedInterests = [...currentMatch.interests].sort((a, b) => {
-            const aIsShared = profile.interests.includes(a);
-            const bIsShared = profile.interests.includes(b);
+            const aIsShared = currentUserProfile.interests.includes(a);
+            const bIsShared = currentUserProfile.interests.includes(b);
             if (aIsShared && !bIsShared) return -1;
             if (!aIsShared && bIsShared) return 1;
             return 0;
@@ -166,7 +113,7 @@ export default function Surf() {
             }
 
             const isLast = index === sortedInterests.length - 1;
-            const isShared = profile.interests.includes(interestId);
+            const isShared = currentUserProfile.interests.includes(interestId);
 
             return (
                 <Chip
@@ -182,7 +129,7 @@ export default function Surf() {
                 />
             );
         });
-    }, [currentMatch, profile]);
+    }, [currentMatch, currentUserProfile]);
 
     if (error) {
         return (
@@ -193,7 +140,6 @@ export default function Surf() {
             </SafeAreaView>
         );
     }
-
 
     if (!currentMatch) {
         return (
@@ -245,10 +191,6 @@ export default function Surf() {
                         }}
                     />
 
-                    {/* <Pressable onPress={() => { navigation.navigate('Profile', { id: currentMatch.id, imageUrl: imageUrl }) }} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'absolute', left: 0, top: 0, width: '100%', height: '100%' }}>
-                        <View style={{ width: '100%', height: '66%' }} />
-                    </Pressable> */}
-
                     <Fader visible position={Fader.position.BOTTOM} tintColor={'#282828'} size={222} />
 
                     {!loading && (
@@ -291,7 +233,6 @@ export default function Surf() {
         </SafeAreaView>
     );
 }
-
 
 const styles = StyleSheet.create({
     container: {
