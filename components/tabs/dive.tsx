@@ -6,17 +6,11 @@ import { Colors } from '@/constants/Colors';
 import hobbiesInterests from '@/constants/Interests';
 import { defaultStyles } from '@/constants/Styles';
 import Spacer from '@/components/Spacer';
-import { Chip, Fader } from 'react-native-ui-lib';
-import TypewriterEffect from '@/components/CrushyTypewriterEffect';
+import { Chip } from 'react-native-ui-lib';
 import { useNavigation, StackActions } from '@react-navigation/native';
 import { usePotentialMatches, useProfile } from '@/hooks/useApi';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase';
-
-interface Interest {
-    id: number;
-    isShared: boolean;
-}
 
 interface PotentialMatch {
     id: string;
@@ -29,72 +23,72 @@ interface PotentialMatch {
 
 export default function Dive() {
     const session = useAuth();
+    const navigation = useNavigation();
     const { matches: potentialMatches, loading, error, fetchDiveMatches, recordAction } = usePotentialMatches();
     const { profileDetails, fetchProfileDetails } = useProfile();
     const [currentMatchIndex, setCurrentMatchIndex] = useState(0);
     const [imageUrl, setImageUrl] = useState<string | number>(require('@/assets/images/react-logo.png'));
-    const navigation = useNavigation();
-    const typewriterKey = useRef(0);
     const scrollViewRef = useRef<ScrollView>(null);
+    const [user, setUser] = useState({ name: '', age: '0', interests: [] });
+    const [myData, setMyData] = useState({});
 
+    const currentMatch = potentialMatches[currentMatchIndex];
 
-    const [user, setUser] = useState<any[]>({ name: '', age: '0', interests: [] });
-    // const [userDetails, setUserDetails] = useState<any[]>();
-    const interestsList = useMemo(() => flattenArray(hobbiesInterests), []);
-    const [hasSharedInterests, setHasSharedInterests] = useState<boolean>(false);
-    const [myData, setMyData] = useState<any>({});
+    const interestsList = useMemo(() => hobbiesInterests.flat(), []);
 
     useEffect(() => {
         if (session?.user?.id) {
-            //console.log('Potential Matches:', potentialMatches);
             fetchDiveMatches();
+            fetchMyData();
         }
     }, [session, fetchDiveMatches]);
 
     useEffect(() => {
-        //console.log('Current Match Index:', currentMatchIndex);
-        //const currentMatch = potentialMatches[currentMatchIndex];
-        //console.log('Current Match:', currentMatch);
-
-
         if (currentMatch?.avatar_pixelated_url) {
-            //console.log('Setting image URL:', currentMatch.avatar_pixelated_url);
             setImageUrl(currentMatch.avatar_pixelated_url);
         } else {
-            //console.log('No avatar URL, setting default image');
             setImageUrl(require('@/assets/images/react-logo.png'));
         }
-    }, [currentMatchIndex, potentialMatches]);
+    }, [currentMatch]);
 
-    const currentMatch = potentialMatches[currentMatchIndex];
+    useEffect(() => {
+        if (currentMatch?.id && session?.user?.id) {
+            fetchUser();
+            fetchProfileDetails(currentMatch.id);
+        }
+    }, [currentMatch, session]);
+
+    const fetchMyData = useCallback(async () => {
+        const { data } = await supabase
+            .from('profiles_test')
+            .select('*')
+            .eq('id', session?.user.id);
+        if (data) {
+            setMyData(data[0]);
+        }
+    }, [session]);
+
+    const fetchUser = useCallback(async () => {
+        const { data } = await supabase
+            .from('profiles_test')
+            .select('*')
+            .eq('id', currentMatch.id);
+        if (data) {
+            setUser(data[0]);
+        }
+    }, [currentMatch]);
 
     const handleAction = useCallback(async (action: 'like' | 'dislike') => {
-        //console.log('HandleAction called');
-        //console.log('Session:', session);
-        //console.log('Current Match:', currentMatch);
+        if (!session?.user?.id || !currentMatch) return;
 
-        scrollToTop()
-
-        if (!session?.user?.id) {
-            //console.log('No session, returning early');
-            return;
-        }
-
-        if (!currentMatch) {
-            //console.log('No currentMatch, returning early');
-            return;
-        }
+        scrollToTop();
 
         try {
-            //console.log(`Recording action for match: ${currentMatch.id}`);
             await recordAction(currentMatch.id, action);
-            //console.log('Action recorded successfully');
 
             if (action === 'like') {
-                //console.log('Checking for match');
                 const isMatch = await checkForMatch(session.user.id, currentMatch.id);
                 if (isMatch) {
-                    //console.log("It's a match!");
                     Alert.alert(
                         "It's a Match!",
                         `You and ${currentMatch.name} have liked each other!`,
@@ -103,7 +97,6 @@ export default function Dive() {
                 }
             }
 
-            //console.log('Moving to next match');
             moveToNextMatch();
         } catch (error) {
             console.error('Error in handleAction:', error);
@@ -111,36 +104,15 @@ export default function Dive() {
     }, [session, currentMatch, recordAction, checkForMatch, moveToNextMatch]);
 
     const moveToNextMatch = useCallback(() => {
-        //console.log('moveToNextMatch called');
-        //console.log(`Current index: ${currentMatchIndex}, Matches length: ${potentialMatches.length}`);
         if (currentMatchIndex < potentialMatches.length - 1) {
-
-            //console.log('Moving to next match in the list');
-            setCurrentMatchIndex(prevIndex => {
-                //console.log(`New index: ${prevIndex + 1}`);
-                return prevIndex + 1;
-            });
-
+            setCurrentMatchIndex(prevIndex => prevIndex + 1);
         } else {
-            //console.log('Reached end of list, fetching new matches');
             fetchDiveMatches();
             setCurrentMatchIndex(0);
         }
-
-        typewriterKey.current += 1;
     }, [currentMatchIndex, potentialMatches.length, fetchDiveMatches]);
 
-
-
-
-
-    const handleLike = () => handleAction('like');
-    const handleDislike = () => handleAction('dislike');
-
-
-
-    const checkForMatch = async (currentUserId: string, likedUserId: string) => {
-        // This function should be moved to the API layer in a future refactoring
+    const checkForMatch = useCallback(async (currentUserId: string, likedUserId: string) => {
         const { data, error } = await supabase
             .from('matches')
             .select('*')
@@ -154,153 +126,68 @@ export default function Dive() {
         }
 
         return data && data.length > 0;
-    };
+    }, []);
 
-
-
-
-
-
-
-
-
-
-
-
-    useEffect(() => {
-        const fetchMe = async () => {
-
-            //setLoading(true)
-
-            const { data } = await supabase
-                .from('profiles_test')
-                .select('*')
-                .eq('id', session?.user.id);
-            if (data) {
-                setMyData(data[0])
-                // setLoading(false)
-            }
-        }
-
-        fetchMe();
-
-    }, [session]);
-
-
-    useEffect(() => {
-
-        const fetchUser = async () => {
-            // setLoading(true)
-            const { data } = await supabase
-                .from('profiles_test')
-                .select('*')
-                .eq('id', currentMatch.id)
-            if (data) {
-                //console.log('User data:', data[0]);
-                setUser(data[0]);
-                // setLoading(false)
-            }
-
-        }
-
-        if (currentMatch?.id && session?.user?.id) {
-            fetchUser();
-            fetchProfileDetails(currentMatch.id)
-        }
-
-    }, [currentMatch]);
-
-
-    function flattenArray(arr: any[]): any[] {
-        return arr.flat();
-    }
-
-    const sortInterests = (a: string, b: string) => {
-        const aIncluded = myData.interests?.includes(parseInt(a));
-        const bIncluded = myData.interests?.includes(parseInt(b));
-        if (aIncluded && !bIncluded) return -1;
-        if (!aIncluded && bIncluded) return 1;
-        return 0;
-    };
-
-    const renderInterestChips = (type: string) => {
-
+    const renderInterestChips = useCallback((type: string) => {
         if (!user.interests || !myData.interests) return null;
 
-        const sortedInterests = [...user.interests].sort(sortInterests);
-
-        return sortedInterests.map((interest: string, index: number) => {
-
-            const interestObject = interestsList.find(item => item.value === interest.toString());
-
-            if (!interestObject) {
-                console.error(`No label found for interest: ${interest}`);
-                return null;
-            }
-
-            const isActive = myData.interests.includes(parseInt(interestObject.value));
-            if (!hasSharedInterests && isActive) {
-                setHasSharedInterests(true);
-            }
-            if (type === 'shared') {
-                if (isActive) {
-                    return (
-                        <Chip
-                            key={index}
-                            label={interestObject.label}
-                            labelStyle={[styles.chipLabel, styles.sharedChipLabel]}
-                            containerStyle={[styles.chip, styles.sharedChip]}
-                            iconSource={require('@/assets/images/icons/iconSharedInterest.png')}
-                        />
-                    );
-                }
-            } else {
-                if (!isActive) {
-                    return (
-                        <Chip
-                            key={index}
-                            label={interestObject.label}
-                            labelStyle={[styles.chipLabel]}
-                            containerStyle={[styles.chip]}
-                        />
-                    );
-                }
-            }
+        const sortedInterests = [...user.interests].sort((a: number, b: number) => {
+            const aIncluded = myData.interests?.includes(a);
+            const bIncluded = myData.interests?.includes(b);
+            if (aIncluded && !bIncluded) return -1;
+            if (!aIncluded && bIncluded) return 1;
+            return 0;
         });
-    };
 
+        return sortedInterests.map((interest: number, index: number) => {
+            const interestObject = interestsList.find(item => item.value === interest.toString());
+            if (!interestObject) return null;
 
+            const isActive = myData.interests.includes(interest);
+            if (type === 'shared' && isActive) {
+                return (
+                    <Chip
+                        key={index}
+                        label={interestObject.label}
+                        labelStyle={[styles.chipLabel, styles.sharedChipLabel]}
+                        containerStyle={[styles.chip, styles.sharedChip]}
+                        iconSource={require('@/assets/images/icons/iconSharedInterest.png')}
+                    />
+                );
+            } else if (type !== 'shared' && !isActive) {
+                return (
+                    <Chip
+                        key={index}
+                        label={interestObject.label}
+                        labelStyle={[styles.chipLabel]}
+                        containerStyle={[styles.chip]}
+                    />
+                );
+            }
+            return null;
+        });
+    }, [user.interests, myData.interests, interestsList]);
 
-
-    const unescapeText = (text) => {
+    const unescapeText = useCallback((text: string) => {
         return text
             .replace(/\\'/g, "'")
             .replace(/\\n/g, '\n')
             .replace(/\\\\/g, '\\');
-    };
+    }, []);
 
-
-
-    const scrollToTop = () => {
+    const scrollToTop = useCallback(() => {
         scrollViewRef.current?.scrollTo({ x: 0, y: 0, animated: true });
-    };
-
-
-
-
-
-
+    }, []);
 
     if (error) {
         return (
             <SafeAreaView style={styles.container}>
                 <View style={styles.errorContainer}>
-                    <Text style={styles.errorText}>`An error occurred. Please try again later. ${error}`</Text>
+                    <Text style={styles.errorText}>An error occurred. Please try again later. {error}</Text>
                 </View>
             </SafeAreaView>
         );
     }
-
 
     if (!currentMatch) {
         return (
@@ -326,39 +213,30 @@ export default function Dive() {
 
     return (
         <SafeAreaView style={styles.container}>
-
             {loading && <ActivityIndicator size="small" color={Colors.light.accent} style={styles.loader} />}
 
             <View style={styles.innerContainer}>
                 <View style={styles.header}>
                     <Image source={require('@/assets/images/logo/logo_crushy.png')} style={styles.logo} />
-
-                    <View style={{ display: 'flex', flexDirection: 'row', gap: 8 }}>
+                    <View style={{ flexDirection: 'row', gap: 8 }}>
                         <Pressable style={[styles.buttonFilter]} onPress={() => { navigation.navigate('SearchFilters') }}>
                             <Ionicons name="search" size={12} color={Colors.light.text} style={{ marginTop: 2 }} />
                             <Text style={styles.buttonFilterText}>Search Filters</Text>
                         </Pressable>
-
                         <Pressable style={[styles.buttonFilter]} onPress={() => { navigation.goBack() }}>
-                            <Image source={require('@/assets/images/icons/tab-home.png')} style={{ width: 32, aspectRatio: '1' }} />
+                            <Image source={require('@/assets/images/icons/tab-home.png')} style={{ width: 32, aspectRatio: 1 }} />
                         </Pressable>
                     </View>
                 </View>
             </View>
 
-
-
             <ScrollView ref={scrollViewRef} style={styles.pageContent}>
-
                 <View style={styles.personContainer}>
                     <View style={{ flexDirection: 'row', justifyContent: 'center' }}>
                         <Image
                             source={typeof imageUrl === 'string' ? { uri: imageUrl } : imageUrl}
                             style={styles.person}
-                            onError={() => {
-                                //console.log('Error loading image, setting default');
-                                setImageUrl(require('@/assets/images/react-logo.png'));
-                            }}
+                            onError={() => setImageUrl(require('@/assets/images/react-logo.png'))}
                         />
                     </View>
 
@@ -368,12 +246,10 @@ export default function Dive() {
                         </View>
                     </View>
 
-
-                    {hasSharedInterests === true && (
+                    {renderInterestChips('shared')?.some(Boolean) && (
                         <View style={{ paddingHorizontal: 16 }}>
                             <Spacer height={32} />
-
-                            <Text style={{ fontFamily: 'HeadingBold', fontSize: 22, color: Colors.light.text, marginTop: 16 }}>Shared Hobbies & Interests</Text>
+                            <Text style={styles.sectionTitle}>Shared Hobbies & Interests</Text>
                             <View style={styles.chipsContainer}>
                                 {renderInterestChips('shared')}
                             </View>
@@ -385,41 +261,41 @@ export default function Dive() {
                     {profileDetails?.bio && (
                         <View>
                             <View style={{ paddingHorizontal: 16 }}>
-                                <Text style={{ fontFamily: 'HeadingBold', fontSize: 22, color: Colors.light.text, marginTop: 16 }}>Bio</Text>
+                                <Text style={styles.sectionTitle}>Bio</Text>
                                 <Spacer height={8} />
-                                <Text style={{ fontFamily: 'BodyRegular', fontSize: 18, lineHeight: 26 }}>{unescapeText(profileDetails.bio)}</Text>
+                                <Text style={styles.bioText}>{unescapeText(profileDetails.bio)}</Text>
                             </View>
                             <Spacer height={32} />
                         </View>
                     )}
 
-                    <View style={{ paddingHorizontal: 16 }}>
-                        <Text style={{ fontFamily: 'HeadingBold', fontSize: 22, color: Colors.light.text, marginTop: 16 }}>Other Hobbies & Interests</Text>
-                        <View style={styles.chipsContainer}>
-                            {renderInterestChips('')}
+
+                    {renderInterestChips('')?.some(Boolean) && (
+                        <View style={{ paddingHorizontal: 16 }}>
+                            <Text style={styles.sectionTitle}>Other Hobbies & Interests</Text>
+                            <View style={styles.chipsContainer}>
+                                {renderInterestChips('')}
+                            </View>
                         </View>
-                    </View>
+                    )}
                 </View>
 
                 <View style={styles.buttonsMatching}>
-                    <Pressable onPress={handleDislike} disabled={loading}>
+                    <Pressable onPress={() => handleAction('dislike')} disabled={loading}>
                         <Image source={require('@/assets/images/buttons/buttonMatchingDislike.png')} style={styles.buttonsMatchingSecondary} />
                     </Pressable>
-                    <Pressable onPress={handleLike} disabled={loading}>
+                    <Pressable onPress={() => handleAction('like')} disabled={loading}>
                         <Image source={require('@/assets/images/buttons/buttonMatchingLike.png')} style={styles.buttonsMatchingPrimary} />
                     </Pressable>
                     <Pressable onPress={() => { alert("This feature will be available in the future.") }} disabled={loading}>
                         <Image source={require('@/assets/images/buttons/buttonMatchingChat.png')} style={styles.buttonsMatchingSecondary} />
                     </Pressable>
                 </View>
-
-
-
             </ScrollView>
-
         </SafeAreaView>
     );
 }
+
 
 
 const styles = StyleSheet.create({
@@ -566,5 +442,15 @@ const styles = StyleSheet.create({
         fontSize: 18,
         color: Colors.light.accent,
     },
-
+    sectionTitle: {
+        fontFamily: 'HeadingBold',
+        fontSize: 22,
+        color: Colors.light.text,
+        marginTop: 16,
+    },
+    bioText: {
+        fontFamily: 'BodyRegular',
+        fontSize: 18,
+        lineHeight: 26,
+    },
 });
