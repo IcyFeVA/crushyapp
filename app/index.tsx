@@ -11,7 +11,7 @@ import { useFonts } from 'expo-font';
 import * as NavigationBar from 'expo-navigation-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Platform } from 'react-native';
-import { MMKV } from 'react-native-mmkv'
+// import { MMKV } from 'react-native-mmkv'
 import hobbiesInterests from '@/constants/Interests'
 import { useNotifications } from '@/hooks/useNotifications';
 import { clearAllStorage, getData, storeData, resetUserSearchFilters } from '@/utils/storage';
