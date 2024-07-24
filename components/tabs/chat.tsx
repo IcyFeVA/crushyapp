@@ -4,7 +4,8 @@ import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, ActivityIndicator, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/hooks/useAuth';
-import { ChannelList, Channel, MessageList, MessageInput, OverlayProvider, Chat } from 'stream-chat-expo';
+import { StreamChat } from 'stream-chat';
+import { Chat, Channel, MessageList, MessageInput } from 'stream-chat-expo';
 import { chatClient, connectUser } from '@/lib/streamChat';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { defaultStyles } from '@/constants/Styles';
@@ -40,7 +41,19 @@ export default function ChatScreen() {
                         throw new Error('No token received from generate-stream-token');
                     }
 
-                    // ... rest of your setup code
+                    try {
+                        await connectUser({ id: session.user.id, name: session.user.email }, data.token);
+                        console.log('User connected successfully');
+                      } catch (error) {
+                        console.error('Error connecting user to Stream:', error);
+                      }
+
+
+                    //   const channel = chatClient.channel('messaging', matchId, {
+                    //     members: [session.user.id, matchId],
+                    //   });
+                    //   await channel.watch();
+                    //   setChannel(channel);
                 } catch (error) {
                     console.error('Error setting up chat:', error);
                     console.error('Error details:', error.message, error.stack);
@@ -49,14 +62,16 @@ export default function ChatScreen() {
             }
         };
 
-        setupChatClient();
+        if (session?.user && matchId) {
+            setupChatClient();
+          }
 
-        return () => {
+          return () => {
             if (clientReady) {
-                chatClient.disconnectUser();
-                setClientReady(false);
+              chatClient.disconnectUser();
+              setClientReady(false);
             }
-        };
+          };
     }, [session, matchId]);
 
     if (error) {

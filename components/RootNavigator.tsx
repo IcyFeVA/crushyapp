@@ -28,6 +28,8 @@ import { useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import Inbox from '@/components/tabs/inbox'; // Add this import
 import ChatScreen from '@/components/tabs/chat'; // Add this import
+import ChannelList from '@/components/ChannelList';
+import ChatChannel from '@/components/ChatChannel';
 
 const tabIcons = {
     homeActive: require('@/assets/images/icons/tab-home-active.png'),
@@ -117,7 +119,7 @@ function TabNavigator() {
             <Tab.Screen name="Home" component={HomeScreen} />
             <Tab.Screen name="History" component={SettingsScreen} />
             <Tab.Screen name="Explore" component={DummySurf} />
-            <Tab.Screen name="Inbox" component={Inbox} options={{ tabBarBadge: 6 }} />
+            <Tab.Screen name="Inbox" component={ChannelList} options={{ tabBarBadge: 6 }} />
             <Tab.Screen name="Me" component={Me} />
         </Tab.Navigator>
     );
@@ -188,6 +190,7 @@ export default function RootNavigator({ session }) {
                             <Stack.Screen name="Profile" component={Profile} />
                             <Stack.Screen name="SearchFilters" component={SearchFilters} />
                             <Stack.Screen name="Chat" component={ChatScreen} />
+                            <Stack.Screen name="ChatChannel" component={ChatChannel} options={{ headerShown: true }} />
                         </Stack.Group>
                         <Stack.Group screenOptions={{ headerShown: false, ...TransitionPresets.SlideFromRightIOS }}>
                             <Stack.Screen
