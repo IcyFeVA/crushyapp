@@ -4,9 +4,20 @@ import { StreamChat } from 'stream-chat';
 
 export const chatClient = StreamChat.getInstance('pcvjbntz7tfy');
 
-export const connectUser = async (user: { id: string; name: string }, token: string) => {
+export const connectUser = async (user: { id: string; }, token: string) => {
   try {
-    await chatClient.connectUser(user, token);
+    // await chatClient.connectUser(user, token);
+
+    await chatClient.connectUser(
+      {
+          id: 'john',
+          name: 'John Doe',
+          image: 'https://getstream.io/random_svg/?name=John',
+      },
+     chatClient.devToken('john'),
+  );
+  
+
     console.log('User connected successfully');
   } catch (error) {
     console.error('Error connecting user to Stream:', error);

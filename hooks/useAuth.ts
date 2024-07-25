@@ -9,18 +9,18 @@ export const useAuth = () => {
 
   useEffect(() => {
     const getSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        try {
-            console.log('getting stream token')
-          const streamToken = await fetchStreamToken(session.user.id);
-          setSession({ ...session, streamToken });
-          console.log('stream token set', streamToken)
-        } catch (error) {
-          console.error('Failed to fetch Stream token:', error);
-          setSession(session); // Set session without Stream token
-        }
-      }
+      // const { data: { session } } = await supabase.auth.getSession();
+      // if (session) {
+      //   try {
+      //       console.log('getting stream token')
+      //     const streamToken = await fetchStreamToken(session.user.id);
+      //     setSession({ ...session, streamToken });
+      //     console.log('stream token set', streamToken)
+      //   } catch (error) {
+      //     console.error('Failed to fetch Stream token:', error);
+      //     setSession(session); // Set session without Stream token
+      //   }
+      // }
     };
 
     getSession();
@@ -29,7 +29,8 @@ export const useAuth = () => {
       if (session) {
         try {
           const streamToken = await fetchStreamToken(session.user.id);
-          setSession({ ...session, streamToken });
+          // setSession({ ...session, streamToken });
+          setSession({ ...session });
         } catch (error) {
           console.error('Failed to fetch Stream token:', error);
           setSession(session); // Set session without Stream token
