@@ -16,97 +16,97 @@ type Match = {
 };
 
 export default function Inbox() {
-    const [matches, setMatches] = useState<Match[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const navigation = useNavigation();
-    const session = useAuth();
+    // const [matches, setMatches] = useState<Match[]>([]);
+    // const [loading, setLoading] = useState(true);
+    // const [error, setError] = useState(null);
+    // const navigation = useNavigation();
+    // const session = useAuth();
 
-    useEffect(() => {
-        if (session?.user) {
-            fetchMatches();
-        }
-    }, [session]);
+    // useEffect(() => {
+    //     if (session?.user) {
+    //         fetchMatches();
+    //     }
+    // }, [session]);
 
-    const fetchMatches = async () => {
-        try {
-            setLoading(true);
-            const { data, error } = await supabase
-                .from('matches')
-                .select(`
-                    id,
-                    matched_at,
-                    profiles_test!matches_user2_id_fkey (
-                        id,
-                        name,
-                        avatar_url
-                    )
-                    `)
-                .eq('user1_id', session?.user.id)
+    // const fetchMatches = async () => {
+    //     try {
+    //         setLoading(true);
+    //         const { data, error } = await supabase
+    //             .from('matches')
+    //             .select(`
+    //                 id,
+    //                 matched_at,
+    //                 profiles_test!matches_user2_id_fkey (
+    //                     id,
+    //                     name,
+    //                     avatar_url
+    //                 )
+    //                 `)
+    //             .eq('user1_id', session?.user.id)
 
-            //.not('matched_at', 'is', null);
+    //         //.not('matched_at', 'is', null);
 
-            if (error) throw error;
+    //         if (error) throw error;
 
-            setMatches(data.map((match: any) => ({
-                id: match.profiles_test.id,
-                name: match.profiles_test.name,
-                avatar_url: match.profiles_test.avatar_url,
-                matched_at: match.matched_at
-            })));
-        } catch (error) {
-            console.error('Error fetching matches:', error);
-            setError(error.message);
-        } finally {
-            setLoading(false);
-        }
-    };
+    //         setMatches(data.map((match: any) => ({
+    //             id: match.profiles_test.id,
+    //             name: match.profiles_test.name,
+    //             avatar_url: match.profiles_test.avatar_url,
+    //             matched_at: match.matched_at
+    //         })));
+    //     } catch (error) {
+    //         console.error('Error fetching matches:', error);
+    //         setError(error.message);
+    //     } finally {
+    //         setLoading(false);
+    //     }
+    // };
 
-    const renderMatch = ({ item }: { item: Match }) => (
-        <Pressable
-            style={styles.matchItem}
-            onPress={() => navigation.navigate('Chat', { matchId: item.id, matchName: item.name })}
-        >
-            <Text style={styles.matchName}>{item.name}</Text>
-        </Pressable>
-    );
+    // const renderMatch = ({ item }: { item: Match }) => (
+    //     <Pressable
+    //         style={styles.matchItem}
+    //         onPress={() => navigation.navigate('Chat', { matchId: item.id, matchName: item.name })}
+    //     >
+    //         <Text style={styles.matchName}>{item.name}</Text>
+    //     </Pressable>
+    // );
 
-    if (loading) {
-        return (
-            <SafeAreaView style={defaultStyles.SafeAreaView}>
-                <View style={styles.centerContainer}>
-                    <ActivityIndicator size="large" />
-                </View>
-            </SafeAreaView>
-        );
-    }
+    // if (loading) {
+    //     return (
+    //         <SafeAreaView style={defaultStyles.SafeAreaView}>
+    //             <View style={styles.centerContainer}>
+    //                 <ActivityIndicator size="large" />
+    //             </View>
+    //         </SafeAreaView>
+    //     );
+    // }
 
-    if (error) {
-        return (
-            <SafeAreaView style={defaultStyles.SafeAreaView}>
-                <View style={styles.centerContainer}>
-                    <Text style={styles.errorText}>Error: {error}</Text>
-                </View>
-            </SafeAreaView>
-        );
-    }
+    // if (error) {
+    //     return (
+    //         <SafeAreaView style={defaultStyles.SafeAreaView}>
+    //             <View style={styles.centerContainer}>
+    //                 <Text style={styles.errorText}>Error: {error}</Text>
+    //             </View>
+    //         </SafeAreaView>
+    //     );
+    // }
 
-    return (
-        <SafeAreaView style={defaultStyles.SafeAreaView}>
-            <View style={defaultStyles.innerContainer}>
-                <Text style={defaultStyles.h2}>Inbox</Text>
-                {matches.length > 0 ? (
-                    <FlatList
-                        data={matches}
-                        renderItem={renderMatch}
-                        keyExtractor={(item) => item.id}
-                    />
-                ) : (
-                    <Text style={styles.noMatchesText}>No matches yet</Text>
-                )}
-            </View>
-        </SafeAreaView>
-    );
+    // return (
+    //     <SafeAreaView style={defaultStyles.SafeAreaView}>
+    //         <View style={defaultStyles.innerContainer}>
+    //             <Text style={defaultStyles.h2}>Inbox</Text>
+    //             {matches.length > 0 ? (
+    //                 <FlatList
+    //                     data={matches}
+    //                     renderItem={renderMatch}
+    //                     keyExtractor={(item) => item.id}
+    //                 />
+    //             ) : (
+    //                 <Text style={styles.noMatchesText}>No matches yet</Text>
+    //             )}
+    //         </View>
+    //     </SafeAreaView>
+    // );
 }
 
 const styles = StyleSheet.create({

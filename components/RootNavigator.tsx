@@ -1,11 +1,8 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator, TransitionPresets } from '@react-navigation/stack';
-import { Ionicons } from '@expo/vector-icons';
 import Auth from '@/components/Auth';
 import { View, Text, Image, Pressable, Platform } from 'react-native';
-import { Colors } from '@/constants/Colors';
-import { useFocusEffect, useNavigation } from '@react-navigation/native'
-// import { BlurView } from 'expo-blur';
+import { NavigationContainer, useFocusEffect, useNavigation } from '@react-navigation/native'
 import Me from '@/components/tabs/me';
 import Surf from '@/components/tabs/surf';
 import Dive from '@/components/tabs/dive';
@@ -21,12 +18,11 @@ import FilterSmokingFrequency from '@/app/searchFilters/filterSmoking';
 import FilterDrinkingFrequency from '@/app/searchFilters/filterDrinking';
 import FilterCannabisFrequency from '@/app/searchFilters/filterCannabis';
 import FilterDietPreference from '@/app/searchFilters/filterDietPreference';
-import { useProfile } from '@/hooks/useProfile';
+import ChatWrapper from '@/components/ChatWrapper';
 import { useAppContext } from '@/providers/AppProvider';
 import { clearAllStorage, getData, storeData } from '@/utils/storage';
 import { useCallback, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import Inbox from '@/components/tabs/inbox'; // Add this import
 import ChannelList from '@/components/ChannelList';
 import ChatChannel from '@/components/ChatChannel';
 import { useChatContext } from 'stream-chat-expo';
@@ -42,6 +38,8 @@ const tabIcons = {
     meInactive: require('@/assets/images/icons/tab-me.png'),
     exploreInactive: require('@/assets/images/icons/tab-explore.png'),
 };
+
+
 
 
 function HomeScreen() {
@@ -211,62 +209,37 @@ export default function RootNavigator({ session }) {
 
 
     return (
-        <Stack.Navigator initialRouteName='Main'>
-            {session ? (
-                showOnboarding === true ? <Stack.Screen name="Onboarding" component={Onboarding} options={{ headerShown: false }} /> : (
-                    <Stack.Group>
-                        <Stack.Group screenOptions={{ headerShown: false, ...TransitionPresets.BottomSheetAndroid }}>
-                            <Stack.Screen name="Main" component={TabNavigator} />
-                            <Stack.Screen name="Surf" component={Surf} options={{ gestureEnabled: true, gestureDirection: 'vertical', gestureResponseDistance: 400 }} />
-                            <Stack.Screen name="Dive" component={Dive} />
-                            <Stack.Screen name="Profile" component={Profile} />
-                            <Stack.Screen name="SearchFilters" component={SearchFilters} />
-                            <Stack.Screen name="ChatChannel" component={ChatChannel} options={{ headerShown: true }} />
+        // <NavigationContainer independent={true}>
+            <Stack.Navigator initialRouteName='Main'>
+                {session ? (
+                    showOnboarding === true ? <Stack.Screen name="Onboarding" component={Onboarding} options={{ headerShown: false }} /> : (
+                        <Stack.Group>
+                            <Stack.Group screenOptions={{ headerShown: false, ...TransitionPresets.BottomSheetAndroid }}>
+                                <Stack.Screen name="Main" component={TabNavigator} />
+                                <Stack.Screen name="Surf" component={Surf} options={{ gestureEnabled: true, gestureDirection: 'vertical', gestureResponseDistance: 400 }} />
+                                <Stack.Screen name="Dive" component={Dive} />
+                                <Stack.Screen name="Profile" component={Profile} />
+                                <Stack.Screen name="SearchFilters" component={SearchFilters} />
+                                <Stack.Screen name="ChatChannel" component={ChatChannel} options={{ headerShown: true }} />
+                            </Stack.Group>
+                            <Stack.Group screenOptions={{ headerShown: false, ...TransitionPresets.SlideFromRightIOS }}>
+                                <Stack.Screen name="filterGenderPreference" component={FilterGenderPreference} />
+                                <Stack.Screen name="filterStarsign" component={FilterStarsign} />
+                                <Stack.Screen name="filterAgeRange" component={FilterAgeRange} />
+                                <Stack.Screen name="filterBodyType" component={FilterBodyType} />
+                                <Stack.Screen name="filterExerciseFrequency" component={FilterExerciseFrequency} />
+                                <Stack.Screen name="filterSmokingFrequency" component={FilterSmokingFrequency} />
+                                <Stack.Screen name="filterDrinkingFrequency" component={FilterDrinkingFrequency} />
+                                <Stack.Screen name="filterCannabisFrequency" component={FilterCannabisFrequency} />
+                                <Stack.Screen name="filterDietPreference" component={FilterDietPreference} />
+                            </Stack.Group>
                         </Stack.Group>
-                        <Stack.Group screenOptions={{ headerShown: false, ...TransitionPresets.SlideFromRightIOS }}>
-                            <Stack.Screen
-                                name="filterGenderPreference"
-                                component={FilterGenderPreference}
-                            />
-                            <Stack.Screen
-                                name="filterStarsign"
-                                component={FilterStarsign}
-                            />
-                            <Stack.Screen
-                                name="filterAgeRange"
-                                component={FilterAgeRange}
-                            />
-                            <Stack.Screen
-                                name="filterBodyType"
-                                component={FilterBodyType}
-                            />
-                            <Stack.Screen
-                                name="filterExerciseFrequency"
-                                component={FilterExerciseFrequency}
-                            />
-                            <Stack.Screen
-                                name="filterSmokingFrequency"
-                                component={FilterSmokingFrequency}
-                            />
-                            <Stack.Screen
-                                name="filterDrinkingFrequency"
-                                component={FilterDrinkingFrequency}
-                            />
-                            <Stack.Screen
-                                name="filterCannabisFrequency"
-                                component={FilterCannabisFrequency}
-                            />
-                            <Stack.Screen
-                                name="filterDietPreference"
-                                component={FilterDietPreference}
-                            />
-                        </Stack.Group>
-                    </Stack.Group>
-                )
-            ) : (
-                <Stack.Screen name="Auth" component={Auth} options={{ headerShown: false }} />
-            )}
-        </Stack.Navigator>
+                    )
+                ) : (
+                    <Stack.Screen name="Auth" component={Auth} options={{ headerShown: false }} />
+                )}
+            </Stack.Navigator>
+        // </NavigationContainer>
     );
 }
 
