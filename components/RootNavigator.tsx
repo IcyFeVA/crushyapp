@@ -18,7 +18,6 @@ import FilterSmokingFrequency from '@/app/searchFilters/filterSmoking';
 import FilterDrinkingFrequency from '@/app/searchFilters/filterDrinking';
 import FilterCannabisFrequency from '@/app/searchFilters/filterCannabis';
 import FilterDietPreference from '@/app/searchFilters/filterDietPreference';
-import ChatWrapper from '@/components/ChatWrapper';
 import { useAppContext } from '@/providers/AppProvider';
 import { clearAllStorage, getData, storeData } from '@/utils/storage';
 import { useCallback, useEffect } from 'react';
