@@ -20,6 +20,10 @@ import { supabase } from '@/lib/supabase';
 import { get } from 'react-native/Libraries/TurboModule/TurboModuleRegistry';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { NavigationContainer } from '@react-navigation/native';
+import { StreamChat } from 'stream-chat';
+import { Chat, OverlayProvider } from 'stream-chat-expo';
+
+const chatClient = StreamChat.getInstance('pcvjbntz7tfy');
 
 
 
@@ -53,7 +57,7 @@ export default function RootLayout() {
         if (error) throw error;
     }, [error]);
 
-
+    
 
 
 
@@ -93,18 +97,20 @@ export default function RootLayout() {
 
 
     return (
-        <AppProvider>
+        <SafeAreaProvider>
             <GestureHandlerRootView style={{ flex: 1 }}>
-                <ErrorBoundary>
-                    <SafeAreaProvider>
-                        {/* <NavigationContainer> */}
-                        <RootNavigator
-                            session={session}
-                        />
-                        {/* </NavigationContainer> */}
-                    </SafeAreaProvider>
-                </ErrorBoundary>
+                <AppProvider>
+                    <OverlayProvider>
+                        <Chat client={chatClient}>
+                            {/* <NavigationContainer> */}
+                                <RootNavigator
+                                    session={session}
+                                />
+                            {/* </NavigationContainer> */}
+                        </Chat>
+                    </OverlayProvider>
+                </AppProvider>
             </GestureHandlerRootView>
-        </AppProvider>
+        </SafeAreaProvider>
     );
 }

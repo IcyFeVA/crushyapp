@@ -1,79 +1,136 @@
-// components/ChannelList.tsx
-
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ChannelList, ChannelSort, Channel, Chat, MessageInput, MessageList, OverlayProvider  } from 'stream-chat-expo';
-import { useNavigation } from '@react-navigation/native';
-import { chatClient } from '@/lib/streamChat';
+import { ChannelList, useChatContext } from 'stream-chat-expo';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useAuth } from '@/hooks/useAuth';
-
-const sort: ChannelSort = { last_message_at: -1 };
 
 export default function ChannelListScreen() {
   const navigation = useNavigation();
+  const { client } = useChatContext();
   const session = useAuth();
   const [clientReady, setClientReady] = useState(false);
-  const [channel, setChannel] = useState();
-
-  useEffect(() => {
-    const createAndWatchChannel = async () => {
-      const newChannel = chatClient.channel('messaging', 'channel_id');
-      await newChannel.watch();
-      setChannel(newChannel);
-    };
-
-    createAndWatchChannel();
-  }, []);
-
+  const [myChannel, setChannel] = useState();
 
   useEffect(() => {
     const setupClient = async () => {
-      if (!session?.user) return;
-
       try {
-        // await chatClient.connectUser(
-        //   {
-        //     id: session.user.id,
-        //     name: session.user.email,
-        //   },
-        //   session.streamToken
-        // );
+        if (!session?.user?.id) return;
 
-        await chatClient.connectUser(
+        console.log('connectUser')
+        await client.connectUser(
           {
               id: "Crushy",
               name: 'Crushy',
               image: 'https://getstream.io/random_svg/?name=John',
           },
-          chatClient.devToken('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiQ3J1c2h5In0.7M2-tacCjPbnFaIDf56-oHZ6ammF9euZx9mKs0MhL30'),
-      );
+          client.devToken('Crushy'),
+        );
+
+        try {
+          const channel = client.channel('messaging', 'mikroleap', {
+            members: ["Crushy", 'mikroleap'],
+          });
+          await channel.watch();
+
+          setChannel(channel);
+          console.log('Channel set up successfully');
+        } catch (error) {
+          console.error('Error setting up channel:', error);
+        }
+
         setClientReady(true);
       } catch (error) {
         console.error('Failed to connect user', error);
       }
     };
 
-    setupClient();
+    if (client) setupClient();
 
-    return () => {
-      chatClient.disconnectUser();
-      setClientReady(false);
-    };
-  }, [session]);
+    // Cleanup function
+    // return () => {
+    //   const disconnectUser = async () => {
+    //     try {
+    //       if (client) {
+    //         await client.disconnectUser();
+    //         console.log('User disconnected successfully');
+    //       }
+    //     } catch (error) {
+    //       console.error('Error disconnecting user:', error);
+    //     }
+    //   };
 
-  if (!clientReady || !session?.user) return <Text>INITIALIZING</Text>;
+    //   disconnectUser();
+    //   setClientReady(false);
+    // };
+
+  }, [session, client]);
+
+
+
+
+
+
+
+
+  // const disconnectUser = useCallback(async () => {
+  //   try {
+  //     if (client && client.userID) {
+  //       await client.disconnectUser();
+  //       console.log('User disconnected successfully');
+  //     }
+  //   } catch (error) {
+  //     console.error('Error disconnecting user:', error);
+  //   }
+  // }, [client]);
+
+
+  // useFocusEffect(
+  //   useCallback(() => {
+  //     // This effect runs when the screen comes into focus
+  //     console.log('focusing')
+
+  //     // Cleanup function that runs when the screen goes out of focus
+  //     return () => {
+  //       console.log('disconnecting user')
+  //       disconnectUser();
+  //     };
+  //   }, [disconnectUser])
+  // );
+
+  // // Handle hardware back button (Android)
+  // useEffect(() => {
+  //   const unsubscribe = navigation.addListener('beforeRemove', (e) => {
+  //     console.log('disconnecting user')
+  //     disconnectUser();
+  //   });
+
+  //   return unsubscribe;
+  // }, [navigation, disconnectUser]);
+
+
+
+
+
+
+
+
+
+
+
+
+  if (!clientReady) return <Text>Loading...</Text>;
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
-      <OverlayProvider>
-      <Chat client={chatClient}>
-      <Channel channel={channel}>
-          <MessageList />
-          <MessageInput />
-        </Channel>
-      </Chat>r
-      </OverlayProvider>
+      <ChannelList
+        filters={{ members: { $in: ['Crushy'] } }}
+        sort={{}}
+        onSelect={(channel) => {
+          console.log(channel)
+          navigation.navigate('ChatChannel', { channelId: channel.id });
+        }}
+      />
     </SafeAreaView>
   );
 }

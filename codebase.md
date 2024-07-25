@@ -142,7 +142,7 @@ Join our community of developers creating universal apps.
     "@react-native-community/netinfo": "11.3.1",
     "@react-native-picker/picker": "2.7.5",
     "@react-navigation/bottom-tabs": "^6.6.0",
-    "@react-navigation/native": "^6.1.17",
+    "@react-navigation/native": "^6.1.18",
     "@react-navigation/native-stack": "^6.9.26",
     "@react-navigation/stack": "^6.4.0",
     "@rneui/themed": "^4.0.0-rc.8",
@@ -150,6 +150,7 @@ Join our community of developers creating universal apps.
     "@stream-io/flat-list-mvcp": "^0.10.3",
     "@supabase/supabase-js": "^2.43.4",
     "ai-digest": "^1.0.4",
+    "axios": "^1.7.2",
     "base64-js": "^1.5.1",
     "expo": "~51.0.17",
     "expo-av": "^14.0.6",
@@ -191,6 +192,7 @@ Join our community of developers creating universal apps.
     "rn-fetch-blob": "^0.12.0",
     "stream-chat": "^8.37.0",
     "stream-chat-expo": "^5.33.1",
+    "stream-chat-react-native": "^5.33.1",
     "zustand": "^4.5.2"
   },
   "devDependencies": {
@@ -318,6 +320,12 @@ module.exports = function (api) {
         {
           "cameraPermission": "$(PRODUCT_NAME) would like to use your camera to share image in a message."
         }
+      ],
+      [
+        "expo-av",
+        {
+          "microphonePermission": "$(PRODUCT_NAME) would like to use your microphone for voice recording."
+        }
       ]
     ],
     "experiments": {
@@ -359,6 +367,23 @@ web-build/
 expo-env.d.ts
 config.ts
 # @end expo-cli
+```
+
+# .easignore
+
+```
+node_modules/
+dist/
+npm-debug.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+web-build/
+
+
 ```
 
 # .aidigestignore
@@ -1008,14 +1033,26 @@ import { StreamChat } from 'stream-chat';
 
 export const chatClient = StreamChat.getInstance('pcvjbntz7tfy');
 
-export const connectUser = async (user: { id: string; name: string }, token: string) => {
-  try {
-    await chatClient.connectUser(user, token);
-    console.log('User connected successfully');
-  } catch (error) {
-    console.error('Error connecting user to Stream:', error);
-    throw error;
-  }
+
+
+
+
+
+
+export const connectUser = async (user: { id: string; }, token: string) => {
+  // try {
+  //   // await chatClient.connectUser(user, token);
+
+
+
+
+  
+
+  //   console.log('User connected successfully');
+  // } catch (error) {
+  //   console.error('Error connecting user to Stream:', error);
+  //   throw error;
+  // }
 };
 
 export const disconnectUser = async () => {
@@ -1507,34 +1544,55 @@ export { useColorScheme } from 'react-native';
 # hooks\useAuth.ts
 
 ```ts
-// src/hooks/useAuth.ts
-import { useEffect, useState } from 'react';
-import { supabase } from '../lib/supabase';
-import { Session } from '@supabase/supabase-js';
+// hooks/useAuth.ts
+
+import { useState, useEffect } from 'react';
+import { supabase } from '@/lib/supabase';
+import { fetchStreamToken } from '@/api/auth';
 
 export const useAuth = () => {
-    const [session, setSession] = useState<Session | null>(null);
+  const [session, setSession] = useState(null);
 
-    useEffect(() => {
-        const getSession = async () => {
-            const { data: { session } } = await supabase.auth.getSession();
-            setSession(session);
-        };
+  useEffect(() => {
+    const getSession = async () => {
+      // const { data: { session } } = await supabase.auth.getSession();
+      // if (session) {
+      //   try {
+      //       console.log('getting stream token')
+      //     const streamToken = await fetchStreamToken(session.user.id);
+      //     setSession({ ...session, streamToken });
+      //     console.log('stream token set', streamToken)
+      //   } catch (error) {
+      //     console.error('Failed to fetch Stream token:', error);
+      //     setSession(session); // Set session without Stream token
+      //   }
+      // }
+    };
 
-        getSession();
+    getSession();
 
-        const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
-            setSession(session);
-        });
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (session) {
+        try {
+          const streamToken = await fetchStreamToken(session.user.id);
+          // setSession({ ...session, streamToken });
+          setSession({ ...session });
+        } catch (error) {
+          console.error('Failed to fetch Stream token:', error);
+          setSession(session); // Set session without Stream token
+        }
+      } else {
+        setSession(null);
+      }
+    });
 
-        return () => {
-            authListener.subscription.unsubscribe();
-        };
-    }, []);
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, []);
 
-    return session;
+  return session;
 };
-
 ```
 
 # hooks\useApi.ts
@@ -1630,610 +1688,6 @@ export const usePotentialMatches = () => {
   return { matches, loading, error, fetchMatches, fetchDiveMatches, recordAction };
 };
 
-
-```
-
-# constants\ToastConfig.ts
-
-```ts
-import React from "react"
-import { View, Text } from "react-native-ui-lib"
-import Toast, { BaseToast, ErrorToast } from 'react-native-toast-message';
-
-
-export const toastConfig = {
-
-    success: (props) => (
-        <BaseToast
-            { ...props }
-            style={{ borderLeftColor: 'pink' }}
-contentContainerStyle = {{ paddingHorizontal: 15 }}
-text1Style = {{
-    fontSize: 15,
-        fontWeight: '400'
-}}
-/>
-    ),
-
-error: (props) => (
-    <ErrorToast
-            { ...props }
-            text1Style = {{ fontSize: 17 }}
-text2Style = {{ fontSize: 15 }}
-/>
-    ),
-    /*
-      Or create a completely new type - `default`,
-      building the layout from scratch.
-  
-      I can consume any custom `props` I want.
-      They will be passed when calling the `show` method (see below)
-    */
-    default: ({ text1, text2, props }) => (
-    <View style= {{ display: 'flex', justifyContent: 'center', width: '94%', backgroundColor: Colors.light.accent, borderRadius: 8, padding: 16 }}>
-        <Text style={ { fontFamily: 'HeadingBold', color: 'white' } }> { text1 } < /Text>
-            < Text style = {{ fontFamily: 'BodyRegular', color: 'white' }}> { text2 } < /Text>
-{/* <Text>{props.uuid}</Text> */ }
-</View>
-    )
-};
-```
-
-# constants\Styles.ts
-
-```ts
-import { Colors } from '@/constants/Colors';
-import { Platform, StyleSheet } from 'react-native';
-
-export const defaultStyles = StyleSheet.create({
-    SafeAreaView: {
-        flex: 1,
-        padding: 16,
-        backgroundColor: Colors.light.background,
-    },
-    innerContainer: {
-        flex: 1,
-    },
-    body: {
-        fontFamily: 'BodyRegular',
-        color: Colors.light.text,
-        fontSize: 16,
-        lineHeight: 24
-    },
-    bodyBold: {
-        fontFamily: 'BodyBold',
-        color: Colors.light.text,
-        fontSize: 16,
-        lineHeight: 24
-    },
-    buttonShadow: {
-        ...Platform.select({
-            ios: {
-                shadowColor: "#ccc",
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.5,
-                shadowRadius: 3,
-            },
-            android: {
-                elevation: 3,
-            },
-        }),
-    },
-    h2: {
-        fontSize: 24,
-        fontFamily: 'HeadingBold',
-        color: Colors.light.text
-    },
-    inputLabel: {
-        fontSize: 16,
-        fontFamily: 'BodySemiBold',
-        color: Colors.light.text
-    },
-    button: {
-        display: 'flex',
-        backgroundColor: Colors.light.primary,
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderWidth: 2,
-        borderColor: Colors.light.primaryLight,
-        paddingTop: 6,
-        paddingHorizontal: 32,
-        borderRadius: 8,
-        minHeight: 48,
-    },
-    buttonLabel: {
-        fontSize: 14,
-        fontFamily: 'BodyBold',
-        color: Colors.light.textInverted,
-        textTransform: 'uppercase'
-    },
-    buttonSecondary: {
-        display: 'flex',
-        backgroundColor: Colors.light.background,
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderWidth: 1,
-        borderColor: Colors.light.tertiary,
-        paddingTop: 6,
-        paddingHorizontal: 32,
-        borderRadius: 8,
-        minHeight: 48,
-    },
-    buttonSecondaryLabel: {
-        fontSize: 14,
-        fontFamily: 'BodyBold',
-        color: Colors.light.primary,
-        textTransform: 'uppercase'
-    },
-    settingListButton: {
-        display: 'flex',
-        backgroundColor: Colors.light.background,
-        justifyContent: 'space-between',
-        borderWidth: 1,
-        borderColor: Colors.light.tertiary,
-        padding: 16,
-        borderRadius: 8,
-        height: 64,
-        maxHeight: 64,
-        borderTopWidth: 0,
-    },
-    settingListButtonLabel: {
-        fontSize: 16,
-        fontFamily: 'BodySemiBold',
-        color: Colors.light.text
-    },
-    radioButton: {
-        flex: 1,
-        backgroundColor: Colors.light.background,
-        justifyContent: 'space-between',
-        borderWidth: 1,
-        borderColor: Colors.light.tertiary,
-        padding: 16,
-        borderRadius: 8,
-        marginBottom: 16,
-        height: 64,
-    },
-    radioButtonLabel: {
-        fontSize: 16,
-        fontFamily: 'BodySemiBold',
-        color: Colors.light.text
-    },
-    checkboxButton: {
-        flex: 1,
-        borderWidth: 1,
-        borderColor: Colors.light.tertiary,
-        padding: 16,
-        borderRadius: 8,
-        marginBottom: 16,
-        height: 64,
-        backgroundColor: Colors.light.background,
-    },
-    checkboxButtonLabel: {
-        fontSize: 16,
-        fontFamily: 'BodySemiBold',
-        color: Colors.light.text
-    },
-    noRadius: {
-        borderRadius: 0
-    },
-});
-```
-
-# constants\Interests.ts
-
-```ts
-const hobbiesInterests = [
-    [
-        { value: "1", label: "Hiking" },
-        { value: "2", label: "Camping" },
-        { value: "3", label: "Fishing" },
-        { value: "4", label: "Hunting" },
-        { value: "5", label: "Rock Climbing" },
-        { value: "6", label: "Bird Watching" },
-        { value: "7", label: "Kayaking" },
-        { value: "8", label: "Canoeing" },
-        { value: "9", label: "Surfing" },
-        { value: "10", label: "Snowboarding" },
-        { value: "11", label: "Skiing" },
-        { value: "12", label: "Mountain Biking" },
-        { value: "13", label: "Road Biking" },
-        { value: "14", label: "Running" },
-        { value: "15", label: "Jogging" },
-        { value: "16", label: "Trail Running" },
-        { value: "17", label: "Paddleboarding" },
-        { value: "18", label: "Sailing" },
-        { value: "19", label: "Horseback Riding" },
-        { value: "20", label: "Gardening" },
-        { value: "21", label: "Stargazing" },
-        { value: "22", label: "Geocaching" },
-        { value: "23", label: "Off-roading" },
-        { value: "24", label: "Archery" },
-        { value: "25", label: "Skateboarding" },
-    ],
-    [
-        { value: "26", label: "Basketball" },
-        { value: "27", label: "Football (American)" },
-        { value: "28", label: "Soccer" },
-        { value: "29", label: "Baseball" },
-        { value: "30", label: "Softball" },
-        { value: "31", label: "Volleyball" },
-        { value: "32", label: "Tennis" },
-        { value: "33", label: "Badminton" },
-        { value: "34", label: "Golf" },
-        { value: "35", label: "Swimming" },
-        { value: "36", label: "Martial Arts" },
-        { value: "37", label: "Yoga" },
-        { value: "38", label: "Pilates" },
-        { value: "39", label: "CrossFit" },
-        { value: "40", label: "Weightlifting" },
-        { value: "41", label: "Boxing" },
-        { value: "42", label: "Wrestling" },
-        { value: "43", label: "Cheerleading" },
-        { value: "44", label: "Gymnastics" },
-        { value: "45", label: "Dance" },
-        { value: "46", label: "Ice Hockey" },
-        { value: "47", label: "Lacrosse" },
-        { value: "48", label: "Cricket" },
-        { value: "49", label: "Ultimate Frisbee" },
-        { value: "50", label: "Rugby" },
-    ],
-    [
-        { value: "51", label: "Painting" },
-        { value: "52", label: "Drawing" },
-        { value: "53", label: "Sketching" },
-        { value: "54", label: "Sculpting" },
-        { value: "55", label: "Pottery" },
-        { value: "56", label: "Knitting" },
-        { value: "57", label: "Crocheting" },
-        { value: "58", label: "Sewing" },
-        { value: "59", label: "Quilting" },
-        { value: "60", label: "Embroidery" },
-        { value: "61", label: "Woodworking" },
-        { value: "62", label: "Metalworking" },
-        { value: "63", label: "Calligraphy" },
-        { value: "64", label: "Photography" },
-        { value: "65", label: "Videography" },
-        { value: "66", label: "Filmmaking" },
-        { value: "67", label: "Acting" },
-        { value: "68", label: "Singing" },
-        { value: "69", label: "Songwriting" },
-        { value: "70", label: "Playing Musical Instruments (Guitar, Piano, Drums, etc.)" },
-        { value: "71", label: "Dancing (Ballet, Hip Hop, Salsa, etc.)" },
-        { value: "72", label: "Crafting" },
-        { value: "73", label: "Jewelry Making" },
-        { value: "74", label: "Writing (Poetry, Novels, etc.)" },
-        { value: "75", label: "Journaling" },
-    ],
-    [
-        { value: "76", label: "Reading" },
-        { value: "77", label: "Watching Movies" },
-        { value: "78", label: "Binge-watching" },
-        { value: "79", label: "Theater" },
-        { value: "80", label: "Opera" },
-        { value: "81", label: "Stand-up Comedy" },
-        { value: "82", label: "Attending Concerts" },
-        { value: "83", label: "Music Festivals" },
-        { value: "84", label: "Podcasts" },
-        { value: "85", label: "Gaming (Video Games, Board Games, Card Games, etc.)" },
-        { value: "86", label: "Puzzle Solving (Crosswords, Sudoku, etc.)" },
-        { value: "87", label: "Trivia" },
-        { value: "88", label: "Watching Sports" },
-        { value: "89", label: "Cosplaying" },
-        { value: "90", label: "Collecting (Stamps, Coins, Comics, etc.)" },
-        { value: "91", label: "Magic Tricks" },
-    ],
-    [
-        { value: "92", label: "Cooking" },
-        { value: "93", label: "Baking" },
-        { value: "94", label: "Grilling/BBQ" },
-        { value: "95", label: "Mixology" },
-        { value: "96", label: "Wine Tasting" },
-        { value: "97", label: "Beer Brewing" },
-        { value: "98", label: "Coffee Tasting" },
-        { value: "99", label: "Tea Tasting" },
-        { value: "100", label: "Food Blogging" },
-        { value: "101", label: "Trying New Restaurants" },
-        { value: "102", label: "Vegetarian/Vegan Cooking" },
-    ],
-    [
-        { value: "103", label: "Traveling" },
-        { value: "104", label: "Road Trips" },
-        { value: "105", label: "Exploring New Cities" },
-        { value: "106", label: "Visiting Museums" },
-        { value: "107", label: "Visiting Art Galleries" },
-        { value: "108", label: "Attending Festivals" },
-        { value: "109", label: "Volunteering" },
-        { value: "110", label: "Charity Work" },
-        { value: "111", label: "Social Clubs" },
-        { value: "112", label: "Book Clubs" },
-        { value: "113", label: "Networking Events" },
-        { value: "114", label: "Public Speaking" },
-        { value: "115", label: "Debate" },
-        { value: "116", label: "Language Learning" },
-        { value: "117", label: "Cultural Events" },
-    ],
-    [
-        { value: "118", label: "Coding" },
-        { value: "119", label: "Robotics" },
-        { value: "120", label: "3D Printing" },
-        { value: "121", label: "Virtual Reality" },
-        { value: "122", label: "Augmented Reality" },
-        { value: "123", label: "Building Computers" },
-        { value: "124", label: "Electronics" },
-        { value: "125", label: "Astronomy" },
-        { value: "126", label: "Science Experiments" },
-        { value: "127", label: "Drone Flying" },
-    ],
-    [
-        { value: "128", label: "Chess" },
-        { value: "129", label: "Strategy Games" },
-        { value: "130", label: "Philosophy" },
-        { value: "131", label: "History" },
-        { value: "132", label: "Archaeology" },
-        { value: "133", label: "Anthropology" },
-        { value: "134", label: "Psychology" },
-        { value: "135", label: "Economics" },
-        { value: "136", label: "Politics" },
-        { value: "137", label: "Debate" },
-        { value: "138", label: "Mathematics" },
-        { value: "139", label: "Cryptography" },
-        { value: "140", label: "Puzzles" },
-    ],
-    [
-        { value: "141", label: "Bird Watching" },
-        { value: "142", label: "Wildlife Photography" },
-        { value: "143", label: "Beekeeping" },
-        { value: "144", label: "Dog Training" },
-        { value: "145", label: "Cat Care" },
-        { value: "146", label: "Reptile Keeping" },
-        { value: "147", label: "Fish Keeping" },
-        { value: "148", label: "Animal Rescue" },
-        { value: "149", label: "Farming" },
-        { value: "150", label: "Permaculture" },
-    ],
-    [
-        { value: "151", label: "Collecting Antiques" },
-        { value: "152", label: "Miniatures" },
-        { value: "153", label: "Model Building" },
-        { value: "154", label: "Trainspotting" },
-        { value: "155", label: "Urban Exploration" },
-        { value: "156", label: "Home Improvement" },
-        { value: "157", label: "Interior Design" },
-        { value: "158", label: "Feng Shui" },
-        { value: "159", label: "Meditation" },
-        { value: "160", label: "Astrology" },
-        { value: "161", label: "Tarot Reading" },
-        { value: "162", label: "Numerology" },
-        { value: "163", label: "Genealogy" },
-        { value: "164", label: "Thrill Seeking" },
-        { value: "165", label: "Fandom Activities (Sci-Fi, Fantasy, etc.)" },
-        { value: "166", label: "Vlogging" },
-        { value: "167", label: "Blogging" },
-        { value: "168", label: "Sustainable Living" },
-        { value: "169", label: "Zero Waste Lifestyle" },
-        { value: "170", label: "Environmental Activism" }
-    ],
-];
-
-// const hobbiesInterests = [
-//     { value: 1, label: "Hiking" },
-//     { value: 2, label: "Camping" },
-//     { value: 3, label: "Fishing" },
-//     { value: 4, label: "Hunting" },
-//     { value: 5, label: "Rock Climbing" },
-//     { value: 6, label: "Bird Watching" },
-//     { value: 7, label: "Kayaking" },
-//     { value: 8, label: "Canoeing" },
-//     { value: 9, label: "Surfing" },
-//     { value: 10, label: "Snowboarding" },
-//     { value: 11, label: "Skiing" },
-//     { value: 12, label: "Mountain Biking" },
-//     { value: 13, label: "Road Biking" },
-//     { value: 14, label: "Running" },
-//     { value: 15, label: "Jogging" },
-//     { value: 16, label: "Trail Running" },
-//     { value: 17, label: "Paddleboarding" },
-//     { value: 18, label: "Sailing" },
-//     { value: 19, label: "Horseback Riding" },
-//     { value: 20, label: "Gardening" },
-//     { value: 21, label: "Stargazing" },
-//     { value: 22, label: "Geocaching" },
-//     { value: 23, label: "Off-roading" },
-//     { value: 24, label: "Archery" },
-//     { value: 25, label: "Skateboarding" },
-//     { value: 26, label: "Basketball" },
-//     { value: 27, label: "Football (American)" },
-//     { value: 28, label: "Soccer" },
-//     { value: 29, label: "Baseball" },
-//     { value: 30, label: "Softball" },
-//     { value: 31, label: "Volleyball" },
-//     { value: 32, label: "Tennis" },
-//     { value: 33, label: "Badminton" },
-//     { value: 34, label: "Golf" },
-//     { value: 35, label: "Swimming" },
-//     { value: 36, label: "Martial Arts" },
-//     { value: 37, label: "Yoga" },
-//     { value: 38, label: "Pilates" },
-//     { value: 39, label: "CrossFit" },
-//     { value: 40, label: "Weightlifting" },
-//     { value: 41, label: "Boxing" },
-//     { value: 42, label: "Wrestling" },
-//     { value: 43, label: "Cheerleading" },
-//     { value: 44, label: "Gymnastics" },
-//     { value: 45, label: "Dance" },
-//     { value: 46, label: "Ice Hockey" },
-//     { value: 47, label: "Lacrosse" },
-//     { value: 48, label: "Cricket" },
-//     { value: 49, label: "Ultimate Frisbee" },
-//     { value: 50, label: "Rugby" },
-//     { value: 51, label: "Painting" },
-//     { value: 52, label: "Drawing" },
-//     { value: 53, label: "Sketching" },
-//     { value: 54, label: "Sculpting" },
-//     { value: 55, label: "Pottery" },
-//     { value: 56, label: "Knitting" },
-//     { value: 57, label: "Crocheting" },
-//     { value: 58, label: "Sewing" },
-//     { value: 59, label: "Quilting" },
-//     { value: 60, label: "Embroidery" },
-//     { value: 61, label: "Woodworking" },
-//     { value: 62, label: "Metalworking" },
-//     { value: 63, label: "Calligraphy" },
-//     { value: 64, label: "Photography" },
-//     { value: 65, label: "Videography" },
-//     { value: 66, label: "Filmmaking" },
-//     { value: 67, label: "Acting" },
-//     { value: 68, label: "Singing" },
-//     { value: 69, label: "Songwriting" },
-//     { value: 70, label: "Playing Musical Instruments (Guitar, Piano, Drums, etc.)" },
-//     { value: 71, label: "Dancing (Ballet, Hip Hop, Salsa, etc.)" },
-//     { value: 72, label: "Crafting" },
-//     { value: 73, label: "Jewelry Making" },
-//     { value: 74, label: "Writing (Poetry, Novels, etc.)" },
-//     { value: 75, label: "Journaling" },
-//     { value: 76, label: "Reading" },
-//     { value: 77, label: "Watching Movies" },
-//     { value: 78, label: "Binge-watching TV Shows" },
-//     { value: 79, label: "Theater" },
-//     { value: 80, label: "Opera" },
-//     { value: 81, label: "Stand-up Comedy" },
-//     { value: 82, label: "Attending Concerts" },
-//     { value: 83, label: "Music Festivals" },
-//     { value: 84, label: "Podcasts" },
-//     { value: 85, label: "Gaming (Video Games, Board Games, Card Games, etc.)" },
-//     { value: 86, label: "Puzzle Solving (Crosswords, Sudoku, etc.)" },
-//     { value: 87, label: "Trivia" },
-//     { value: 88, label: "Watching Sports" },
-//     { value: 89, label: "Cosplaying" },
-//     { value: 90, label: "Collecting (Stamps, Coins, Comics, etc.)" },
-//     { value: 91, label: "Magic Tricks" },
-//     { value: 92, label: "Cooking" },
-//     { value: 93, label: "Baking" },
-//     { value: 94, label: "Grilling/BBQ" },
-//     { value: 95, label: "Mixology" },
-//     { value: 96, label: "Wine Tasting" },
-//     { value: 97, label: "Beer Brewing" },
-//     { value: 98, label: "Coffee Tasting" },
-//     { value: 99, label: "Tea Tasting" },
-//     { value: 100, label: "Food Blogging" },
-//     { value: 101, label: "Trying New Restaurants" },
-//     { value: 102, label: "Vegetarian/Vegan Cooking" },
-//     { value: 103, label: "Traveling" },
-//     { value: 104, label: "Road Trips" },
-//     { value: 105, label: "Exploring New Cities" },
-//     { value: 106, label: "Visiting Museums" },
-//     { value: 107, label: "Visiting Art Galleries" },
-//     { value: 108, label: "Attending Festivals" },
-//     { value: 109, label: "Volunteering" },
-//     { value: 110, label: "Charity Work" },
-//     { value: 111, label: "Social Clubs" },
-//     { value: 112, label: "Book Clubs" },
-//     { value: 113, label: "Networking Events" },
-//     { value: 114, label: "Public Speaking" },
-//     { value: 115, label: "Debate" },
-//     { value: 116, label: "Language Learning" },
-//     { value: 117, label: "Cultural Events" },
-//     { value: 118, label: "Coding" },
-//     { value: 119, label: "Robotics" },
-//     { value: 120, label: "3D Printing" },
-//     { value: 121, label: "Virtual Reality" },
-//     { value: 122, label: "Augmented Reality" },
-//     { value: 123, label: "Building Computers" },
-//     { value: 124, label: "Electronics" },
-//     { value: 125, label: "Astronomy" },
-//     { value: 126, label: "Science Experiments" },
-//     { value: 127, label: "Drone Flying" },
-//     { value: 128, label: "Chess" },
-//     { value: 129, label: "Strategy Games" },
-//     { value: 130, label: "Philosophy" },
-//     { value: 131, label: "History" },
-//     { value: 132, label: "Archaeology" },
-//     { value: 133, label: "Anthropology" },
-//     { value: 134, label: "Psychology" },
-//     { value: 135, label: "Economics" },
-//     { value: 136, label: "Politics" },
-//     { value: 137, label: "Debate" },
-//     { value: 138, label: "Mathematics" },
-//     { value: 139, label: "Cryptography" },
-//     { value: 140, label: "Puzzles" },
-//     { value: 141, label: "Bird Watching" },
-//     { value: 142, label: "Wildlife Photography" },
-//     { value: 143, label: "Beekeeping" },
-//     { value: 144, label: "Dog Training" },
-//     { value: 145, label: "Cat Care" },
-//     { value: 146, label: "Reptile Keeping" },
-//     { value: 147, label: "Fish Keeping" },
-//     { value: 148, label: "Animal Rescue" },
-//     { value: 149, label: "Farming" },
-//     { value: 150, label: "Permaculture" },
-//     { value: 151, label: "Collecting Antiques" },
-//     { value: 152, label: "Miniatures" },
-//     { value: 153, label: "Model Building" },
-//     { value: 154, label: "Trainspotting" },
-//     { value: 155, label: "Urban Exploration" },
-//     { value: 156, label: "Home Improvement" },
-//     { value: 157, label: "Interior Design" },
-//     { value: 158, label: "Feng Shui" },
-//     { value: 159, label: "Meditation" },
-//     { value: 160, label: "Astrology" },
-//     { value: 161, label: "Tarot Reading" },
-//     { value: 162, label: "Numerology" },
-//     { value: 163, label: "Genealogy" },
-//     { value: 164, label: "Thrill Seeking (Skydiving, Bungee Jumping, etc.)" },
-//     { value: 165, label: "Fandom Activities (Sci-Fi, Fantasy, etc.)" },
-//     { value: 166, label: "Vlogging" },
-//     { value: 167, label: "Blogging" },
-//     { value: 168, label: "Sustainable Living" },
-//     { value: 169, label: "Zero Waste Lifestyle" },
-//     { value: 170, label: "Environmental Activism" }
-// ];
-
-
-
-export default hobbiesInterests;
-
-```
-
-# constants\Colors.ts
-
-```ts
-/**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
- */
-
-const tintColorLight = '#0a7ea4';
-const tintColorDark = '#fff';
-
-export const Colors = {
-  light: {
-    white: '#FFFFFF',
-    black: '#000000',
-    text: '#341D1D',
-    textSecondary: '#867272',
-    textInverted: '#FFFFFF',
-    background: '#FDFFFF',
-    backgroundSecondary: '#FFFAF8',
-    tint: tintColorLight,
-    icon: '#687076',
-    tabIconDefault: '#687076',
-    tabIconSelected: tintColorLight,
-    primary: '#DA2778',
-    primaryLight: '#F76BB1',
-    accent: '#7A37D0',
-    secondary: '#F1F1F1',
-    tertiary: '#D9D9D9',
-  },
-  dark: {
-    text: '#ECEDEE',
-    background: '#151718',
-    tint: tintColorDark,
-    icon: '#9BA1A6',
-    tabIconDefault: '#9BA1A6',
-    tabIconSelected: tintColorDark,
-    tertiary: '#D9D9D9',
-  },
-};
 
 ```
 
@@ -2659,7 +2113,8 @@ import { clearAllStorage, getData, storeData } from '@/utils/storage';
 import { useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import Inbox from '@/components/tabs/inbox'; // Add this import
-import ChatScreen from '@/components/tabs/chat'; // Add this import
+import ChannelList from '@/components/ChannelList';
+import ChatChannel from '@/components/ChatChannel';
 
 const tabIcons = {
     homeActive: require('@/assets/images/icons/tab-home-active.png'),
@@ -2749,11 +2204,16 @@ function TabNavigator() {
             <Tab.Screen name="Home" component={HomeScreen} />
             <Tab.Screen name="History" component={SettingsScreen} />
             <Tab.Screen name="Explore" component={DummySurf} />
-            <Tab.Screen name="Inbox" component={Inbox} options={{ tabBarBadge: 6 }} />
+            <Tab.Screen name="Inbox" component={ChannelList} options={{ tabBarBadge: 6 }} />
             <Tab.Screen name="Me" component={Me} />
         </Tab.Navigator>
     );
 }
+
+
+
+
+
 
 export default function RootNavigator({ session }) {
     const { showOnboarding, setShowOnboarding } = useAppContext();
@@ -2819,7 +2279,7 @@ export default function RootNavigator({ session }) {
                             <Stack.Screen name="Dive" component={Dive} />
                             <Stack.Screen name="Profile" component={Profile} />
                             <Stack.Screen name="SearchFilters" component={SearchFilters} />
-                            <Stack.Screen name="Chat" component={ChatScreen} />
+                            <Stack.Screen name="ChatChannel" component={ChatChannel} options={{ headerShown: true }} />
                         </Stack.Group>
                         <Stack.Group screenOptions={{ headerShown: false, ...TransitionPresets.SlideFromRightIOS }}>
                             <Stack.Screen
@@ -2873,45 +2333,6 @@ export default function RootNavigator({ session }) {
 
 
 
-/*
-            <Stack.Navigator initialRouteName={showOnboarding ? 'onboarding' : '(tabs)'} >
-
-                <Stack.Group screenOptions={{ headerShown: false, ...TransitionPresets.RevealFromBottomAndroid }} >
-                    <Stack.Screen
-                        name="onboarding"
-                        component={Onboarding}
-                    />
-                    <Tab.Navigator>
-                        <Tab.Screen name="Home" component={Home} />
-                        <Tab.Screen name="Settings" component={Me} />
-                    </Tab.Navigator>
-                </Stack.Group>
-
-                <Stack.Group screenOptions={{ headerShown: false, ...TransitionPresets.SlideFromRightIOS }}>
-                    <Stack.Screen
-                        name="filterGenderPreference"
-                        component={FilterGenderPreference}
-                    />
-                    <Stack.Screen
-                        name="filterStarsign"
-                        component={FilterStarsign}
-                    />
-                    <Stack.Screen
-                        name="filterAgeRange"
-                        component={FilterAgeRange}
-                    />
-                </Stack.Group>
-
-                <Stack.Group screenOptions={{ headerShown: false, ...TransitionPresets.BottomSheetAndroid }}>
-                    <Stack.Screen
-                        name="Profile"
-                        component={DetailsScreen}
-                        initialParams={{ id: null, imageUrl: null }}
-                    />
-                </Stack.Group>
-
-            </Stack.Navigator>
-*/
 ```
 
 # components\ExternalLink.tsx
@@ -3080,6 +2501,121 @@ const styles = StyleSheet.create({
   },
 });
 
+```
+
+# components\ChatChannel.tsx
+
+```tsx
+// components/ChatChannel.tsx
+
+import React from 'react';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Channel, MessageList, MessageInput } from 'stream-chat-expo';
+import { useRoute } from '@react-navigation/native';
+
+export default function ChatChannelScreen() {
+  const route = useRoute();
+  const { channel } = route.params;
+
+  return (
+    <SafeAreaView style={{ flex: 1 }}>
+      <Channel channel={channel}>
+        <MessageList />
+        <MessageInput />
+      </Channel>
+    </SafeAreaView>
+  );
+}
+```
+
+# components\ChannelList.tsx
+
+```tsx
+
+
+
+
+import React, { useEffect, useState } from 'react';
+import { Text } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { ChannelList, useChatContext } from 'stream-chat-expo';
+import { useNavigation } from '@react-navigation/native';
+import { useAuth } from '@/hooks/useAuth';
+
+
+export default function ChannelListScreen() {
+  const navigation = useNavigation();
+  const { client } = useChatContext();
+  const session = useAuth();
+  const [clientReady, setClientReady] = useState(false);
+  const [myChannel, setChannel] = useState();
+  
+
+  useEffect(() => {
+    const setupClient = async () => {
+      try {
+        if (!session?.user?.id) return;
+
+        // await client.connectUser(
+        //   {
+        //     id: session.user.id,
+        //     name: session.user.email,
+        //   },
+        //   client.devToken(session.user.id)
+        // );
+
+        console.log('connectUser')
+        await client.connectUser(
+          {
+              id: "Crushy",
+              name: 'Crushy',
+              image: 'https://getstream.io/random_svg/?name=John',
+          },
+          // client.devToken('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiQ3J1c2h5In0.7M2-tacCjPbnFaIDf56-oHZ6ammF9euZx9mKs0MhL30'),
+          client.devToken('Crushy'),
+        );
+
+        try {
+          const channel = client.channel('messaging', 'mikroleap', {
+            members: ["Crushy", 'mikroleap'],
+          });
+          await channel.watch();
+
+          setChannel(channel);
+          console.log('Channel set up successfully');
+        } catch (error) {
+          console.error('Error setting up channel:', error);
+        }
+
+        setClientReady(true);
+      } catch (error) {
+        console.error('Failed to connect user', error);
+      }
+    };
+
+    if (client) setupClient();
+
+    // return () => {
+    //   client?.disconnectUser();
+    //   setClientReady(false);
+    // };
+  }, [session, client]);
+
+  if (!clientReady) return <Text>Loading...</Text>;
+
+  return (
+    <SafeAreaView style={{ flex: 1 }}>
+      <ChannelList
+        filters={{ members: { $in: ['Crushy'] } }}
+        sort={{}}
+        onSelect={(channel) => {
+          console.log(channel)
+          navigation.navigate('ChatChannel', { channel });
+        }}
+      />
+    </SafeAreaView>
+  );
+}
 ```
 
 # components\Avatar.tsx
@@ -3889,6 +3425,610 @@ const styles = StyleSheet.create({
         marginTop: 20,
     },
 })
+```
+
+# constants\ToastConfig.ts
+
+```ts
+import React from "react"
+import { View, Text } from "react-native-ui-lib"
+import Toast, { BaseToast, ErrorToast } from 'react-native-toast-message';
+
+
+export const toastConfig = {
+
+    success: (props) => (
+        <BaseToast
+            { ...props }
+            style={{ borderLeftColor: 'pink' }}
+contentContainerStyle = {{ paddingHorizontal: 15 }}
+text1Style = {{
+    fontSize: 15,
+        fontWeight: '400'
+}}
+/>
+    ),
+
+error: (props) => (
+    <ErrorToast
+            { ...props }
+            text1Style = {{ fontSize: 17 }}
+text2Style = {{ fontSize: 15 }}
+/>
+    ),
+    /*
+      Or create a completely new type - `default`,
+      building the layout from scratch.
+  
+      I can consume any custom `props` I want.
+      They will be passed when calling the `show` method (see below)
+    */
+    default: ({ text1, text2, props }) => (
+    <View style= {{ display: 'flex', justifyContent: 'center', width: '94%', backgroundColor: Colors.light.accent, borderRadius: 8, padding: 16 }}>
+        <Text style={ { fontFamily: 'HeadingBold', color: 'white' } }> { text1 } < /Text>
+            < Text style = {{ fontFamily: 'BodyRegular', color: 'white' }}> { text2 } < /Text>
+{/* <Text>{props.uuid}</Text> */ }
+</View>
+    )
+};
+```
+
+# constants\Styles.ts
+
+```ts
+import { Colors } from '@/constants/Colors';
+import { Platform, StyleSheet } from 'react-native';
+
+export const defaultStyles = StyleSheet.create({
+    SafeAreaView: {
+        flex: 1,
+        padding: 16,
+        backgroundColor: Colors.light.background,
+    },
+    innerContainer: {
+        flex: 1,
+    },
+    body: {
+        fontFamily: 'BodyRegular',
+        color: Colors.light.text,
+        fontSize: 16,
+        lineHeight: 24
+    },
+    bodyBold: {
+        fontFamily: 'BodyBold',
+        color: Colors.light.text,
+        fontSize: 16,
+        lineHeight: 24
+    },
+    buttonShadow: {
+        ...Platform.select({
+            ios: {
+                shadowColor: "#ccc",
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.5,
+                shadowRadius: 3,
+            },
+            android: {
+                elevation: 3,
+            },
+        }),
+    },
+    h2: {
+        fontSize: 24,
+        fontFamily: 'HeadingBold',
+        color: Colors.light.text
+    },
+    inputLabel: {
+        fontSize: 16,
+        fontFamily: 'BodySemiBold',
+        color: Colors.light.text
+    },
+    button: {
+        display: 'flex',
+        backgroundColor: Colors.light.primary,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 2,
+        borderColor: Colors.light.primaryLight,
+        paddingTop: 6,
+        paddingHorizontal: 32,
+        borderRadius: 8,
+        minHeight: 48,
+    },
+    buttonLabel: {
+        fontSize: 14,
+        fontFamily: 'BodyBold',
+        color: Colors.light.textInverted,
+        textTransform: 'uppercase'
+    },
+    buttonSecondary: {
+        display: 'flex',
+        backgroundColor: Colors.light.background,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: Colors.light.tertiary,
+        paddingTop: 6,
+        paddingHorizontal: 32,
+        borderRadius: 8,
+        minHeight: 48,
+    },
+    buttonSecondaryLabel: {
+        fontSize: 14,
+        fontFamily: 'BodyBold',
+        color: Colors.light.primary,
+        textTransform: 'uppercase'
+    },
+    settingListButton: {
+        display: 'flex',
+        backgroundColor: Colors.light.background,
+        justifyContent: 'space-between',
+        borderWidth: 1,
+        borderColor: Colors.light.tertiary,
+        padding: 16,
+        borderRadius: 8,
+        height: 64,
+        maxHeight: 64,
+        borderTopWidth: 0,
+    },
+    settingListButtonLabel: {
+        fontSize: 16,
+        fontFamily: 'BodySemiBold',
+        color: Colors.light.text
+    },
+    radioButton: {
+        flex: 1,
+        backgroundColor: Colors.light.background,
+        justifyContent: 'space-between',
+        borderWidth: 1,
+        borderColor: Colors.light.tertiary,
+        padding: 16,
+        borderRadius: 8,
+        marginBottom: 16,
+        height: 64,
+    },
+    radioButtonLabel: {
+        fontSize: 16,
+        fontFamily: 'BodySemiBold',
+        color: Colors.light.text
+    },
+    checkboxButton: {
+        flex: 1,
+        borderWidth: 1,
+        borderColor: Colors.light.tertiary,
+        padding: 16,
+        borderRadius: 8,
+        marginBottom: 16,
+        height: 64,
+        backgroundColor: Colors.light.background,
+    },
+    checkboxButtonLabel: {
+        fontSize: 16,
+        fontFamily: 'BodySemiBold',
+        color: Colors.light.text
+    },
+    noRadius: {
+        borderRadius: 0
+    },
+});
+```
+
+# constants\Interests.ts
+
+```ts
+const hobbiesInterests = [
+    [
+        { value: "1", label: "Hiking" },
+        { value: "2", label: "Camping" },
+        { value: "3", label: "Fishing" },
+        { value: "4", label: "Hunting" },
+        { value: "5", label: "Rock Climbing" },
+        { value: "6", label: "Bird Watching" },
+        { value: "7", label: "Kayaking" },
+        { value: "8", label: "Canoeing" },
+        { value: "9", label: "Surfing" },
+        { value: "10", label: "Snowboarding" },
+        { value: "11", label: "Skiing" },
+        { value: "12", label: "Mountain Biking" },
+        { value: "13", label: "Road Biking" },
+        { value: "14", label: "Running" },
+        { value: "15", label: "Jogging" },
+        { value: "16", label: "Trail Running" },
+        { value: "17", label: "Paddleboarding" },
+        { value: "18", label: "Sailing" },
+        { value: "19", label: "Horseback Riding" },
+        { value: "20", label: "Gardening" },
+        { value: "21", label: "Stargazing" },
+        { value: "22", label: "Geocaching" },
+        { value: "23", label: "Off-roading" },
+        { value: "24", label: "Archery" },
+        { value: "25", label: "Skateboarding" },
+    ],
+    [
+        { value: "26", label: "Basketball" },
+        { value: "27", label: "Football (American)" },
+        { value: "28", label: "Soccer" },
+        { value: "29", label: "Baseball" },
+        { value: "30", label: "Softball" },
+        { value: "31", label: "Volleyball" },
+        { value: "32", label: "Tennis" },
+        { value: "33", label: "Badminton" },
+        { value: "34", label: "Golf" },
+        { value: "35", label: "Swimming" },
+        { value: "36", label: "Martial Arts" },
+        { value: "37", label: "Yoga" },
+        { value: "38", label: "Pilates" },
+        { value: "39", label: "CrossFit" },
+        { value: "40", label: "Weightlifting" },
+        { value: "41", label: "Boxing" },
+        { value: "42", label: "Wrestling" },
+        { value: "43", label: "Cheerleading" },
+        { value: "44", label: "Gymnastics" },
+        { value: "45", label: "Dance" },
+        { value: "46", label: "Ice Hockey" },
+        { value: "47", label: "Lacrosse" },
+        { value: "48", label: "Cricket" },
+        { value: "49", label: "Ultimate Frisbee" },
+        { value: "50", label: "Rugby" },
+    ],
+    [
+        { value: "51", label: "Painting" },
+        { value: "52", label: "Drawing" },
+        { value: "53", label: "Sketching" },
+        { value: "54", label: "Sculpting" },
+        { value: "55", label: "Pottery" },
+        { value: "56", label: "Knitting" },
+        { value: "57", label: "Crocheting" },
+        { value: "58", label: "Sewing" },
+        { value: "59", label: "Quilting" },
+        { value: "60", label: "Embroidery" },
+        { value: "61", label: "Woodworking" },
+        { value: "62", label: "Metalworking" },
+        { value: "63", label: "Calligraphy" },
+        { value: "64", label: "Photography" },
+        { value: "65", label: "Videography" },
+        { value: "66", label: "Filmmaking" },
+        { value: "67", label: "Acting" },
+        { value: "68", label: "Singing" },
+        { value: "69", label: "Songwriting" },
+        { value: "70", label: "Playing Musical Instruments (Guitar, Piano, Drums, etc.)" },
+        { value: "71", label: "Dancing (Ballet, Hip Hop, Salsa, etc.)" },
+        { value: "72", label: "Crafting" },
+        { value: "73", label: "Jewelry Making" },
+        { value: "74", label: "Writing (Poetry, Novels, etc.)" },
+        { value: "75", label: "Journaling" },
+    ],
+    [
+        { value: "76", label: "Reading" },
+        { value: "77", label: "Watching Movies" },
+        { value: "78", label: "Binge-watching" },
+        { value: "79", label: "Theater" },
+        { value: "80", label: "Opera" },
+        { value: "81", label: "Stand-up Comedy" },
+        { value: "82", label: "Attending Concerts" },
+        { value: "83", label: "Music Festivals" },
+        { value: "84", label: "Podcasts" },
+        { value: "85", label: "Gaming (Video Games, Board Games, Card Games, etc.)" },
+        { value: "86", label: "Puzzle Solving (Crosswords, Sudoku, etc.)" },
+        { value: "87", label: "Trivia" },
+        { value: "88", label: "Watching Sports" },
+        { value: "89", label: "Cosplaying" },
+        { value: "90", label: "Collecting (Stamps, Coins, Comics, etc.)" },
+        { value: "91", label: "Magic Tricks" },
+    ],
+    [
+        { value: "92", label: "Cooking" },
+        { value: "93", label: "Baking" },
+        { value: "94", label: "Grilling/BBQ" },
+        { value: "95", label: "Mixology" },
+        { value: "96", label: "Wine Tasting" },
+        { value: "97", label: "Beer Brewing" },
+        { value: "98", label: "Coffee Tasting" },
+        { value: "99", label: "Tea Tasting" },
+        { value: "100", label: "Food Blogging" },
+        { value: "101", label: "Trying New Restaurants" },
+        { value: "102", label: "Vegetarian/Vegan Cooking" },
+    ],
+    [
+        { value: "103", label: "Traveling" },
+        { value: "104", label: "Road Trips" },
+        { value: "105", label: "Exploring New Cities" },
+        { value: "106", label: "Visiting Museums" },
+        { value: "107", label: "Visiting Art Galleries" },
+        { value: "108", label: "Attending Festivals" },
+        { value: "109", label: "Volunteering" },
+        { value: "110", label: "Charity Work" },
+        { value: "111", label: "Social Clubs" },
+        { value: "112", label: "Book Clubs" },
+        { value: "113", label: "Networking Events" },
+        { value: "114", label: "Public Speaking" },
+        { value: "115", label: "Debate" },
+        { value: "116", label: "Language Learning" },
+        { value: "117", label: "Cultural Events" },
+    ],
+    [
+        { value: "118", label: "Coding" },
+        { value: "119", label: "Robotics" },
+        { value: "120", label: "3D Printing" },
+        { value: "121", label: "Virtual Reality" },
+        { value: "122", label: "Augmented Reality" },
+        { value: "123", label: "Building Computers" },
+        { value: "124", label: "Electronics" },
+        { value: "125", label: "Astronomy" },
+        { value: "126", label: "Science Experiments" },
+        { value: "127", label: "Drone Flying" },
+    ],
+    [
+        { value: "128", label: "Chess" },
+        { value: "129", label: "Strategy Games" },
+        { value: "130", label: "Philosophy" },
+        { value: "131", label: "History" },
+        { value: "132", label: "Archaeology" },
+        { value: "133", label: "Anthropology" },
+        { value: "134", label: "Psychology" },
+        { value: "135", label: "Economics" },
+        { value: "136", label: "Politics" },
+        { value: "137", label: "Debate" },
+        { value: "138", label: "Mathematics" },
+        { value: "139", label: "Cryptography" },
+        { value: "140", label: "Puzzles" },
+    ],
+    [
+        { value: "141", label: "Bird Watching" },
+        { value: "142", label: "Wildlife Photography" },
+        { value: "143", label: "Beekeeping" },
+        { value: "144", label: "Dog Training" },
+        { value: "145", label: "Cat Care" },
+        { value: "146", label: "Reptile Keeping" },
+        { value: "147", label: "Fish Keeping" },
+        { value: "148", label: "Animal Rescue" },
+        { value: "149", label: "Farming" },
+        { value: "150", label: "Permaculture" },
+    ],
+    [
+        { value: "151", label: "Collecting Antiques" },
+        { value: "152", label: "Miniatures" },
+        { value: "153", label: "Model Building" },
+        { value: "154", label: "Trainspotting" },
+        { value: "155", label: "Urban Exploration" },
+        { value: "156", label: "Home Improvement" },
+        { value: "157", label: "Interior Design" },
+        { value: "158", label: "Feng Shui" },
+        { value: "159", label: "Meditation" },
+        { value: "160", label: "Astrology" },
+        { value: "161", label: "Tarot Reading" },
+        { value: "162", label: "Numerology" },
+        { value: "163", label: "Genealogy" },
+        { value: "164", label: "Thrill Seeking" },
+        { value: "165", label: "Fandom Activities (Sci-Fi, Fantasy, etc.)" },
+        { value: "166", label: "Vlogging" },
+        { value: "167", label: "Blogging" },
+        { value: "168", label: "Sustainable Living" },
+        { value: "169", label: "Zero Waste Lifestyle" },
+        { value: "170", label: "Environmental Activism" }
+    ],
+];
+
+// const hobbiesInterests = [
+//     { value: 1, label: "Hiking" },
+//     { value: 2, label: "Camping" },
+//     { value: 3, label: "Fishing" },
+//     { value: 4, label: "Hunting" },
+//     { value: 5, label: "Rock Climbing" },
+//     { value: 6, label: "Bird Watching" },
+//     { value: 7, label: "Kayaking" },
+//     { value: 8, label: "Canoeing" },
+//     { value: 9, label: "Surfing" },
+//     { value: 10, label: "Snowboarding" },
+//     { value: 11, label: "Skiing" },
+//     { value: 12, label: "Mountain Biking" },
+//     { value: 13, label: "Road Biking" },
+//     { value: 14, label: "Running" },
+//     { value: 15, label: "Jogging" },
+//     { value: 16, label: "Trail Running" },
+//     { value: 17, label: "Paddleboarding" },
+//     { value: 18, label: "Sailing" },
+//     { value: 19, label: "Horseback Riding" },
+//     { value: 20, label: "Gardening" },
+//     { value: 21, label: "Stargazing" },
+//     { value: 22, label: "Geocaching" },
+//     { value: 23, label: "Off-roading" },
+//     { value: 24, label: "Archery" },
+//     { value: 25, label: "Skateboarding" },
+//     { value: 26, label: "Basketball" },
+//     { value: 27, label: "Football (American)" },
+//     { value: 28, label: "Soccer" },
+//     { value: 29, label: "Baseball" },
+//     { value: 30, label: "Softball" },
+//     { value: 31, label: "Volleyball" },
+//     { value: 32, label: "Tennis" },
+//     { value: 33, label: "Badminton" },
+//     { value: 34, label: "Golf" },
+//     { value: 35, label: "Swimming" },
+//     { value: 36, label: "Martial Arts" },
+//     { value: 37, label: "Yoga" },
+//     { value: 38, label: "Pilates" },
+//     { value: 39, label: "CrossFit" },
+//     { value: 40, label: "Weightlifting" },
+//     { value: 41, label: "Boxing" },
+//     { value: 42, label: "Wrestling" },
+//     { value: 43, label: "Cheerleading" },
+//     { value: 44, label: "Gymnastics" },
+//     { value: 45, label: "Dance" },
+//     { value: 46, label: "Ice Hockey" },
+//     { value: 47, label: "Lacrosse" },
+//     { value: 48, label: "Cricket" },
+//     { value: 49, label: "Ultimate Frisbee" },
+//     { value: 50, label: "Rugby" },
+//     { value: 51, label: "Painting" },
+//     { value: 52, label: "Drawing" },
+//     { value: 53, label: "Sketching" },
+//     { value: 54, label: "Sculpting" },
+//     { value: 55, label: "Pottery" },
+//     { value: 56, label: "Knitting" },
+//     { value: 57, label: "Crocheting" },
+//     { value: 58, label: "Sewing" },
+//     { value: 59, label: "Quilting" },
+//     { value: 60, label: "Embroidery" },
+//     { value: 61, label: "Woodworking" },
+//     { value: 62, label: "Metalworking" },
+//     { value: 63, label: "Calligraphy" },
+//     { value: 64, label: "Photography" },
+//     { value: 65, label: "Videography" },
+//     { value: 66, label: "Filmmaking" },
+//     { value: 67, label: "Acting" },
+//     { value: 68, label: "Singing" },
+//     { value: 69, label: "Songwriting" },
+//     { value: 70, label: "Playing Musical Instruments (Guitar, Piano, Drums, etc.)" },
+//     { value: 71, label: "Dancing (Ballet, Hip Hop, Salsa, etc.)" },
+//     { value: 72, label: "Crafting" },
+//     { value: 73, label: "Jewelry Making" },
+//     { value: 74, label: "Writing (Poetry, Novels, etc.)" },
+//     { value: 75, label: "Journaling" },
+//     { value: 76, label: "Reading" },
+//     { value: 77, label: "Watching Movies" },
+//     { value: 78, label: "Binge-watching TV Shows" },
+//     { value: 79, label: "Theater" },
+//     { value: 80, label: "Opera" },
+//     { value: 81, label: "Stand-up Comedy" },
+//     { value: 82, label: "Attending Concerts" },
+//     { value: 83, label: "Music Festivals" },
+//     { value: 84, label: "Podcasts" },
+//     { value: 85, label: "Gaming (Video Games, Board Games, Card Games, etc.)" },
+//     { value: 86, label: "Puzzle Solving (Crosswords, Sudoku, etc.)" },
+//     { value: 87, label: "Trivia" },
+//     { value: 88, label: "Watching Sports" },
+//     { value: 89, label: "Cosplaying" },
+//     { value: 90, label: "Collecting (Stamps, Coins, Comics, etc.)" },
+//     { value: 91, label: "Magic Tricks" },
+//     { value: 92, label: "Cooking" },
+//     { value: 93, label: "Baking" },
+//     { value: 94, label: "Grilling/BBQ" },
+//     { value: 95, label: "Mixology" },
+//     { value: 96, label: "Wine Tasting" },
+//     { value: 97, label: "Beer Brewing" },
+//     { value: 98, label: "Coffee Tasting" },
+//     { value: 99, label: "Tea Tasting" },
+//     { value: 100, label: "Food Blogging" },
+//     { value: 101, label: "Trying New Restaurants" },
+//     { value: 102, label: "Vegetarian/Vegan Cooking" },
+//     { value: 103, label: "Traveling" },
+//     { value: 104, label: "Road Trips" },
+//     { value: 105, label: "Exploring New Cities" },
+//     { value: 106, label: "Visiting Museums" },
+//     { value: 107, label: "Visiting Art Galleries" },
+//     { value: 108, label: "Attending Festivals" },
+//     { value: 109, label: "Volunteering" },
+//     { value: 110, label: "Charity Work" },
+//     { value: 111, label: "Social Clubs" },
+//     { value: 112, label: "Book Clubs" },
+//     { value: 113, label: "Networking Events" },
+//     { value: 114, label: "Public Speaking" },
+//     { value: 115, label: "Debate" },
+//     { value: 116, label: "Language Learning" },
+//     { value: 117, label: "Cultural Events" },
+//     { value: 118, label: "Coding" },
+//     { value: 119, label: "Robotics" },
+//     { value: 120, label: "3D Printing" },
+//     { value: 121, label: "Virtual Reality" },
+//     { value: 122, label: "Augmented Reality" },
+//     { value: 123, label: "Building Computers" },
+//     { value: 124, label: "Electronics" },
+//     { value: 125, label: "Astronomy" },
+//     { value: 126, label: "Science Experiments" },
+//     { value: 127, label: "Drone Flying" },
+//     { value: 128, label: "Chess" },
+//     { value: 129, label: "Strategy Games" },
+//     { value: 130, label: "Philosophy" },
+//     { value: 131, label: "History" },
+//     { value: 132, label: "Archaeology" },
+//     { value: 133, label: "Anthropology" },
+//     { value: 134, label: "Psychology" },
+//     { value: 135, label: "Economics" },
+//     { value: 136, label: "Politics" },
+//     { value: 137, label: "Debate" },
+//     { value: 138, label: "Mathematics" },
+//     { value: 139, label: "Cryptography" },
+//     { value: 140, label: "Puzzles" },
+//     { value: 141, label: "Bird Watching" },
+//     { value: 142, label: "Wildlife Photography" },
+//     { value: 143, label: "Beekeeping" },
+//     { value: 144, label: "Dog Training" },
+//     { value: 145, label: "Cat Care" },
+//     { value: 146, label: "Reptile Keeping" },
+//     { value: 147, label: "Fish Keeping" },
+//     { value: 148, label: "Animal Rescue" },
+//     { value: 149, label: "Farming" },
+//     { value: 150, label: "Permaculture" },
+//     { value: 151, label: "Collecting Antiques" },
+//     { value: 152, label: "Miniatures" },
+//     { value: 153, label: "Model Building" },
+//     { value: 154, label: "Trainspotting" },
+//     { value: 155, label: "Urban Exploration" },
+//     { value: 156, label: "Home Improvement" },
+//     { value: 157, label: "Interior Design" },
+//     { value: 158, label: "Feng Shui" },
+//     { value: 159, label: "Meditation" },
+//     { value: 160, label: "Astrology" },
+//     { value: 161, label: "Tarot Reading" },
+//     { value: 162, label: "Numerology" },
+//     { value: 163, label: "Genealogy" },
+//     { value: 164, label: "Thrill Seeking (Skydiving, Bungee Jumping, etc.)" },
+//     { value: 165, label: "Fandom Activities (Sci-Fi, Fantasy, etc.)" },
+//     { value: 166, label: "Vlogging" },
+//     { value: 167, label: "Blogging" },
+//     { value: 168, label: "Sustainable Living" },
+//     { value: 169, label: "Zero Waste Lifestyle" },
+//     { value: 170, label: "Environmental Activism" }
+// ];
+
+
+
+export default hobbiesInterests;
+
+```
+
+# constants\Colors.ts
+
+```ts
+/**
+ * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
+ * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
+ */
+
+const tintColorLight = '#0a7ea4';
+const tintColorDark = '#fff';
+
+export const Colors = {
+  light: {
+    white: '#FFFFFF',
+    black: '#000000',
+    text: '#341D1D',
+    textSecondary: '#867272',
+    textInverted: '#FFFFFF',
+    background: '#FDFFFF',
+    backgroundSecondary: '#FFFAF8',
+    tint: tintColorLight,
+    icon: '#687076',
+    tabIconDefault: '#687076',
+    tabIconSelected: tintColorLight,
+    primary: '#DA2778',
+    primaryLight: '#F76BB1',
+    accent: '#7A37D0',
+    secondary: '#F1F1F1',
+    tertiary: '#D9D9D9',
+  },
+  dark: {
+    text: '#ECEDEE',
+    background: '#151718',
+    tint: tintColorDark,
+    icon: '#9BA1A6',
+    tabIconDefault: '#9BA1A6',
+    tabIconSelected: tintColorDark,
+    tertiary: '#D9D9D9',
+  },
+};
+
 ```
 
 # app-example\_layout.tsx
@@ -5479,6 +5619,10 @@ import { supabase } from '@/lib/supabase';
 import { get } from 'react-native/Libraries/TurboModule/TurboModuleRegistry';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { NavigationContainer } from '@react-navigation/native';
+import { StreamChat } from 'stream-chat';
+import { Chat, OverlayProvider } from 'stream-chat-expo';
+
+const chatClient = StreamChat.getInstance('pcvjbntz7tfy');
 
 
 
@@ -5512,7 +5656,7 @@ export default function RootLayout() {
         if (error) throw error;
     }, [error]);
 
-
+    
 
 
 
@@ -5552,19 +5696,21 @@ export default function RootLayout() {
 
 
     return (
-        <AppProvider>
+        <SafeAreaProvider>
             <GestureHandlerRootView style={{ flex: 1 }}>
-                <ErrorBoundary>
-                    <SafeAreaProvider>
-                        {/* <NavigationContainer> */}
-                        <RootNavigator
-                            session={session}
-                        />
-                        {/* </NavigationContainer> */}
-                    </SafeAreaProvider>
-                </ErrorBoundary>
+                <AppProvider>
+                    <OverlayProvider>
+                        <Chat client={chatClient}>
+                            {/* <NavigationContainer> */}
+                                <RootNavigator
+                                    session={session}
+                                />
+                            {/* </NavigationContainer> */}
+                        </Chat>
+                    </OverlayProvider>
+                </AppProvider>
             </GestureHandlerRootView>
-        </AppProvider>
+        </SafeAreaProvider>
     );
 }
 
@@ -5664,6 +5810,36 @@ getPotentialDiveMatches: async (userId: string, limit: number) => {
 };
 ```
 
+# api\auth.ts
+
+```ts
+// api/auth.ts
+
+import { supabase } from '@/lib/supabase';
+
+export async function fetchStreamToken(userId: string): Promise<string> {
+  try {
+    const { data, error } = await supabase.functions.invoke('generate-stream-token', {
+      body: { user: { id: userId } },
+    });
+
+    if (error) throw error;
+    if (!data || !data.token) throw new Error('No token received');
+
+    return data.token;
+  } catch (error) {
+    console.error('Error fetching Stream token:', error);
+    throw error;
+  }
+}
+```
+
+# supabase\.temp\cli-latest
+
+```
+v1.187.3
+```
+
 # scripts\sql\current sql setup.txt
 
 ```txt
@@ -5699,146 +5875,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 ```
-
-# assets\sounds\notification.wav
-
-This is a binary file of the type: Binary
-
-# assets\images\splash.png
-
-This is a binary file of the type: Image
-
-# assets\images\react-logo@3x.png
-
-This is a binary file of the type: Image
-
-# assets\images\react-logo@2x.png
-
-This is a binary file of the type: Image
-
-# assets\images\react-logo.png
-
-This is a binary file of the type: Image
-
-# assets\images\partial-react-logo.png
-
-This is a binary file of the type: Image
-
-# assets\images\icon.png
-
-This is a binary file of the type: Image
-
-# assets\images\favicon.png
-
-This is a binary file of the type: Image
-
-# assets\images\adaptive-icon.png
-
-This is a binary file of the type: Image
-
-# assets\fonts\RobotoSlab-Thin.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\RobotoSlab-SemiBold.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\RobotoSlab-Regular.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\RobotoSlab-Medium.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\RobotoSlab-Light.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\RobotoSlab-ExtraLight.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\RobotoSlab-ExtraBold.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\RobotoSlab-Bold.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\RobotoSlab-Black.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-SemiBoldItalic.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-SemiBold.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-Regular.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-MediumItalic.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-Medium.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-LightItalic.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-Light.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-Italic.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-ExtraLightItalic.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-ExtraLight.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-ExtraBoldItalic.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-ExtraBold.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-BoldItalic.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-Bold.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\Copernicus-Extrabold.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\Copernicus-Book.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\Copernicus-Bold.ttf
-
-This is a binary file of the type: Binary
 
 # components\__tests__\ThemedText-test.tsx
 
@@ -5899,6 +5935,96 @@ const SecondaryButtonText = styled(Text, 'uppercase text-center text-primary-700
 
 
 export { PrimaryButton, PrimaryButtonText, SecondaryButton, SecondaryButtonText }
+```
+
+# components\navigation\TabBarIcon.tsx
+
+```tsx
+// You can explore the built-in icon families and icons on the web at https://icons.expo.fyi/
+
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { type IconProps } from '@expo/vector-icons/build/createIconSet';
+import { type ComponentProps } from 'react';
+
+export function TabBarIcon({ style, ...rest }: IconProps<ComponentProps<typeof Ionicons>['name']>) {
+  return <Ionicons size={28} style={[{ marginBottom: -3 }, style]} {...rest} />;
+}
+
+```
+
+# components\onboarding\StepInterests.tsx
+
+```tsx
+import React, { useCallback, useState, useEffect } from 'react';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
+import { Checkbox } from 'react-native-ui-lib';
+import { Colors } from '@/constants/Colors';
+import { defaultStyles } from '@/constants/Styles';
+import hobbiesInterests from '@/constants/Interests';
+import Spacer from '@/components/Spacer';
+
+const StepInterests = ({ onInterestsSelected }) => {
+    const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
+    const flattenedInterests = React.useMemo(() => hobbiesInterests.flat(), []);
+
+    const handleInterestToggle = useCallback((interest: string) => {
+        setSelectedInterests(prevInterests => {
+            if (prevInterests.includes(interest)) {
+                return prevInterests.filter(i => i !== interest);
+            } else {
+                return [...prevInterests, interest];
+            }
+        });
+    }, []);
+
+    useEffect(() => {
+        onInterestsSelected(selectedInterests);
+    }, [selectedInterests, onInterestsSelected]);
+
+    const renderItem = useCallback(({ item }) => (
+        <Pressable onPress={() => handleInterestToggle(item.value)}>
+            <Checkbox
+                color={selectedInterests.includes(item.value) ? Colors.light.text : Colors.light.tertiary}
+                label={item.label}
+                value={selectedInterests.includes(item.value)}
+                containerStyle={[defaultStyles.checkboxButton, { borderColor: selectedInterests.includes(item.value) ? Colors.light.text : Colors.light.tertiary }]}
+                labelStyle={defaultStyles.checkboxButtonLabel}
+                onValueChange={() => handleInterestToggle(item.value)}
+            />
+        </Pressable>
+    ), [selectedInterests, handleInterestToggle]);
+
+    return (
+        <View style={styles.container}>
+            <Text style={defaultStyles.h2}>Interests ({selectedInterests.length})</Text>
+            <Spacer height={8} />
+            <Text style={defaultStyles.body}>
+                This helps us find people with the same hobbies and interests.
+            </Text>
+            <Spacer height={24} />
+            <FlashList
+                data={flattenedInterests}
+                renderItem={renderItem}
+                estimatedItemSize={75}
+                keyExtractor={(item) => item.value}
+                contentContainerStyle={styles.listContainer}
+            />
+        </View>
+    );
+};
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        padding: 16,
+    },
+    listContainer: {
+        paddingBottom: 16,
+    },
+});
+
+export default StepInterests;
 ```
 
 # components\tabs\surf.tsx
@@ -7128,211 +7254,145 @@ const styles = StyleSheet.create({
 
 ```
 
-# components\tabs\chat.tsx
+# assets\sounds\notification.wav
 
-```tsx
-// components/tabs/chat.tsx
+This is a binary file of the type: Binary
 
-import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, ActivityIndicator, Text } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAuth } from '@/hooks/useAuth';
-import { ChannelList, Channel, MessageList, MessageInput, OverlayProvider, Chat } from 'stream-chat-expo';
-import { chatClient, connectUser } from '@/lib/streamChat';
-import { useNavigation, useRoute } from '@react-navigation/native';
-import { defaultStyles } from '@/constants/Styles';
-import { supabase } from '@/lib/supabase';
+# assets\images\splash.png
 
-export default function ChatScreen() {
-    const [channel, setChannel] = useState(null);
-    const [clientReady, setClientReady] = useState(false);
-    const [error, setError] = useState(null);
-    const session = useAuth();
-    const navigation = useNavigation();
-    const route = useRoute();
-    const { matchId, matchName } = route.params;
+This is a binary file of the type: Image
 
-    useEffect(() => {
-        const setupChatClient = async () => {
-            if (session?.user) {
-                try {
-                    console.log('Invoking generate-stream-token function...');
-                    const { data, error } = await supabase.functions.invoke('generate-stream-token', {
-                        body: { user: { id: session.user.id } },
-                    });
+# assets\images\react-logo@3x.png
 
-                    if (error) {
-                        console.error('Error from generate-stream-token:', error);
-                        console.error('Error details:', error.message, error.stack);
-                        throw new Error(error.message || 'Failed to generate token');
-                    }
+This is a binary file of the type: Image
 
-                    console.log('Response from generate-stream-token:', data);
+# assets\images\react-logo@2x.png
 
-                    if (!data || !data.token) {
-                        throw new Error('No token received from generate-stream-token');
-                    }
+This is a binary file of the type: Image
 
-                    // ... rest of your setup code
-                } catch (error) {
-                    console.error('Error setting up chat:', error);
-                    console.error('Error details:', error.message, error.stack);
-                    setError(error.message);
-                }
-            }
-        };
+# assets\images\react-logo.png
 
-        setupChatClient();
+This is a binary file of the type: Image
 
-        return () => {
-            if (clientReady) {
-                chatClient.disconnectUser();
-                setClientReady(false);
-            }
-        };
-    }, [session, matchId]);
+# assets\images\partial-react-logo.png
 
-    if (error) {
-        return (
-            <SafeAreaView style={defaultStyles.SafeAreaView}>
-                <View style={styles.centerContainer}>
-                    <Text style={styles.errorText}>Error: {error}</Text>
-                </View>
-            </SafeAreaView>
-        );
-    }
+This is a binary file of the type: Image
 
-    if (!clientReady || !channel) {
-        return (
-            <SafeAreaView style={defaultStyles.SafeAreaView}>
-                <View style={styles.centerContainer}>
-                    <ActivityIndicator size="large" />
-                </View>
-            </SafeAreaView>
-        );
-    }
+# assets\images\icon.png
 
-    return (
-        <SafeAreaView style={defaultStyles.SafeAreaView}>
-            <OverlayProvider>
-                <Chat client={chatClient}>
-                    <Channel channel={channel}>
-                        <View style={styles.chatContainer}>
-                            <MessageList />
-                            <MessageInput />
-                        </View>
-                    </Channel>
-                </Chat>
-            </OverlayProvider>
-        </SafeAreaView>
-    );
-}
+This is a binary file of the type: Image
 
-const styles = StyleSheet.create({
-    chatContainer: {
-        flex: 1,
-    },
-    centerContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    errorText: {
-        color: 'red',
-        fontSize: 16,
-    },
-});
-```
+# assets\images\favicon.png
 
-# components\navigation\TabBarIcon.tsx
+This is a binary file of the type: Image
 
-```tsx
-// You can explore the built-in icon families and icons on the web at https://icons.expo.fyi/
+# assets\images\adaptive-icon.png
 
-import Ionicons from '@expo/vector-icons/Ionicons';
-import { type IconProps } from '@expo/vector-icons/build/createIconSet';
-import { type ComponentProps } from 'react';
+This is a binary file of the type: Image
 
-export function TabBarIcon({ style, ...rest }: IconProps<ComponentProps<typeof Ionicons>['name']>) {
-  return <Ionicons size={28} style={[{ marginBottom: -3 }, style]} {...rest} />;
-}
+# assets\fonts\RobotoSlab-Thin.ttf
 
-```
+This is a binary file of the type: Binary
 
-# components\onboarding\StepInterests.tsx
+# assets\fonts\RobotoSlab-SemiBold.ttf
 
-```tsx
-import React, { useCallback, useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
-import { FlashList } from '@shopify/flash-list';
-import { Checkbox } from 'react-native-ui-lib';
-import { Colors } from '@/constants/Colors';
-import { defaultStyles } from '@/constants/Styles';
-import hobbiesInterests from '@/constants/Interests';
-import Spacer from '@/components/Spacer';
+This is a binary file of the type: Binary
 
-const StepInterests = ({ onInterestsSelected }) => {
-    const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
-    const flattenedInterests = React.useMemo(() => hobbiesInterests.flat(), []);
+# assets\fonts\RobotoSlab-Regular.ttf
 
-    const handleInterestToggle = useCallback((interest: string) => {
-        setSelectedInterests(prevInterests => {
-            if (prevInterests.includes(interest)) {
-                return prevInterests.filter(i => i !== interest);
-            } else {
-                return [...prevInterests, interest];
-            }
-        });
-    }, []);
+This is a binary file of the type: Binary
 
-    useEffect(() => {
-        onInterestsSelected(selectedInterests);
-    }, [selectedInterests, onInterestsSelected]);
+# assets\fonts\RobotoSlab-Medium.ttf
 
-    const renderItem = useCallback(({ item }) => (
-        <Pressable onPress={() => handleInterestToggle(item.value)}>
-            <Checkbox
-                color={selectedInterests.includes(item.value) ? Colors.light.text : Colors.light.tertiary}
-                label={item.label}
-                value={selectedInterests.includes(item.value)}
-                containerStyle={[defaultStyles.checkboxButton, { borderColor: selectedInterests.includes(item.value) ? Colors.light.text : Colors.light.tertiary }]}
-                labelStyle={defaultStyles.checkboxButtonLabel}
-                onValueChange={() => handleInterestToggle(item.value)}
-            />
-        </Pressable>
-    ), [selectedInterests, handleInterestToggle]);
+This is a binary file of the type: Binary
 
-    return (
-        <View style={styles.container}>
-            <Text style={defaultStyles.h2}>Interests ({selectedInterests.length})</Text>
-            <Spacer height={8} />
-            <Text style={defaultStyles.body}>
-                This helps us find people with the same hobbies and interests.
-            </Text>
-            <Spacer height={24} />
-            <FlashList
-                data={flattenedInterests}
-                renderItem={renderItem}
-                estimatedItemSize={75}
-                keyExtractor={(item) => item.value}
-                contentContainerStyle={styles.listContainer}
-            />
-        </View>
-    );
-};
+# assets\fonts\RobotoSlab-Light.ttf
 
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        padding: 16,
-    },
-    listContainer: {
-        paddingBottom: 16,
-    },
-});
+This is a binary file of the type: Binary
 
-export default StepInterests;
-```
+# assets\fonts\RobotoSlab-ExtraLight.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\RobotoSlab-ExtraBold.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\RobotoSlab-Bold.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\RobotoSlab-Black.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-SemiBoldItalic.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-SemiBold.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-Regular.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-MediumItalic.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-Medium.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-LightItalic.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-Light.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-Italic.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-ExtraLightItalic.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-ExtraLight.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-ExtraBoldItalic.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-ExtraBold.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-BoldItalic.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-Bold.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\Copernicus-Extrabold.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\Copernicus-Book.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\Copernicus-Bold.ttf
+
+This is a binary file of the type: Binary
 
 # app-example\(tabs)\_layout.tsx
 
@@ -8796,6 +8856,48 @@ Deno.serve(async (req) => {
 })
 ```
 
+# supabase\functions\generate-stream-token\index.ts
+
+```ts
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { StreamChat } from 'https://esm.sh/stream-chat@8.37.0'
+
+const STREAM_API_KEY = Deno.env.get('STREAM_API_KEY')
+const STREAM_API_SECRET = Deno.env.get('STREAM_API_SECRET')
+
+if (!STREAM_API_KEY || !STREAM_API_SECRET) {
+  throw new Error('STREAM_API_KEY or STREAM_API_SECRET is not set')
+}
+
+const serverClient = StreamChat.getInstance(STREAM_API_KEY, STREAM_API_SECRET);
+
+serve(async (req) => {
+  try {
+    const { user } = await req.json()
+
+    if (!user || !user.id) {
+      return new Response(
+        JSON.stringify({ error: 'User ID is required' }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      )
+    }
+
+    const token = serverClient.createToken(user.id)
+
+    return new Response(
+      JSON.stringify({ token }),
+      { headers: { 'Content-Type': 'application/json' } }
+    )
+  } catch (error) {
+    console.error('Error in generate-stream-token:', error)
+    return new Response(
+      JSON.stringify({ error: 'Internal Server Error', details: error.message }),
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
+    )
+  }
+})
+```
+
 # supabase\functions\invoke-process-match-notifications\index.ts
 
 ```ts
@@ -8838,86 +8940,34 @@ Deno.serve(async (req) => {
 
 ```
 
-# supabase\functions\generate-stream-token\index.ts
+# components\__tests__\__snapshots__\ThemedText-test.tsx.snap
 
-```ts
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+```snap
+// Jest Snapshot v1, https://goo.gl/fbAQLP
 
-const STREAM_API_KEY = Deno.env.get('STREAM_API_KEY')
-const STREAM_API_SECRET = Deno.env.get('STREAM_API_SECRET')
-
-function createToken(userId: string): string {
-  const header = {
-    alg: 'HS256',
-    type: 'JWT',
-  };
-
-  const payload = {
-    user_id: userId,
-  };
-
-  const encodedHeader = btoa(JSON.stringify(header));
-  const encodedPayload = btoa(JSON.stringify(payload));
-
-  try {
-    const signature = sign(`${encodedHeader}.${encodedPayload}`, STREAM_API_SECRET!);
-    return `${encodedHeader}.${encodedPayload}.${signature}`;
-  } catch (error) {
-    throw new Error(`Error creating token: ${error.message}`);
+exports[`renders correctly 1`] = `
+<Text
+  style={
+    [
+      {
+        "color": "#11181C",
+      },
+      {
+        "fontSize": 16,
+        "lineHeight": 24,
+      },
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+    ]
   }
-}
+>
+  Snapshot test!
+</Text>
+`;
 
-async function sign(message: string, secret: string): Promise<string> {
-  try {
-    const encoder = new TextEncoder();
-    const key = await crypto.subtle.importKey(
-      "raw",
-      encoder.encode(secret),
-      { name: "HMAC", hash: "SHA-256" },
-      false,
-      ["sign"]
-    );
-    const signature = await crypto.subtle.sign(
-      "HMAC",
-      key,
-      encoder.encode(message)
-    );
-    return btoa(String.fromCharCode(...new Uint8Array(signature)));
-  } catch (error) {
-    throw new Error(`Error signing message: ${error.message}`);
-  }
-}
-
-serve(async (req) => {
-  try {
-    if (!STREAM_API_KEY || !STREAM_API_SECRET) {
-      throw new Error('STREAM_API_KEY or STREAM_API_SECRET is not set');
-    }
-
-    const body = await req.json();
-    const { user } = body;
-
-    if (!user || !user.id) {
-      return new Response(
-        JSON.stringify({ error: 'User ID is required' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      )
-    }
-
-    const token = await createToken(user.id);
-
-    return new Response(
-      JSON.stringify({ token }),
-      { headers: { 'Content-Type': 'application/json' } }
-    )
-  } catch (error) {
-    console.error('Error in generate-stream-token:', error);
-    return new Response(
-      JSON.stringify({ error: 'Internal Server Error', details: error.message, stack: error.stack }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    )
-  }
-})
 ```
 
 # assets\images\onboarding\onboarding5@3x.png
@@ -8980,18 +9030,6 @@ This is a binary file of the type: Image
 
 This is a binary file of the type: Image
 
-# assets\images\dummies\dummy3.png
-
-This is a binary file of the type: Image
-
-# assets\images\dummies\dummy2.png
-
-This is a binary file of the type: Image
-
-# assets\images\dummies\dummy1.png
-
-This is a binary file of the type: Image
-
 # assets\images\logo\logo_crushy@3x.png
 
 This is a binary file of the type: Image
@@ -9001,6 +9039,18 @@ This is a binary file of the type: Image
 This is a binary file of the type: Image
 
 # assets\images\logo\logo_crushy.png
+
+This is a binary file of the type: Image
+
+# assets\images\dummies\dummy3.png
+
+This is a binary file of the type: Image
+
+# assets\images\dummies\dummy2.png
+
+This is a binary file of the type: Image
+
+# assets\images\dummies\dummy1.png
 
 This is a binary file of the type: Image
 
@@ -9123,36 +9173,6 @@ This is a binary file of the type: Image
 # assets\images\icons\iconSharedInterest.png
 
 This is a binary file of the type: Image
-
-# components\__tests__\__snapshots__\ThemedText-test.tsx.snap
-
-```snap
-// Jest Snapshot v1, https://goo.gl/fbAQLP
-
-exports[`renders correctly 1`] = `
-<Text
-  style={
-    [
-      {
-        "color": "#11181C",
-      },
-      {
-        "fontSize": 16,
-        "lineHeight": 24,
-      },
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-    ]
-  }
->
-  Snapshot test!
-</Text>
-`;
-
-```
 
 # assets\images\buttons\buttonMatchingLike@3x.png
 

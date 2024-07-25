@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import Auth from '@/components/Auth';
 import { View, Text, Image, Pressable, Platform } from 'react-native';
 import { Colors } from '@/constants/Colors';
-import { useNavigation } from '@react-navigation/native'
+import { useFocusEffect, useNavigation } from '@react-navigation/native'
 // import { BlurView } from 'expo-blur';
 import Me from '@/components/tabs/me';
 import Surf from '@/components/tabs/surf';
@@ -24,12 +24,12 @@ import FilterDietPreference from '@/app/searchFilters/filterDietPreference';
 import { useProfile } from '@/hooks/useProfile';
 import { useAppContext } from '@/providers/AppProvider';
 import { clearAllStorage, getData, storeData } from '@/utils/storage';
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import Inbox from '@/components/tabs/inbox'; // Add this import
-import ChatScreen from '@/components/tabs/chat'; // Add this import
 import ChannelList from '@/components/ChannelList';
 import ChatChannel from '@/components/ChatChannel';
+import { useChatContext } from 'stream-chat-expo';
 
 const tabIcons = {
     homeActive: require('@/assets/images/icons/tab-home-active.png'),
@@ -80,8 +80,21 @@ const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
 
 
+
 function TabNavigator() {
     const navigation = useNavigation();
+    const { client } = useChatContext();
+
+    const disconnectUser = useCallback(async () => {
+        try {
+          if (client && client.userID) {
+            await client.disconnectUser();
+            console.log('User disconnected successfully');
+          }
+        } catch (error) {
+          console.error('Error disconnecting user:', error);
+        }
+      }, [client]);
 
 
     return (
@@ -100,7 +113,11 @@ function TabNavigator() {
                         iconSource = focused ? tabIcons.meActive : tabIcons.meInactive;
                     } else if (route.name === 'Explore') {
                         return (
-                            <Pressable style={{ marginTop: Platform.OS === 'ios' ? 0 : -4 }} onPress={() => { navigation.navigate('Dive') }}>
+                            <Pressable style={{ marginTop: Platform.OS === 'ios' ? 0 : -4 }} onPress={() => {
+                                disconnectUser()
+                                navigation.navigate('Home') // TODO: fix this hack. chat has to be disconnected when navigating from inbox to anywhere. when you close dive/surf, inbox will still be focused when coming from there. So we move to home to reset that.
+                                navigation.navigate('Dive')
+                            }}>
                                 <Image source={require('@/assets/images/icons/tab-explore.png')} />
                             </Pressable>
                         )
@@ -125,8 +142,15 @@ function TabNavigator() {
     );
 }
 
+
+
+
+
+
 export default function RootNavigator({ session }) {
     const { showOnboarding, setShowOnboarding } = useAppContext();
+    
+
 
     useEffect(() => {
         // clearAllStorage()
@@ -178,6 +202,14 @@ export default function RootNavigator({ session }) {
         }
     }, [session?.user.id]);
 
+
+
+
+
+
+
+
+
     return (
         <Stack.Navigator initialRouteName='Main'>
             {session ? (
@@ -189,7 +221,6 @@ export default function RootNavigator({ session }) {
                             <Stack.Screen name="Dive" component={Dive} />
                             <Stack.Screen name="Profile" component={Profile} />
                             <Stack.Screen name="SearchFilters" component={SearchFilters} />
-                            <Stack.Screen name="Chat" component={ChatScreen} />
                             <Stack.Screen name="ChatChannel" component={ChatChannel} options={{ headerShown: true }} />
                         </Stack.Group>
                         <Stack.Group screenOptions={{ headerShown: false, ...TransitionPresets.SlideFromRightIOS }}>
@@ -243,43 +274,3 @@ export default function RootNavigator({ session }) {
 
 
 
-
-/*
-            <Stack.Navigator initialRouteName={showOnboarding ? 'onboarding' : '(tabs)'} >
-
-                <Stack.Group screenOptions={{ headerShown: false, ...TransitionPresets.RevealFromBottomAndroid }} >
-                    <Stack.Screen
-                        name="onboarding"
-                        component={Onboarding}
-                    />
-                    <Tab.Navigator>
-                        <Tab.Screen name="Home" component={Home} />
-                        <Tab.Screen name="Settings" component={Me} />
-                    </Tab.Navigator>
-                </Stack.Group>
-
-                <Stack.Group screenOptions={{ headerShown: false, ...TransitionPresets.SlideFromRightIOS }}>
-                    <Stack.Screen
-                        name="filterGenderPreference"
-                        component={FilterGenderPreference}
-                    />
-                    <Stack.Screen
-                        name="filterStarsign"
-                        component={FilterStarsign}
-                    />
-                    <Stack.Screen
-                        name="filterAgeRange"
-                        component={FilterAgeRange}
-                    />
-                </Stack.Group>
-
-                <Stack.Group screenOptions={{ headerShown: false, ...TransitionPresets.BottomSheetAndroid }}>
-                    <Stack.Screen
-                        name="Profile"
-                        component={DetailsScreen}
-                        initialParams={{ id: null, imageUrl: null }}
-                    />
-                </Stack.Group>
-
-            </Stack.Navigator>
-*/
