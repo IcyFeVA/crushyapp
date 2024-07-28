@@ -1,72 +1,108 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Text } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { ChannelList, useChatContext } from 'stream-chat-expo';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
-import { useAuth } from '@/hooks/useAuth';
-import { Colors } from '@/constants/Colors';
+import React, { useEffect, useState } from "react";
+import { View, Text, FlatList, Pressable, StyleSheet } from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/lib/supabase";
+import { Colors } from "@/constants/Colors";
+import { defaultStyles } from "@/constants/Styles";
+import { connectUser } from "@/lib/streamChat";
+import { useChatContext } from "stream-chat-expo";
 
-export default function ChannelListScreen() {
+type Match = {
+  id: string;
+  name: string;
+  avatar_url: string;
+};
+
+export default function Inbox() {
+  const [matches, setMatches] = useState<Match[]>([]);
   const navigation = useNavigation();
-  const { client } = useChatContext();
   const session = useAuth();
+  const { client } = useChatContext();
   const [clientReady, setClientReady] = useState(false);
-  const [myChannel, setMyChannel] = useState();
 
-    useEffect(() => {
+  useEffect(() => {
+    if (session?.user) {
+      fetchMatches();
+
       const setupClient = async () => {
         try {
           if (!session?.user?.id) return;
 
-          console.log('Connecting user...');
+          console.log("Connecting user...");
           await client.connectUser(
             {
               id: "Crushy",
-              name: 'Crushy',
-              image: 'https://getstream.io/random_svg/?name=John',
+              name: "Crushy",
+              image: "https://getstream.io/random_svg/?name=John",
             },
-            client.devToken('Crushy'),
+            client.devToken("Crushy")
           );
 
           setClientReady(true);
         } catch (error) {
-          console.error('Failed to connect user', error);
+          console.error("Failed to connect user", error);
         }
       };
 
       if (client) setupClient();
+    }
+  }, [session]);
 
-      // Cleanup function
-      // return () => {
-      //   const disconnectUser = async () => {
-      //     try {
-      //       if (client) {
-      //         await client.disconnectUser();
-      //         console.log('User disconnected successfully');
-      //       }
-      //     } catch (error) {
-      //       console.error('Error disconnecting user:', error);
-      //     }
-      //   };
+  const fetchMatches = async () => {
+    const { data, error } = await supabase
+      .from("matches")
+      .select("profiles_test!matches_user2_id_fkey(id, name, avatar_url)")
+      .eq("user1_id", session?.user.id)
+      .eq("matched", true);
 
-      //   disconnectUser();
-      //   setClientReady(false);
-      // };
-    }, [client, session])
+    if (error) {
+      console.error("Error fetching matches:", error);
+    } else {
+      setMatches(data.map((match: any) => match.profiles_test));
+    }
+  };
 
-  if (!clientReady) {
-    return <ActivityIndicator size="large" color={Colors.light.accent} />
-  }
+  const renderMatch = ({ item }: { item: Match }) => (
+    <Pressable
+      style={styles.matchItem}
+      onPress={() =>
+        navigation.navigate("ChatChannel", {
+          matchId: item.id,
+          matchName: item.name,
+          channelId: item.id,
+        })
+      }
+    >
+      <Text style={styles.matchName}>{item.name}</Text>
+    </Pressable>
+  );
 
   return (
-    <SafeAreaView style={{ flex: 1 }}>
-      <ChannelList
-        filters={{ members: { $in: ['Crushy'] } }}
-        sort={{}}
-        onSelect={(channel) => {
-          navigation.navigate('ChatChannel', { channelId: channel.id });
-        }}
-      />
+    <SafeAreaView style={defaultStyles.SafeAreaView}>
+      <View style={defaultStyles.innerContainer}>
+        <Text style={defaultStyles.h2}>Inbox</Text>
+        <FlatList
+          data={matches}
+          renderItem={renderMatch}
+          keyExtractor={(item) => item.id}
+        />
+      </View>
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  matchItem: {
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.light.tertiary,
+  },
+  matchName: {
+    fontSize: 16,
+    fontFamily: "BodySemiBold",
+  },
+});
+
+

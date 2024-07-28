@@ -35,29 +35,24 @@
 //   );
 // }
 
-
-
-
-import React, {useEffect, useState} from 'react';
-import {ActivityIndicator, View} from 'react-native';
-import {StreamChat} from 'stream-chat';
-import { useRoute } from '@react-navigation/native';
+import React, { useEffect, useState } from "react";
+import { ActivityIndicator, View } from "react-native";
+import { StreamChat } from "stream-chat";
+import { useRoute } from "@react-navigation/native";
 import {
   Channel,
   Chat,
   MessageInput,
   MessageList,
   OverlayProvider as ChatOverlayProvider,
-  useChatContext
-} from 'stream-chat-expo';
+  useChatContext,
+} from "stream-chat-expo";
 import {
   SafeAreaProvider,
   SafeAreaView,
   useSafeAreaInsets,
-} from 'react-native-safe-area-context';
-import { Colors } from '@/constants/Colors';
-
-
+} from "react-native-safe-area-context";
+import { Colors } from "@/constants/Colors";
 
 export default function App() {
   const [ready, setReady] = useState();
@@ -66,19 +61,19 @@ export default function App() {
   const { channelId } = route.params;
 
   const userToken =
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiQ3J1c2h5In0.7M2-tacCjPbnFaIDf56-oHZ6ammF9euZx9mKs0MhL30';
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiQ3J1c2h5In0.7M2-tacCjPbnFaIDf56-oHZ6ammF9euZx9mKs0MhL30";
 
   const user = {
-    id: 'Crushy',
+    id: "Crushy",
   };
 
   //const chatClient = StreamChat.getInstance('pcvjbntz7tfy');
   //const connectUserPromise = chatClient.connectUser(user, userToken);
 
-  const channel = client.channel('messaging', channelId);
+  const channel = client.channel("messaging", channelId);
 
   const ChannelScreen = () => {
-    const {bottom} = useSafeAreaInsets();
+    const { bottom } = useSafeAreaInsets();
 
     return (
       <ChatOverlayProvider bottomInset={bottom} topInset={0}>
@@ -86,7 +81,7 @@ export default function App() {
           <Chat client={client}>
             {/* Setting keyboardVerticalOffset as 0, since we don't have any header yet */}
             <Channel channel={channel} keyboardVerticalOffset={0}>
-              <View style={{flex: 1}}>
+              <View style={{ flex: 1 }}>
                 <MessageList />
                 <MessageInput />
               </View>
@@ -96,9 +91,6 @@ export default function App() {
       </ChatOverlayProvider>
     );
   };
-
-
-
 
   useEffect(() => {
     const initChat = async () => {
@@ -110,7 +102,7 @@ export default function App() {
   }, []);
 
   if (!ready) {
-    return <ActivityIndicator size="large" color={Colors.light.accent} />
+    return <ActivityIndicator size="large" color={Colors.light.accent} />;
   }
 
   return (
