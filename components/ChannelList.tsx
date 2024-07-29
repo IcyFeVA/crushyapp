@@ -7,7 +7,11 @@ import { supabase } from "@/lib/supabase";
 import { Colors } from "@/constants/Colors";
 import { defaultStyles } from "@/constants/Styles";
 import { connectUser } from "@/lib/streamChat";
-import { useChatContext } from "stream-chat-expo";
+import {
+  useChatContext,
+  ChannelPreviewMessenger,
+  ChannelList,
+} from "stream-chat-expo";
 import { fetchStreamToken } from "@/api/auth";
 
 type Match = {
@@ -22,6 +26,7 @@ export default function Inbox() {
   const session = useAuth();
   const { client } = useChatContext();
   const [clientReady, setClientReady] = useState(false);
+  const [myChannels, setChannels] = useState();
 
   useEffect(() => {
     if (session?.user) {
@@ -32,7 +37,7 @@ export default function Inbox() {
           if (!session?.user?.id) return;
 
           console.log("Connecting user...");
-          await connectUser({ id: session?.user.id });
+          await connectUser({ id: session?.user.id, name: "TESTER" });
 
           setClientReady(true);
         } catch (error) {
@@ -45,16 +50,45 @@ export default function Inbox() {
   }, [session]);
 
   const fetchMatches = async () => {
-    const { data, error } = await supabase
-      .from("matches")
-      .select("profiles_test!matches_user2_id_fkey(id, name, avatar_url)")
-      .eq("user1_id", session?.user.id)
-      .eq("matched", true);
+    try {
+      const { data: matches, error } = await supabase
+        .from("matches")
+        .select(
+          "*, user1:profiles_test!user1_id(*), user2:profiles_test!user2_id(*)"
+        )
+        .or(`user1_id.eq.${session.user.id},user2_id.eq.${session.user.id}`)
+        .eq("matched", true);
 
-    if (error) {
+      if (error) throw error;
+
+      const channelPromises = matches.map(async (match) => {
+        const otherUser =
+          match.user1_id === session.user.id ? match.user2 : match.user1;
+        const channelId = [session.user.id, otherUser.id].sort().join("_");
+
+        let channel = client.channel("messaging", channelId, {
+          members: [session.user.id, otherUser.id],
+          name: otherUser.name,
+        });
+
+        try {
+          await channel.create();
+          console.log("Channel created successfully:", channel.id);
+        } catch (error) {
+          if (error.code === 4) {
+            console.log("Channel already exists:", channel.id);
+          } else {
+            console.error("Error creating channel:", error);
+          }
+        }
+
+        return channel;
+      });
+
+      const createdChannels = await Promise.all(channelPromises);
+      setChannels(createdChannels);
+    } catch (error) {
       console.error("Error fetching matches:", error);
-    } else {
-      setMatches(data.map((match: any) => match.profiles_test));
     }
   };
 
@@ -75,16 +109,34 @@ export default function Inbox() {
     </Pressable>
   );
 
+  const CustomChannelPreview = (props) => {
+    const { channel } = props;
+    const otherUser = Object.values(channel.state.members).find(
+      (member) => member.user.id !== session.user.id
+    );
+
+    return <ChannelPreviewMessenger {...props} title={otherUser?.user?.name} />;
+  };
+
+  if (!session?.user || !clientReady) {
+    return null;
+  }
+
   return (
-    <SafeAreaView style={defaultStyles.SafeAreaView}>
-      <View style={defaultStyles.innerContainer}>
-        <Text style={defaultStyles.h2}>Inbox</Text>
-        <FlatList
-          data={matches}
-          renderItem={renderMatch}
-          keyExtractor={(item) => item.id}
-        />
-      </View>
+    <SafeAreaView style={{ flex: 1 }}>
+      <ChannelList
+        filters={{
+          type: "messaging",
+          members: { $in: [session.user.id] },
+        }}
+        sort={{ last_message_at: -1 }}
+        onSelect={(channel) => {
+          navigation.navigate("ChatChannel", {
+            channelId: channel.id,
+          });
+        }}
+        Preview={CustomChannelPreview}
+      />
     </SafeAreaView>
   );
 }
@@ -100,5 +152,3 @@ const styles = StyleSheet.create({
     fontFamily: "BodySemiBold",
   },
 });
-
-

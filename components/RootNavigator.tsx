@@ -79,64 +79,76 @@ const Stack = createStackNavigator();
 
 
 function TabNavigator() {
-    const navigation = useNavigation();
-    const { client } = useChatContext();
+  const navigation = useNavigation();
+  // const { client } = useChatContext();
 
-    const disconnectUser = useCallback(async () => {
-        try {
-          if (client && client.userID) {
-            await client.disconnectUser();
-            console.log('User disconnected successfully');
+  // const disconnectUser = useCallback(async () => {
+  //     try {
+  //       if (client && client.userID) {
+  //         await client.disconnectUser();
+  //         console.log('User disconnected successfully');
+  //       }
+  //     } catch (error) {
+  //       console.error('Error disconnecting user:', error);
+  //     }
+  //   }, [client]);
+
+  return (
+    <Tab.Navigator
+      screenOptions={({ route }) => ({
+        tabBarIcon: ({ focused, color, size }) => {
+          let iconSource;
+
+          if (route.name === "Home") {
+            iconSource = focused ? tabIcons.homeActive : tabIcons.homeInactive;
+          } else if (route.name === "History") {
+            iconSource = focused
+              ? tabIcons.historyActive
+              : tabIcons.historyInactive;
+          } else if (route.name === "Inbox") {
+            iconSource = focused
+              ? tabIcons.inboxActive
+              : tabIcons.inboxInactive;
+          } else if (route.name === "Me") {
+            iconSource = focused ? tabIcons.meActive : tabIcons.meInactive;
+          } else if (route.name === "Explore") {
+            return (
+              <Pressable
+                style={{ marginTop: Platform.OS === "ios" ? 0 : -4 }}
+                onPress={() => {
+                  // disconnectUser()
+                  navigation.navigate("Home"); // TODO: fix this hack. chat has to be disconnected when navigating from inbox to anywhere. when you close dive/surf, inbox will still be focused when coming from there. So we move to home to reset that.
+                  navigation.navigate("Dive");
+                }}
+              >
+                <Image
+                  source={require("@/assets/images/icons/tab-explore.png")}
+                />
+              </Pressable>
+            );
           }
-        } catch (error) {
-          console.error('Error disconnecting user:', error);
-        }
-      }, [client]);
 
-
-    return (
-        <Tab.Navigator
-            screenOptions={({ route }) => ({
-                tabBarIcon: ({ focused, color, size }) => {
-                    let iconSource;
-
-                    if (route.name === 'Home') {
-                        iconSource = focused ? tabIcons.homeActive : tabIcons.homeInactive;
-                    } else if (route.name === 'History') {
-                        iconSource = focused ? tabIcons.historyActive : tabIcons.historyInactive;
-                    } else if (route.name === 'Inbox') {
-                        iconSource = focused ? tabIcons.inboxActive : tabIcons.inboxInactive;
-                    } else if (route.name === 'Me') {
-                        iconSource = focused ? tabIcons.meActive : tabIcons.meInactive;
-                    } else if (route.name === 'Explore') {
-                        return (
-                            <Pressable style={{ marginTop: Platform.OS === 'ios' ? 0 : -4 }} onPress={() => {
-                                disconnectUser()
-                                navigation.navigate('Home') // TODO: fix this hack. chat has to be disconnected when navigating from inbox to anywhere. when you close dive/surf, inbox will still be focused when coming from there. So we move to home to reset that.
-                                navigation.navigate('Dive')
-                            }}>
-                                <Image source={require('@/assets/images/icons/tab-explore.png')} />
-                            </Pressable>
-                        )
-                    }
-
-                    return <Image source={iconSource} />
-                },
-                headerShown: false,
-                tabBarShowLabel: false,
-                tabBarStyle: { height: Platform.OS === 'ios' ? 80 : 48 },
-                // tabBarBackground: () => (
-                //     <BlurView tint="light" intensity={100} style={StyleSheet.absoluteFill} />
-                //   ),
-            })}
-        >
-            <Tab.Screen name="Home" component={HomeScreen} />
-            <Tab.Screen name="History" component={SettingsScreen} />
-            <Tab.Screen name="Explore" component={DummySurf} />
-            <Tab.Screen name="Inbox" component={ChannelList} options={{ tabBarBadge: 6 }} />
-            <Tab.Screen name="Me" component={Me} />
-        </Tab.Navigator>
-    );
+          return <Image source={iconSource} />;
+        },
+        headerShown: false,
+        tabBarShowLabel: false,
+        tabBarStyle: { height: Platform.OS === "ios" ? 80 : 48 },
+        // tabBarBackground: () => (
+        //     <BlurView tint="light" intensity={100} style={StyleSheet.absoluteFill} />
+        //   ),
+      })}
+    >
+      <Tab.Screen name="Home" component={HomeScreen} />
+      <Tab.Screen name="History" component={SettingsScreen} />
+      <Tab.Screen name="Explore" component={DummySurf} />
+      <Tab.Screen
+        name="Inbox"
+        component={ChannelList}
+        options={{ tabBarBadge: 6 }}
+      />
+      <Tab.Screen name="Me" component={Me} />
+    </Tab.Navigator>
+  );
 }
 
 
