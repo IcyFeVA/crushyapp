@@ -9,6 +9,7 @@ import {
 import { useRoute, useNavigation } from "@react-navigation/native";
 import { ActivityIndicator } from "react-native";
 import { Colors } from "@/constants/Colors";
+import { supabase } from "@/lib/supabase";
 
 export default function ChatChannelScreen() {
   const navigation = useNavigation();
@@ -23,18 +24,34 @@ export default function ChatChannelScreen() {
       await newChannel.watch();
       setChannel(newChannel);
 
-      // Get member names
-      const members = Object.values(newChannel.state.members);
-      const memberNames = members.map(
-        (member) => member.user?.name || "Unknown User"
-      );
+      // Get member IDs
+      const memberIds = Object.keys(newChannel.state.members);
+      console.log("Member IDs:", memberIds);
+
+      // Fetch user data from Supabase
+      const { data: users, error } = await supabase
+        .from("profiles_test")
+        .select("id, name")
+        .in("id", memberIds);
+
+      if (error) {
+        console.error("Error fetching user data:", error);
+        return;
+      }
+
+      console.log("Fetched user data:", users);
+
+      // Map user names
+      const memberNames = memberIds.map((id) => {
+        const user = users.find((u) => u.id === id);
+        return user ? user.name : "Unknown User";
+      });
+
       console.log("Channel members:", memberNames);
 
-      // If you want to get the other user's name (assuming it's a 1-on-1 chat)
-      const otherMember = members.find(
-        (member) => member.user?.id !== client.userID
-      );
-      const otherUserName = otherMember?.user?.name || "Unknown User";
+      // Find the other user (assuming 1-on-1 chat)
+      const otherUser = users.find((u) => u.id !== client.userID);
+      const otherUserName = otherUser ? otherUser.name : "Unknown User";
       console.log("Other user name:", otherUserName);
 
       // Set the channel name to the other user's name
@@ -46,7 +63,7 @@ export default function ChatChannelScreen() {
     };
 
     createAndWatchChannel();
-  }, [channelId, client, navigation]);
+  }, [channelId, client, navigation, supabase]);
 
   if (!channelId || !channel) {
     return <ActivityIndicator size="large" color={Colors.light.accent} />;
