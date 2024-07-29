@@ -39,6 +39,7 @@ import React, { useEffect, useState } from "react";
 import { ActivityIndicator, View } from "react-native";
 import { StreamChat } from "stream-chat";
 import { useRoute } from "@react-navigation/native";
+import { createChannel } from "@/lib/streamChat";
 import {
   Channel,
   Chat,
@@ -58,19 +59,10 @@ export default function App() {
   const [ready, setReady] = useState();
   const { client } = useChatContext();
   const route = useRoute();
-  const { channelId } = route.params;
+  const { channelId, myId, matchId } = route.params;
 
-  const userToken =
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiQ3J1c2h5In0.7M2-tacCjPbnFaIDf56-oHZ6ammF9euZx9mKs0MhL30";
-
-  const user = {
-    id: "Crushy",
-  };
-
-  //const chatClient = StreamChat.getInstance('pcvjbntz7tfy');
-  //const connectUserPromise = chatClient.connectUser(user, userToken);
-
-  const channel = client.channel("messaging", channelId);
+  console.log(channelId);
+  const channel = createChannel(channelId, [myId, matchId]);
 
   const ChannelScreen = () => {
     const { bottom } = useSafeAreaInsets();

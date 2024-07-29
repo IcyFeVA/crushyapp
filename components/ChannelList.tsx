@@ -8,6 +8,7 @@ import { Colors } from "@/constants/Colors";
 import { defaultStyles } from "@/constants/Styles";
 import { connectUser } from "@/lib/streamChat";
 import { useChatContext } from "stream-chat-expo";
+import { fetchStreamToken } from "@/api/auth";
 
 type Match = {
   id: string;
@@ -31,14 +32,7 @@ export default function Inbox() {
           if (!session?.user?.id) return;
 
           console.log("Connecting user...");
-          await client.connectUser(
-            {
-              id: "Crushy",
-              name: "Crushy",
-              image: "https://getstream.io/random_svg/?name=John",
-            },
-            client.devToken("Crushy")
-          );
+          await connectUser({ id: session?.user.id });
 
           setClientReady(true);
         } catch (error) {
@@ -46,7 +40,7 @@ export default function Inbox() {
         }
       };
 
-      if (client) setupClient();
+      if (client && !clientReady) setupClient();
     }
   }, [session]);
 
@@ -69,9 +63,11 @@ export default function Inbox() {
       style={styles.matchItem}
       onPress={() =>
         navigation.navigate("ChatChannel", {
+          channelId: session?.user.id,
+          channelName: item.name,
+          avatarUrl: item.avatar_url,
+          myId: session?.user.id,
           matchId: item.id,
-          matchName: item.name,
-          channelId: item.id,
         })
       }
     >

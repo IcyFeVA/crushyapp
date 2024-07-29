@@ -1,5 +1,6 @@
 // lib/streamChat.ts
 
+import { fetchStreamToken } from '@/api/auth';
 import { StreamChat } from 'stream-chat';
 
 export const chatClient = StreamChat.getInstance('pcvjbntz7tfy');
@@ -10,20 +11,19 @@ export const chatClient = StreamChat.getInstance('pcvjbntz7tfy');
 
 
 
-export const connectUser = async (user: { id: string; }, token: string) => {
-  // try {
-  //   // await chatClient.connectUser(user, token);
-
-
-
-
-  
-
-  //   console.log('User connected successfully');
-  // } catch (error) {
-  //   console.error('Error connecting user to Stream:', error);
-  //   throw error;
-  // }
+export const connectUser = async (user: { id: string; }) => {
+  try {
+    await chatClient.connectUser(
+      user, 
+      async () => {
+        return await fetchStreamToken(user.id)
+      }
+    );
+    console.log('User connected successfully');
+  } catch (error) {
+    console.error('Error connecting user to Stream:', error);
+    throw error;
+  }
 };
 
 export const disconnectUser = async () => {
@@ -37,7 +37,7 @@ export const disconnectUser = async () => {
 
 export const createChannel = async (channelId: string, members: string[]) => {
   try {
-    const channel = chatClient.channel('messaging', channelId, {
+    const channel = chatClient.channel('messaging', {
       members,
     });
     await channel.create();

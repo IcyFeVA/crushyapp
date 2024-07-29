@@ -11,14 +11,7 @@ export const useAuth = () => {
     const getSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        try {
-          const streamToken = await fetchStreamToken(session.user.id);
-          console.log('streamtoken', streamToken, session.user.id)
-          setSession({ ...session, streamToken });
-        } catch (error) {
-          console.error('Failed to fetch Stream token:', error);
           setSession(session); // Set session without Stream token
-        }
       }
     };
 
@@ -26,15 +19,7 @@ export const useAuth = () => {
 
     const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (session) {
-        try {
-          const streamToken = await fetchStreamToken(session.user.id);
-          setSession({ ...session, streamToken });
-        } catch (error) {
-          console.error('Failed to fetch Stream token:', error);
           setSession(session); // Set session without Stream token
-        }
-      } else {
-        setSession(null);
       }
     });
 
