@@ -26,260 +26,341 @@ import { useNavigation } from '@react-navigation/native'
 import { useAppContext } from '@/providers/AppProvider';
 import { storeData } from '@/utils/storage';
 import { isLoading } from 'expo-font';
+import { connectUser } from "@/lib/streamChat";
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 const useOnboardingStore = create((set) => ({
-    name: '',
-    age: null,
-    gender: null,
-    pronouns: [],
-    relationship: null,
-    genderPreferences: null,
-    interests: [],
-    photoUploaded: false,
-    dataUploaded: false,
-    onboardingCompleted: false,
-    setName: () => set((state: { name: string; }) => ({ name: state.name })),
-    setAge: () => set((state: { age: string; }) => ({ age: state.age })),
-    setGender: () => set((state: { gender: string; }) => ({ gender: state.gender })),
-    setPronouns: () => set((state: { pronouns: object; }) => ({ pronouns: state.pronouns })),
-    setRelationship: () => set((state: { relationship: string; }) => ({ relationship: state.relationship })),
-    setGenderPreferences: () => set((state: { genderPreferences: string; }) => ({ genderPreferences: state.genderPreferences })),
-    setInterests: () => set((state: { interests: object; }) => ({ interests: state.interests })),
-}))
-
-
+  name: "",
+  age: null,
+  gender: null,
+  pronouns: [],
+  relationship: null,
+  genderPreferences: null,
+  interests: [],
+  photoUploaded: false,
+  dataUploaded: false,
+  onboardingCompleted: false,
+  setName: () => set((state: { name: string }) => ({ name: state.name })),
+  setAge: () => set((state: { age: string }) => ({ age: state.age })),
+  setGender: () =>
+    set((state: { gender: string }) => ({ gender: state.gender })),
+  setPronouns: () =>
+    set((state: { pronouns: object }) => ({ pronouns: state.pronouns })),
+  setRelationship: () =>
+    set((state: { relationship: string }) => ({
+      relationship: state.relationship,
+    })),
+  setGenderPreferences: () =>
+    set((state: { genderPreferences: string }) => ({
+      genderPreferences: state.genderPreferences,
+    })),
+  setInterests: () =>
+    set((state: { interests: object }) => ({ interests: state.interests })),
+}));
 
 export default function Onboarding() {
-    const session = useAuth();
-    const [currentStep, setCurrentStep] = useState(0);
-    const flatListRef = useRef(null);
-    const { isLoading, setIsLoading } = useAppContext();
-    const [listKey, setListKey] = useState(0); // used to force re-render of FlatList
-    const [name, age, gender, pronouns, relationship, genderPreferences, interests, photoUploaded, dataUploaded, onboardingCompleted] = useOnboardingStore(
-        useShallow((state) => [state.name, state.age, state.gender, state.pronouns, state.relationship, state.genderPreferences, state.interests, state.photoUploaded, state.dataUploaded, state.onboardingCompleted]),
-    )
-    const toastConfig = {
-        default: ({ text1, text2, props }) => (
-            <View style={{ display: 'flex', justifyContent: 'center', width: '94%', backgroundColor: Colors.light.accent, borderColor: Colors.light.white, borderRadius: 8, padding: 16 }}>
-                <Text style={{ fontFamily: 'HeadingBold', color: Colors.light.textInverted }}>{text1}</Text>
-                <Text style={{ fontFamily: 'BodyRegular', color: Colors.light.textInverted }}>{text2}</Text>
-            </View>
-        )
-    };
+  const session = useAuth();
+  const [currentStep, setCurrentStep] = useState(0);
+  const flatListRef = useRef(null);
+  const { isLoading, setIsLoading } = useAppContext();
+  const [listKey, setListKey] = useState(0); // used to force re-render of FlatList
+  const [
+    name,
+    age,
+    gender,
+    pronouns,
+    relationship,
+    genderPreferences,
+    interests,
+    photoUploaded,
+    dataUploaded,
+    onboardingCompleted,
+  ] = useOnboardingStore(
+    useShallow((state) => [
+      state.name,
+      state.age,
+      state.gender,
+      state.pronouns,
+      state.relationship,
+      state.genderPreferences,
+      state.interests,
+      state.photoUploaded,
+      state.dataUploaded,
+      state.onboardingCompleted,
+    ])
+  );
+  const toastConfig = {
+    default: ({ text1, text2, props }) => (
+      <View
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          width: "94%",
+          backgroundColor: Colors.light.accent,
+          borderColor: Colors.light.white,
+          borderRadius: 8,
+          padding: 16,
+        }}
+      >
+        <Text
+          style={{
+            fontFamily: "HeadingBold",
+            color: Colors.light.textInverted,
+          }}
+        >
+          {text1}
+        </Text>
+        <Text
+          style={{
+            fontFamily: "BodyRegular",
+            color: Colors.light.textInverted,
+          }}
+        >
+          {text2}
+        </Text>
+      </View>
+    ),
+  };
 
-    const steps: object[] = [
-        { key: '1', title: 'Step 1', component: StepName },
-        { key: '2', title: 'Step 2', component: StepAge },
-        { key: '3', title: 'Step 3', component: StepGender },
-        { key: '4', title: 'Step 4', component: StepPronouns },
-        { key: '6', title: 'Step 6', component: StepRelationship },
-        { key: '7', title: 'Step 7', component: StepGenderPreferences },
-        { key: '8', title: 'Step 8', component: StepInterests },
-        { key: '9', title: 'Step 9', component: StepPhoto },
-    ];
+  const steps: object[] = [
+    { key: "1", title: "Step 1", component: StepName },
+    { key: "2", title: "Step 2", component: StepAge },
+    { key: "3", title: "Step 3", component: StepGender },
+    { key: "4", title: "Step 4", component: StepPronouns },
+    { key: "6", title: "Step 6", component: StepRelationship },
+    { key: "7", title: "Step 7", component: StepGenderPreferences },
+    { key: "8", title: "Step 8", component: StepInterests },
+    { key: "9", title: "Step 9", component: StepPhoto },
+  ];
 
+  function handleNext() {
+    console.log("currentStep:", currentStep);
 
-
-    function handleNext() {
-
-        console.log('currentStep:', currentStep);
-
-        if (currentStep === 0) {
-            if (name.length < 2) {
-                Toast.show({
-                    type: 'default',
-                    text1: '👋 Hey',
-                    text2: 'Your name is too short',
-                });
-                return
-            }
-            // check if name containes the words crushy or crush or official
-            const words = ['crushy', 'crush', 'official', 'admin', 'administrator', 'moderator', 'ceo', 'cmo', 'cto'];
-            const contains = words.some(word => name.toLowerCase().includes(word));
-            if (contains) {
-                Toast.show({
-                    type: 'default',
-                    text1: '👋 Hey',
-                    text2: 'This name is not allowed',
-                });
-                return
-            }
-        }
-        if (currentStep === 1) {
-            if (age === null || parseInt(age) > 111 || parseInt(age) < 17) {
-                Toast.show({
-                    type: 'default',
-                    text1: '👋 Check your age',
-                    text2: 'You have to be 17 or older to continue',
-                });
-                return
-            }
-        }
-        if (currentStep === 2) {
-            if (gender === null) {
-                Toast.show({
-                    type: 'default',
-                    text1: '👋 Hey',
-                    text2: 'Please select your gender',
-                });
-                return
-            }
-        }
-
-        if (currentStep === 3) {
-            if (pronouns === null || pronouns < 1) {
-                Toast.show({
-                    type: 'default',
-                    text1: '👋 Hey',
-                    text2: 'Please select at least one pronoun',
-                });
-                return
-            }
-        }
-
-        if (currentStep === 4) {
-            if (relationship === null || relationship < 1) {
-                Toast.show({
-                    type: 'default',
-                    text1: '👋 Hey',
-                    text2: 'Please select what you are looking for',
-                });
-                return
-            }
-        }
-
-        if (currentStep === 5) {
-            if (genderPreferences === null || genderPreferences < 1) {
-                Toast.show({
-                    type: 'default',
-                    text1: '👋 Hey',
-                    text2: 'Please select your gender preferences',
-                });
-                return
-            }
-        }
-
-        if (currentStep === 6) {
-            if (interests.length === 0) {
-                Toast.show({
-                    type: 'default',
-                    text1: '👋 Hey',
-                    text2: 'Please select at least one hobby or interest',
-                });
-                return
-            }
-        }
-
-        if (currentStep === 7) {
-            if (photoUploaded === false) {
-                Toast.show({
-                    type: 'default',
-                    text1: '👋 Hey',
-                    text2: 'Please upload a photo',
-                });
-                return
-            } else {
-                saveData();
-                return
-            }
-        }
-
-        if (currentStep < steps.length - 1) {
-            setCurrentStep(currentStep + 1);
-            if (flatListRef.current) {
-                flatListRef.current.scrollToIndex({ index: currentStep + 1 });
-            }
-        }
-    };
-
-    const handleBack = () => {
-        if (currentStep > 0) {
-            setCurrentStep(currentStep - 1);
-            if (flatListRef.current) {
-                flatListRef.current.scrollToIndex({ index: currentStep - 1 });
-            }
-        }
-    };
-
-
-    const saveData = async () => {
-
-        console.log('name:', name);
-        console.log('age:', age);
-        console.log('gender:', gender);
-        console.log('pronouns:', pronouns);
-        console.log('relationship:', relationship);
-        console.log('genderPreferences:', genderPreferences);
-        console.log('interests:', interests);
-
-
-        try {
-            const { data, error } = await supabase
-                .from('profiles_test')
-                .update({
-                    name: name,
-                    age: age,
-                    gender: gender,
-                    pronouns: pronouns,
-                    looking_for: relationship,
-                    gender_preference: genderPreferences,
-                    interests: interests,
-                })
-                .eq('id', session?.user.id)
-                .select();
-
-            if (error) {
-                console.error(error);
-            } else {
-                console.log(data);
-                useOnboardingStore.setState({ dataUploaded: true })
-            }
-        } catch (error) {
-            console.error(error);
-        }
+    if (currentStep === 0) {
+      if (name.length < 2) {
+        Toast.show({
+          type: "default",
+          text1: "👋 Hey",
+          text2: "Your name is too short",
+        });
+        return;
+      }
+      // check if name containes the words crushy or crush or official
+      const words = [
+        "crushy",
+        "crush",
+        "official",
+        "admin",
+        "administrator",
+        "moderator",
+        "ceo",
+        "cmo",
+        "cto",
+      ];
+      const contains = words.some((word) => name.toLowerCase().includes(word));
+      if (contains) {
+        Toast.show({
+          type: "default",
+          text1: "👋 Hey",
+          text2: "This name is not allowed",
+        });
+        return;
+      }
+    }
+    if (currentStep === 1) {
+      if (age === null || parseInt(age) > 111 || parseInt(age) < 17) {
+        Toast.show({
+          type: "default",
+          text1: "👋 Check your age",
+          text2: "You have to be 17 or older to continue",
+        });
+        return;
+      }
+    }
+    if (currentStep === 2) {
+      if (gender === null) {
+        Toast.show({
+          type: "default",
+          text1: "👋 Hey",
+          text2: "Please select your gender",
+        });
+        return;
+      }
     }
 
+    if (currentStep === 3) {
+      if (pronouns === null || pronouns < 1) {
+        Toast.show({
+          type: "default",
+          text1: "👋 Hey",
+          text2: "Please select at least one pronoun",
+        });
+        return;
+      }
+    }
 
+    if (currentStep === 4) {
+      if (relationship === null || relationship < 1) {
+        Toast.show({
+          type: "default",
+          text1: "👋 Hey",
+          text2: "Please select what you are looking for",
+        });
+        return;
+      }
+    }
 
+    if (currentStep === 5) {
+      if (genderPreferences === null || genderPreferences < 1) {
+        Toast.show({
+          type: "default",
+          text1: "👋 Hey",
+          text2: "Please select your gender preferences",
+        });
+        return;
+      }
+    }
 
-    return (
-        <SafeAreaView style={styles.safeArea}>
-            <View>
-                {dataUploaded ? (
-                    <StepFinal />
-                ) : (
-                    <View className='flex h-full justify-between bg-white'>
-                        <FlatList
-                            ref={flatListRef}
-                            data={steps}
-                            horizontal
-                            showsHorizontalScrollIndicator={false}
-                            pagingEnabled
-                            scrollEnabled={false}
-                            renderItem={({ item }) => React.createElement(item.component)}
-                            keyExtractor={item => item.key}
-                        />
-                        <View style={styles.buttonContainer}>
-                            {currentStep > 0 ? (
-                                <Button onPress={handleBack} style={[defaultStyles.buttonSecondary, defaultStyles.buttonShadow]} disabled={isLoading}>
-                                    <Text style={defaultStyles.buttonSecondaryLabel}>Back</Text>
-                                </Button>
-                            ) : (
-                                <View style={{ width: 16 }}></View>
-                            )}
-                            <Button onPress={handleNext} style={[defaultStyles.button, defaultStyles.buttonShadow]} disabled={isLoading}>
-                                <Text style={defaultStyles.buttonLabel}>Next</Text>
-                            </Button>
-                        </View>
-                    </View>
-                )}
-                <Toast config={toastConfig} />
+    if (currentStep === 6) {
+      if (interests.length === 0) {
+        Toast.show({
+          type: "default",
+          text1: "👋 Hey",
+          text2: "Please select at least one hobby or interest",
+        });
+        return;
+      }
+    }
+
+    if (currentStep === 7) {
+      if (photoUploaded === false) {
+        Toast.show({
+          type: "default",
+          text1: "👋 Hey",
+          text2: "Please upload a photo",
+        });
+        return;
+      } else {
+        saveData();
+        return;
+      }
+    }
+
+    if (currentStep < steps.length - 1) {
+      setCurrentStep(currentStep + 1);
+      if (flatListRef.current) {
+        flatListRef.current.scrollToIndex({ index: currentStep + 1 });
+      }
+    }
+  }
+
+  const handleBack = () => {
+    if (currentStep > 0) {
+      setCurrentStep(currentStep - 1);
+      if (flatListRef.current) {
+        flatListRef.current.scrollToIndex({ index: currentStep - 1 });
+      }
+    }
+  };
+
+  const saveData = async () => {
+    console.log("name:", name);
+    console.log("age:", age);
+    console.log("gender:", gender);
+    console.log("pronouns:", pronouns);
+    console.log("relationship:", relationship);
+    console.log("genderPreferences:", genderPreferences);
+    console.log("interests:", interests);
+
+    try {
+      const { data, error } = await supabase
+        .from("profiles_test")
+        .update({
+          name: name,
+          age: age,
+          gender: gender,
+          pronouns: pronouns,
+          looking_for: relationship,
+          gender_preference: genderPreferences,
+          interests: interests,
+        })
+        .eq("id", session?.user.id)
+        .select();
+
+      // Create user in Stream Chat
+      await createStreamChatUser(session.user);
+
+      if (error) {
+        console.error(error);
+      } else {
+        console.log(data);
+        useOnboardingStore.setState({ dataUploaded: true });
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  async function createStreamChatUser(user) {
+    try {
+      await connectUser({ id: user.id, name: name });
+      console.log("User created in Stream Chat");
+    } catch (error) {
+      console.error("Error creating user in Stream Chat:", error);
+      // TODO: Handle user creation error
+      // Optionally, you might want to delete the Supabase user if Stream Chat user creation fails
+      // await supabase.auth.api.deleteUser(user.id);
+      throw new Error("Failed to create user in chat system");
+    }
+  }
+
+  return (
+    <SafeAreaView style={styles.safeArea}>
+      <View>
+        {dataUploaded ? (
+          <StepFinal />
+        ) : (
+          <View className="flex h-full justify-between bg-white">
+            <FlatList
+              ref={flatListRef}
+              data={steps}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              pagingEnabled
+              scrollEnabled={false}
+              renderItem={({ item }) => React.createElement(item.component)}
+              keyExtractor={(item) => item.key}
+            />
+            <View style={styles.buttonContainer}>
+              {currentStep > 0 ? (
+                <Button
+                  onPress={handleBack}
+                  style={[
+                    defaultStyles.buttonSecondary,
+                    defaultStyles.buttonShadow,
+                  ]}
+                  disabled={isLoading}
+                >
+                  <Text style={defaultStyles.buttonSecondaryLabel}>Back</Text>
+                </Button>
+              ) : (
+                <View style={{ width: 16 }}></View>
+              )}
+              <Button
+                onPress={handleNext}
+                style={[defaultStyles.button, defaultStyles.buttonShadow]}
+                disabled={isLoading}
+              >
+                <Text style={defaultStyles.buttonLabel}>Next</Text>
+              </Button>
             </View>
-        </SafeAreaView >
-    );
+          </View>
+        )}
+        <Toast config={toastConfig} />
+      </View>
+    </SafeAreaView>
+  );
 };
 
 

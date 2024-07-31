@@ -162,53 +162,53 @@ export default function RootNavigator({ session }) {
 
 
     useEffect(() => {
-        // clearAllStorage()
-        // return;
+      //   clearAllStorage();
+      //   return;
 
-        const checkIfOnboardingDone = async () => {
-            try {
-                const onboardingComplete = await getData('onboardingComplete');
+      const checkIfOnboardingDone = async () => {
+        try {
+          const onboardingComplete = await getData("onboardingComplete");
 
-                if (onboardingComplete === undefined) {
-                    console.log('onboarding status undefined in storage');
+          if (onboardingComplete === undefined) {
+            console.log("onboarding status undefined in storage");
 
-                    const getProfile = async () => {
-                        try {
-                            const { data } = await supabase
-                                .from('profiles_test')
-                                .select('name')
-                                .eq('id', session?.user.id)
-                                .single();
+            const getProfile = async () => {
+              try {
+                const { data } = await supabase
+                  .from("profiles_test")
+                  .select("name")
+                  .eq("id", session?.user.id)
+                  .single();
 
-                            if (data) {
-                                if (data?.name != null) {
-                                    console.log('onboarding done, saving it in storage');
-                                    await storeData('onboardingComplete', true);
-                                } else {
-                                    console.log('onboarding not done');
-                                    setShowOnboarding(true);
-                                }
-                            }
-
-                        } catch (error: any) {
-                            console.log('Error getting profile:', error);
-                        }
-                    };
-
-                    getProfile();
-
-
-                } else {
-                    console.log('onboarding status found in storage', onboardingComplete);
+                if (data) {
+                  if (data?.name != null) {
+                    console.log("onboarding done, saving it in storage");
+                    await storeData("onboardingComplete", true);
+                  } else {
+                    console.log("onboarding not done");
+                    setShowOnboarding(true);
+                  }
                 }
-            } catch (error) {
-                console.error('Error checking onboarding status:', error);
-            }
-        };
+              } catch (error: any) {
+                console.log("Error getting profile:", error);
+              }
+            };
 
-        if (session) {
-            checkIfOnboardingDone();
+            getProfile();
+          } else {
+            console.log(
+              "onboarding status found in storage",
+              onboardingComplete
+            );
+          }
+        } catch (error) {
+          console.error("Error checking onboarding status:", error);
         }
+      };
+
+      if (session) {
+        checkIfOnboardingDone();
+      }
     }, [session?.user.id]);
 
 

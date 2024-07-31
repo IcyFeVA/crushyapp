@@ -50,6 +50,7 @@ export default function Inbox() {
     if (!session?.user?.id || clientReady) return;
 
     try {
+      // TODO: Add logic to check if user is already connected (at the end of the onboarding the user gets created in stream chat
       console.log("Connecting user...");
       await connectUser({ id: session.user.id });
       console.log("User connected successfully");
