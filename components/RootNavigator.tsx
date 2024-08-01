@@ -50,49 +50,37 @@ function HomeScreen() {
 }
 
 function DummySurf() {
-    return <View />;
+  return (
+    <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+      <Text>Explore</Text>
+    </View>
+  );
 }
 
 function SettingsScreen() {
-    return (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-            <Text>Settings!</Text>
-        </View>
-    );
+  return (
+    <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+      <Text>Settings!</Text>
+    </View>
+  );
 }
 
 const SettingsStack = createStackNavigator();
 
 function SettingsStackScreen() {
-    return (
-        <SettingsStack.Navigator>
-            <SettingsStack.Screen name="Settings" component={SettingsScreen} />
-            <SettingsStack.Screen name="Details" component={SettingsScreen} />
-        </SettingsStack.Navigator>
-    );
+  return (
+    <SettingsStack.Navigator>
+      <SettingsStack.Screen name="Settings" component={SettingsScreen} />
+      <SettingsStack.Screen name="Details" component={SettingsScreen} />
+    </SettingsStack.Navigator>
+  );
 }
-
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
 
-
-
 function TabNavigator() {
   const navigation = useNavigation();
-  const { client } = useChatContext();
-
-  const disconnectUser = useCallback(async () => {
-    try {
-      if (client && client.userID) {
-        await client.disconnectUser();
-        console.log("User disconnected successfully");
-      }
-    } catch (error) {
-      console.error("Error disconnecting user:", error);
-    }
-  }, [client]);
-
 
   return (
     <Tab.Navigator
@@ -113,19 +101,13 @@ function TabNavigator() {
           } else if (route.name === "Me") {
             iconSource = focused ? tabIcons.meActive : tabIcons.meInactive;
           } else if (route.name === "Explore") {
+            iconSource = focused ? tabIcons.meActive : tabIcons.meInactive;
             return (
-              <Pressable
+              <Image
                 style={{ marginTop: Platform.OS === "ios" ? 0 : -4 }}
-                onPress={() => {
-                  disconnectUser();
-                  navigation.navigate("Home"); // TODO: fix this hack. chat has to be disconnected when navigating from inbox to anywhere. when you close dive/surf, inbox will still be focused when coming from there. So we move to home to reset that.
-                  navigation.navigate("Dive");
-                }}
-              >
-                <Image
-                  source={require("@/assets/images/icons/tab-explore.png")}
-                />
-              </Pressable>
+                source={require("@/assets/images/icons/tab-explore.png")}
+                pointerEvents="none"
+              />
             );
           }
 
@@ -135,10 +117,13 @@ function TabNavigator() {
           <Pressable
             {...props}
             onPress={() => {
-              if (route.name !== "Inbox") {
-                disconnectUser();
-              }
               props.onPress();
+              if (route.name === "Explore") {
+                setTimeout(() => {
+                  navigation.navigate("Home");
+                  navigation.navigate("Surf");
+                }, 100);
+              }
             }}
           />
         ),

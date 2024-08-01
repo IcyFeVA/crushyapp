@@ -193,7 +193,10 @@ Join our community of developers creating universal apps.
     "stream-chat": "^8.37.0",
     "stream-chat-expo": "^5.33.1",
     "stream-chat-react-native": "^5.33.1",
-    "zustand": "^4.5.2"
+    "zustand": "^4.5.2",
+    "expo-clipboard": "~6.0.3",
+    "expo-sharing": "~12.0.1",
+    "expo-document-picker": "~12.0.2"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
@@ -1548,16 +1551,16 @@ export { useColorScheme } from 'react-native';
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { fetchStreamToken } from '@/api/auth';
+import { Session } from '@supabase/supabase-js';
 
 export const useAuth = () => {
-  const [session, setSession] = useState(null);
+  const [session, setSession] = useState<Session | null>(null);
 
   useEffect(() => {
     const getSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-          setSession(session); // Set session without Stream token
+          setSession(session);
       }
     };
 
@@ -1565,7 +1568,7 @@ export const useAuth = () => {
 
     const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (session) {
-          setSession(session); // Set session without Stream token
+          setSession(session);
       }
     });
 
@@ -2753,18 +2756,19 @@ const Stack = createStackNavigator();
 
 function TabNavigator() {
   const navigation = useNavigation();
-  // const { client } = useChatContext();
+  const { client } = useChatContext();
 
-  // const disconnectUser = useCallback(async () => {
-  //     try {
-  //       if (client && client.userID) {
-  //         await client.disconnectUser();
-  //         console.log('User disconnected successfully');
-  //       }
-  //     } catch (error) {
-  //       console.error('Error disconnecting user:', error);
-  //     }
-  //   }, [client]);
+  const disconnectUser = useCallback(async () => {
+    try {
+      if (client && client.userID) {
+        await client.disconnectUser();
+        console.log("User disconnected successfully");
+      }
+    } catch (error) {
+      console.error("Error disconnecting user:", error);
+    }
+  }, [client]);
+
 
   return (
     <Tab.Navigator
@@ -2789,7 +2793,7 @@ function TabNavigator() {
               <Pressable
                 style={{ marginTop: Platform.OS === "ios" ? 0 : -4 }}
                 onPress={() => {
-                  // disconnectUser()
+                  disconnectUser();
                   navigation.navigate("Home"); // TODO: fix this hack. chat has to be disconnected when navigating from inbox to anywhere. when you close dive/surf, inbox will still be focused when coming from there. So we move to home to reset that.
                   navigation.navigate("Dive");
                 }}
@@ -2803,6 +2807,17 @@ function TabNavigator() {
 
           return <Image source={iconSource} />;
         },
+        tabBarButton: (props) => (
+          <Pressable
+            {...props}
+            onPress={() => {
+              if (route.name !== "Inbox") {
+                disconnectUser();
+              }
+              props.onPress();
+            }}
+          />
+        ),
         headerShown: false,
         tabBarShowLabel: false,
         tabBarStyle: { height: Platform.OS === "ios" ? 80 : 48 },
@@ -2818,6 +2833,7 @@ function TabNavigator() {
         name="Inbox"
         component={ChannelList}
         options={{ tabBarBadge: 6 }}
+        initialParams={{ inChatFlow: false }}
       />
       <Tab.Screen name="Me" component={Me} />
     </Tab.Navigator>
@@ -3118,6 +3134,7 @@ import { ActivityIndicator } from "react-native";
 import { Colors } from "@/constants/Colors";
 import { supabase } from "@/lib/supabase";
 
+
 export default function ChatChannelScreen() {
   const navigation = useNavigation();
   const route = useRoute();
@@ -3197,167 +3214,150 @@ export default function ChatChannelScreen() {
 # components\ChannelList.tsx
 
 ```tsx
-import React, { useCallback, useEffect, useState } from "react";
-import { useNavigation } from "@react-navigation/native";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase";
 import { Colors } from "@/constants/Colors";
-import { connectUser } from "@/lib/streamChat";
+import { connectUser, chatClient } from "@/lib/streamChat";
 import { useChatContext, ChannelList } from "stream-chat-expo";
-import { StreamChat } from "stream-chat";
 import { ActivityIndicator } from "react-native";
 
-type Match = {
-  id: string;
-  name: string;
-  avatar_url: string;
-};
-
 export default function Inbox() {
-  const [matches, setMatches] = useState<Match[]>([]);
   const navigation = useNavigation();
   const session = useAuth();
   const { client } = useChatContext();
-  const [clientReady, setClientReady] = useState(false);
-  const [myChannels, setChannels] = useState();
-  const [matchesFetched, setMatchesFetched] = useState(false);
-
-  let connectingUser = false;
+  const isConnectedRef = useRef(false);
+  const isInChatChannelRef = useRef(false);
+  const isMountedRef = useRef(true);
+  const [channelsLoaded, setChannelsLoaded] = useState(false);
 
   function generateShortChannelId(userId1: string, userId2: string): string {
-    // Sort the user IDs to ensure consistency
     const sortedIds = [userId1, userId2].sort();
-
-    // Combine the first 8 characters of each ID
     const combined = sortedIds[0].slice(0, 8) + sortedIds[1].slice(0, 8);
-
-    // Simple hash function
     let hash = 0;
     for (let i = 0; i < combined.length; i++) {
       const char = combined.charCodeAt(i);
       hash = (hash << 5) - hash + char;
-      hash = hash & hash; // Convert to 32-bit integer
+      hash = hash & hash;
     }
-
-    // Convert hash to a string and take the first 16 characters
     return Math.abs(hash).toString(36).slice(0, 16);
   }
 
-  // Function to connect user
   const setupClient = useCallback(async () => {
-    if (!session?.user?.id || clientReady) return;
+    if (!session?.user?.id || isConnectedRef.current) return;
 
     try {
-      // TODO: Add logic to check if user is already connected (at the end of the onboarding the user gets created in stream chat
       console.log("Connecting user...");
-      await connectUser({ id: session.user.id });
-      console.log("User connected successfully");
-      setClientReady(true);
+      await connectUser({
+        id: session.user.id,
+        name: session.user.email || "Anonymous User",
+      });
+      if (isMountedRef.current) {
+        isConnectedRef.current = true;
+        console.log("User connected successfully");
+      }
     } catch (error) {
       console.error("Failed to connect user", error);
     }
-  }, [session?.user?.id, clientReady]);
+  }, [session?.user?.id, session?.user?.email]);
 
-  // Function to fetch matches
-  const fetchMatches = useCallback(async () => {
-    if (!clientReady || matchesFetched) return;
+  const disconnectUser = useCallback(async () => {
+    if (isConnectedRef.current) {
+      try {
+        await chatClient.disconnectUser();
+        if (isMountedRef.current) {
+          isConnectedRef.current = false;
+          setChannelsLoaded(false);
+          console.log("User disconnected successfully");
+        }
+      } catch (error) {
+        console.error("Error disconnecting user:", error);
+      }
+    }
+  }, []);
+
+  const fetchAndCreateChannels = useCallback(async () => {
+    if (!isConnectedRef.current) return;
 
     try {
       console.log("Fetching matches...");
+      const { data: matches, error } = await supabase
+        .from("matches")
+        .select(
+          "*, user1:profiles_test!user1_id(*), user2:profiles_test!user2_id(*)"
+        )
+        .or(`user1_id.eq.${session.user.id},user2_id.eq.${session.user.id}`)
+        .eq("matched", true);
 
-      try {
-        const { data: matches, error } = await supabase
-          .from("matches")
-          .select(
-            "*, user1:profiles_test!user1_id(*), user2:profiles_test!user2_id(*)"
-          )
-          .or(`user1_id.eq.${session.user.id},user2_id.eq.${session.user.id}`)
-          .eq("matched", true);
+      if (error) throw error;
 
-        if (error) throw error;
+      console.log("Matches fetched:", matches.length);
 
-        // Ensure all users exist in Stream Chat
-        const allUsers = matches.flatMap((match) => [match.user1, match.user2]);
-        await ensureUsersExist(client, allUsers);
+      if (matches.length === 0) {
+        console.log("No matches found");
+        setChannelsLoaded(true);
+        return;
+      }
 
-        const channelPromises = matches.map(async (match) => {
-          const otherUser =
-            match.user1_id === session.user.id ? match.user2 : match.user1;
-          const channelId = generateShortChannelId(
-            session.user.id,
-            otherUser.id
-          );
+      const channelPromises = matches.map(async (match) => {
+        const otherUser =
+          match.user1_id === session.user.id ? match.user2 : match.user1;
+        const channelId = generateShortChannelId(session.user.id, otherUser.id);
 
-          console.log(
-            `Attempting to create/fetch channel for users: ${session.user.id} and ${otherUser.id}`
-          );
-          console.log(`Generated channel ID: ${channelId}`);
-
+        try {
           let channel = client.channel("messaging", channelId, {
             members: [session.user.id, otherUser.id],
-            name: otherUser.name,
+            name: otherUser.name || "Anonymous User",
           });
-
-          try {
-            await channel.create();
-            console.log("Channel created successfully:", channel.id);
-          } catch (error) {
-            if (error.code === 4) {
-              console.log("Channel already exists:", channel.id);
-            } else {
-              console.error("Error creating channel:", error);
-            }
-          }
-
+          await channel.create();
+          console.log("Channel created/fetched:", channelId);
           return channel;
-        });
+        } catch (error) {
+          console.error("Error creating/fetching channel:", error);
+          return null;
+        }
+      });
 
-        const createdChannels = await Promise.all(channelPromises);
-        setChannels(createdChannels);
-      } catch (error) {
-        console.error("Error fetching matches:", error);
-      }
-
-      setMatchesFetched(true);
+      const createdChannels = (await Promise.all(channelPromises)).filter(Boolean);
+      console.log("Channels created/fetched:", createdChannels.length);
+      setChannelsLoaded(true);
     } catch (error) {
-      console.error("Error fetching matches:", error);
+      console.error("Error fetching and creating channels:", error);
+      setChannelsLoaded(true);
     }
-  }, [clientReady, matchesFetched]);
+  }, [session?.user?.id, client]);
 
-  // Effect for connecting user
+  useFocusEffect(
+    useCallback(() => {
+      setupClient().then(() => {
+        if (isConnectedRef.current) {
+          fetchAndCreateChannels();
+        }
+      });
+    }, [setupClient, fetchAndCreateChannels])
+  );
+
   useEffect(() => {
-    if (client && !clientReady) {
-      setupClient();
-    }
-  }, [client, clientReady, setupClient]);
-
-  // Effect for fetching matches
-  useEffect(() => {
-    if (clientReady && !matchesFetched) {
-      fetchMatches();
-    }
-  }, [clientReady, matchesFetched, fetchMatches]);
-
-  async function ensureUsersExist(
-    client: StreamChat,
-    users: { id: string; name: string }[]
-  ) {
-    for (const user of users) {
-      try {
-        await client.upsertUser({ id: user.id, name: user.name });
-        console.log(`User ${user.id} ensured in Stream Chat`);
-      } catch (error) {
-        console.error(`Error ensuring user ${user.id} exists:`, error);
+    const unsubscribe = navigation.addListener('state', (e) => {
+      const currentRoute = e.data.state.routes[e.data.state.index];
+      if (currentRoute.name !== 'ChannelList' && currentRoute.name !== 'ChatChannel') {
+        disconnectUser();
       }
-    }
-  }
+    });
+
+    return () => {
+      unsubscribe();
+      isMountedRef.current = false;
+    };
+  }, [navigation, disconnectUser]);
 
   if (!session?.user) {
     return null;
   }
 
-  if (!clientReady || !matchesFetched) {
+  if (!isConnectedRef.current || !channelsLoaded) {
     return <ActivityIndicator size="large" color={Colors.light.accent} />;
   }
 
@@ -3379,7 +3379,6 @@ export default function Inbox() {
     </SafeAreaView>
   );
 }
-
 ```
 
 # components\Avatar.tsx
@@ -6108,6 +6107,12 @@ useEffect(() => {
 */
 ```
 
+# supabase\.temp\cli-latest
+
+```
+v1.187.3
+```
+
 # scripts\sql\current sql setup.txt
 
 ```txt
@@ -6144,12 +6149,6 @@ END;
 $$ LANGUAGE plpgsql;
 ```
 
-# supabase\.temp\cli-latest
-
-```
-v1.187.3
-```
-
 # components\__tests__\ThemedText-test.tsx
 
 ```tsx
@@ -6164,6 +6163,126 @@ it(`renders correctly`, () => {
   expect(tree).toMatchSnapshot();
 });
 
+```
+
+# components\onboarding\StepInterests.tsx
+
+```tsx
+import React, { useCallback, useState, useEffect } from 'react';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
+import { Checkbox } from 'react-native-ui-lib';
+import { Colors } from '@/constants/Colors';
+import { defaultStyles } from '@/constants/Styles';
+import hobbiesInterests from '@/constants/Interests';
+import Spacer from '@/components/Spacer';
+
+const StepInterests = ({ onInterestsSelected }) => {
+    const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
+    const flattenedInterests = React.useMemo(() => hobbiesInterests.flat(), []);
+
+    const handleInterestToggle = useCallback((interest: string) => {
+        setSelectedInterests(prevInterests => {
+            if (prevInterests.includes(interest)) {
+                return prevInterests.filter(i => i !== interest);
+            } else {
+                return [...prevInterests, interest];
+            }
+        });
+    }, []);
+
+    useEffect(() => {
+        onInterestsSelected(selectedInterests);
+    }, [selectedInterests, onInterestsSelected]);
+
+    const renderItem = useCallback(({ item }) => (
+        <Pressable onPress={() => handleInterestToggle(item.value)}>
+            <Checkbox
+                color={selectedInterests.includes(item.value) ? Colors.light.text : Colors.light.tertiary}
+                label={item.label}
+                value={selectedInterests.includes(item.value)}
+                containerStyle={[defaultStyles.checkboxButton, { borderColor: selectedInterests.includes(item.value) ? Colors.light.text : Colors.light.tertiary }]}
+                labelStyle={defaultStyles.checkboxButtonLabel}
+                onValueChange={() => handleInterestToggle(item.value)}
+            />
+        </Pressable>
+    ), [selectedInterests, handleInterestToggle]);
+
+    return (
+        <View style={styles.container}>
+            <Text style={defaultStyles.h2}>Interests ({selectedInterests.length})</Text>
+            <Spacer height={8} />
+            <Text style={defaultStyles.body}>
+                This helps us find people with the same hobbies and interests.
+            </Text>
+            <Spacer height={24} />
+            <FlashList
+                data={flattenedInterests}
+                renderItem={renderItem}
+                estimatedItemSize={75}
+                keyExtractor={(item) => item.value}
+                contentContainerStyle={styles.listContainer}
+            />
+        </View>
+    );
+};
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        padding: 16,
+    },
+    listContainer: {
+        paddingBottom: 16,
+    },
+});
+
+export default StepInterests;
+```
+
+# components\ui\Textfields.tsx
+
+```tsx
+
+import { TextInput } from 'react-native';
+import { styled } from 'nativewind';
+
+const Textfield = styled(TextInput, 'w-full radius-4 text-lg bg-gray-100 p-2 rounded-lg h-12 border-2 border-gray-200');
+
+
+export { Textfield }
+```
+
+# components\ui\Containers.tsx
+
+```tsx
+
+import { View } from 'react-native';
+import { styled } from 'nativewind';
+
+const Pageview = styled(View, 'p-6');
+
+
+export { Pageview }
+
+
+```
+
+# components\ui\Buttons.tsx
+
+```tsx
+
+import { Text, Button } from 'react-native-ui-lib';
+import { styled } from 'nativewind';
+
+const PrimaryButton = styled(Button, 'w-full h-12 rounded-lg justify-center bg-primary-600 border-2 border-primary-400 shadow active:shadow-none');
+const PrimaryButtonText = styled(Text, 'uppercase text-center text-white font-bold');
+
+const SecondaryButton = styled(Button, 'w-full h-12 rounded-lg justify-center bg-white border-2 border-primary-200 shadow active:shadow-none');
+const SecondaryButtonText = styled(Text, 'uppercase text-center text-primary-700 font-bold');
+
+
+export { PrimaryButton, PrimaryButtonText, SecondaryButton, SecondaryButtonText }
 ```
 
 # components\tabs\surf.tsx
@@ -7393,130 +7512,6 @@ const styles = StyleSheet.create({
 
 ```
 
-# components\ui\Textfields.tsx
-
-```tsx
-
-import { TextInput } from 'react-native';
-import { styled } from 'nativewind';
-
-const Textfield = styled(TextInput, 'w-full radius-4 text-lg bg-gray-100 p-2 rounded-lg h-12 border-2 border-gray-200');
-
-
-export { Textfield }
-```
-
-# components\ui\Containers.tsx
-
-```tsx
-
-import { View } from 'react-native';
-import { styled } from 'nativewind';
-
-const Pageview = styled(View, 'p-6');
-
-
-export { Pageview }
-
-
-```
-
-# components\ui\Buttons.tsx
-
-```tsx
-
-import { Text, Button } from 'react-native-ui-lib';
-import { styled } from 'nativewind';
-
-const PrimaryButton = styled(Button, 'w-full h-12 rounded-lg justify-center bg-primary-600 border-2 border-primary-400 shadow active:shadow-none');
-const PrimaryButtonText = styled(Text, 'uppercase text-center text-white font-bold');
-
-const SecondaryButton = styled(Button, 'w-full h-12 rounded-lg justify-center bg-white border-2 border-primary-200 shadow active:shadow-none');
-const SecondaryButtonText = styled(Text, 'uppercase text-center text-primary-700 font-bold');
-
-
-export { PrimaryButton, PrimaryButtonText, SecondaryButton, SecondaryButtonText }
-```
-
-# components\onboarding\StepInterests.tsx
-
-```tsx
-import React, { useCallback, useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
-import { FlashList } from '@shopify/flash-list';
-import { Checkbox } from 'react-native-ui-lib';
-import { Colors } from '@/constants/Colors';
-import { defaultStyles } from '@/constants/Styles';
-import hobbiesInterests from '@/constants/Interests';
-import Spacer from '@/components/Spacer';
-
-const StepInterests = ({ onInterestsSelected }) => {
-    const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
-    const flattenedInterests = React.useMemo(() => hobbiesInterests.flat(), []);
-
-    const handleInterestToggle = useCallback((interest: string) => {
-        setSelectedInterests(prevInterests => {
-            if (prevInterests.includes(interest)) {
-                return prevInterests.filter(i => i !== interest);
-            } else {
-                return [...prevInterests, interest];
-            }
-        });
-    }, []);
-
-    useEffect(() => {
-        onInterestsSelected(selectedInterests);
-    }, [selectedInterests, onInterestsSelected]);
-
-    const renderItem = useCallback(({ item }) => (
-        <Pressable onPress={() => handleInterestToggle(item.value)}>
-            <Checkbox
-                color={selectedInterests.includes(item.value) ? Colors.light.text : Colors.light.tertiary}
-                label={item.label}
-                value={selectedInterests.includes(item.value)}
-                containerStyle={[defaultStyles.checkboxButton, { borderColor: selectedInterests.includes(item.value) ? Colors.light.text : Colors.light.tertiary }]}
-                labelStyle={defaultStyles.checkboxButtonLabel}
-                onValueChange={() => handleInterestToggle(item.value)}
-            />
-        </Pressable>
-    ), [selectedInterests, handleInterestToggle]);
-
-    return (
-        <View style={styles.container}>
-            <Text style={defaultStyles.h2}>Interests ({selectedInterests.length})</Text>
-            <Spacer height={8} />
-            <Text style={defaultStyles.body}>
-                This helps us find people with the same hobbies and interests.
-            </Text>
-            <Spacer height={24} />
-            <FlashList
-                data={flattenedInterests}
-                renderItem={renderItem}
-                estimatedItemSize={75}
-                keyExtractor={(item) => item.value}
-                contentContainerStyle={styles.listContainer}
-            />
-        </View>
-    );
-};
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        padding: 16,
-    },
-    listContainer: {
-        paddingBottom: 16,
-    },
-});
-
-export default StepInterests;
-```
-
-# assets\sounds\notification.wav
-
-This is a binary file of the type: Binary
-
 # components\navigation\TabBarIcon.tsx
 
 ```tsx
@@ -7531,6 +7526,237 @@ export function TabBarIcon({ style, ...rest }: IconProps<ComponentProps<typeof I
 }
 
 ```
+
+# app-example\(tabs)\_layout.tsx
+
+```tsx
+import { Tabs } from 'expo-router';
+import React from 'react';
+
+import { TabBarIcon } from '@/components/navigation/TabBarIcon';
+import { Colors } from '@/constants/Colors';
+import { useColorScheme } from '@/hooks/useColorScheme';
+
+export default function TabLayout() {
+  const colorScheme = useColorScheme();
+
+  return (
+    <Tabs
+      screenOptions={{
+        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
+        headerShown: false,
+      }}>
+      <Tabs.Screen
+        name="index"
+        options={{
+          title: 'Home',
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon name={focused ? 'home' : 'home-outline'} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="explore"
+        options={{
+          title: 'Explore',
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon name={focused ? 'code-slash' : 'code-slash-outline'} color={color} />
+          ),
+        }}
+      />
+    </Tabs>
+  );
+}
+
+```
+
+# app-example\(tabs)\index.tsx
+
+```tsx
+import { Image, StyleSheet, Platform } from 'react-native';
+
+import { HelloWave } from '@/components/HelloWave';
+import ParallaxScrollView from '@/components/ParallaxScrollView';
+import { ThemedText } from '@/components/ThemedText';
+import { ThemedView } from '@/components/ThemedView';
+
+export default function HomeScreen() {
+  return (
+    <ParallaxScrollView
+      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
+      headerImage={
+        <Image
+          source={require('@/assets/images/partial-react-logo.png')}
+          style={styles.reactLogo}
+        />
+      }>
+      <ThemedView style={styles.titleContainer}>
+        <ThemedText type="title">Welcome!</ThemedText>
+        <HelloWave />
+      </ThemedView>
+      <ThemedView style={styles.stepContainer}>
+        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
+        <ThemedText>
+          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
+          Press{' '}
+          <ThemedText type="defaultSemiBold">
+            {Platform.select({ ios: 'cmd + d', android: 'cmd + m' })}
+          </ThemedText>{' '}
+          to open developer tools.
+        </ThemedText>
+      </ThemedView>
+      <ThemedView style={styles.stepContainer}>
+        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
+        <ThemedText>
+          Tap the Explore tab to learn more about what's included in this starter app.
+        </ThemedText>
+      </ThemedView>
+      <ThemedView style={styles.stepContainer}>
+        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
+        <ThemedText>
+          When you're ready, run{' '}
+          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
+          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
+          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
+          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
+        </ThemedText>
+      </ThemedView>
+    </ParallaxScrollView>
+  );
+}
+
+const styles = StyleSheet.create({
+  titleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  stepContainer: {
+    gap: 8,
+    marginBottom: 8,
+  },
+  reactLogo: {
+    height: 178,
+    width: 290,
+    bottom: 0,
+    left: 0,
+    position: 'absolute',
+  },
+});
+
+```
+
+# app-example\(tabs)\explore.tsx
+
+```tsx
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { StyleSheet, Image, Platform } from 'react-native';
+
+import { Collapsible } from '@/components/Collapsible';
+import { ExternalLink } from '@/components/ExternalLink';
+import ParallaxScrollView from '@/components/ParallaxScrollView';
+import { ThemedText } from '@/components/ThemedText';
+import { ThemedView } from '@/components/ThemedView';
+
+export default function TabTwoScreen() {
+  return (
+    <ParallaxScrollView
+      headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
+      headerImage={<Ionicons size={310} name="code-slash" style={styles.headerImage} />}>
+      <ThemedView style={styles.titleContainer}>
+        <ThemedText type="title">Explore</ThemedText>
+      </ThemedView>
+      <ThemedText>This app includes example code to help you get started.</ThemedText>
+      <Collapsible title="File-based routing">
+        <ThemedText>
+          This app has two screens:{' '}
+          <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> and{' '}
+          <ThemedText type="defaultSemiBold">app/(tabs)/explore.tsx</ThemedText>
+        </ThemedText>
+        <ThemedText>
+          The layout file in <ThemedText type="defaultSemiBold">app/(tabs)/_layout.tsx</ThemedText>{' '}
+          sets up the tab navigator.
+        </ThemedText>
+        <ExternalLink href="https://docs.expo.dev/router/introduction">
+          <ThemedText type="link">Learn more</ThemedText>
+        </ExternalLink>
+      </Collapsible>
+      <Collapsible title="Android, iOS, and web support">
+        <ThemedText>
+          You can open this project on Android, iOS, and the web. To open the web version, press{' '}
+          <ThemedText type="defaultSemiBold">w</ThemedText> in the terminal running this project.
+        </ThemedText>
+      </Collapsible>
+      <Collapsible title="Images">
+        <ThemedText>
+          For static images, you can use the <ThemedText type="defaultSemiBold">@2x</ThemedText> and{' '}
+          <ThemedText type="defaultSemiBold">@3x</ThemedText> suffixes to provide files for
+          different screen densities
+        </ThemedText>
+        <Image source={require('@/assets/images/react-logo.png')} style={{ alignSelf: 'center' }} />
+        <ExternalLink href="https://reactnative.dev/docs/images">
+          <ThemedText type="link">Learn more</ThemedText>
+        </ExternalLink>
+      </Collapsible>
+      <Collapsible title="Custom fonts">
+        <ThemedText>
+          Open <ThemedText type="defaultSemiBold">app/_layout.tsx</ThemedText> to see how to load{' '}
+          <ThemedText style={{ fontFamily: 'SpaceMono' }}>
+            custom fonts such as this one.
+          </ThemedText>
+        </ThemedText>
+        <ExternalLink href="https://docs.expo.dev/versions/latest/sdk/font">
+          <ThemedText type="link">Learn more</ThemedText>
+        </ExternalLink>
+      </Collapsible>
+      <Collapsible title="Light and dark mode components">
+        <ThemedText>
+          This template has light and dark mode support. The{' '}
+          <ThemedText type="defaultSemiBold">useColorScheme()</ThemedText> hook lets you inspect
+          what the user's current color scheme is, and so you can adjust UI colors accordingly.
+        </ThemedText>
+        <ExternalLink href="https://docs.expo.dev/develop/user-interface/color-themes/">
+          <ThemedText type="link">Learn more</ThemedText>
+        </ExternalLink>
+      </Collapsible>
+      <Collapsible title="Animations">
+        <ThemedText>
+          This template includes an example of an animated component. The{' '}
+          <ThemedText type="defaultSemiBold">components/HelloWave.tsx</ThemedText> component uses
+          the powerful <ThemedText type="defaultSemiBold">react-native-reanimated</ThemedText> library
+          to create a waving hand animation.
+        </ThemedText>
+        {Platform.select({
+          ios: (
+            <ThemedText>
+              The <ThemedText type="defaultSemiBold">components/ParallaxScrollView.tsx</ThemedText>{' '}
+              component provides a parallax effect for the header image.
+            </ThemedText>
+          ),
+        })}
+      </Collapsible>
+    </ParallaxScrollView>
+  );
+}
+
+const styles = StyleSheet.create({
+  headerImage: {
+    color: '#808080',
+    bottom: -90,
+    left: -35,
+    position: 'absolute',
+  },
+  titleContainer: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+});
+
+```
+
+# assets\sounds\notification.wav
+
+This is a binary file of the type: Binary
 
 # assets\images\splash.png
 
@@ -8733,233 +8959,6 @@ const styles = StyleSheet.create({
 });
 ```
 
-# app-example\(tabs)\_layout.tsx
-
-```tsx
-import { Tabs } from 'expo-router';
-import React from 'react';
-
-import { TabBarIcon } from '@/components/navigation/TabBarIcon';
-import { Colors } from '@/constants/Colors';
-import { useColorScheme } from '@/hooks/useColorScheme';
-
-export default function TabLayout() {
-  const colorScheme = useColorScheme();
-
-  return (
-    <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-        headerShown: false,
-      }}>
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Home',
-          tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon name={focused ? 'home' : 'home-outline'} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="explore"
-        options={{
-          title: 'Explore',
-          tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon name={focused ? 'code-slash' : 'code-slash-outline'} color={color} />
-          ),
-        }}
-      />
-    </Tabs>
-  );
-}
-
-```
-
-# app-example\(tabs)\index.tsx
-
-```tsx
-import { Image, StyleSheet, Platform } from 'react-native';
-
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
-
-export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({ ios: 'cmd + d', android: 'cmd + m' })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          Tap the Explore tab to learn more about what's included in this starter app.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          When you're ready, run{' '}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
-  );
-}
-
-const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-  },
-});
-
-```
-
-# app-example\(tabs)\explore.tsx
-
-```tsx
-import Ionicons from '@expo/vector-icons/Ionicons';
-import { StyleSheet, Image, Platform } from 'react-native';
-
-import { Collapsible } from '@/components/Collapsible';
-import { ExternalLink } from '@/components/ExternalLink';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
-
-export default function TabTwoScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
-      headerImage={<Ionicons size={310} name="code-slash" style={styles.headerImage} />}>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Explore</ThemedText>
-      </ThemedView>
-      <ThemedText>This app includes example code to help you get started.</ThemedText>
-      <Collapsible title="File-based routing">
-        <ThemedText>
-          This app has two screens:{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/explore.tsx</ThemedText>
-        </ThemedText>
-        <ThemedText>
-          The layout file in <ThemedText type="defaultSemiBold">app/(tabs)/_layout.tsx</ThemedText>{' '}
-          sets up the tab navigator.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/router/introduction">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Android, iOS, and web support">
-        <ThemedText>
-          You can open this project on Android, iOS, and the web. To open the web version, press{' '}
-          <ThemedText type="defaultSemiBold">w</ThemedText> in the terminal running this project.
-        </ThemedText>
-      </Collapsible>
-      <Collapsible title="Images">
-        <ThemedText>
-          For static images, you can use the <ThemedText type="defaultSemiBold">@2x</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">@3x</ThemedText> suffixes to provide files for
-          different screen densities
-        </ThemedText>
-        <Image source={require('@/assets/images/react-logo.png')} style={{ alignSelf: 'center' }} />
-        <ExternalLink href="https://reactnative.dev/docs/images">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Custom fonts">
-        <ThemedText>
-          Open <ThemedText type="defaultSemiBold">app/_layout.tsx</ThemedText> to see how to load{' '}
-          <ThemedText style={{ fontFamily: 'SpaceMono' }}>
-            custom fonts such as this one.
-          </ThemedText>
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/versions/latest/sdk/font">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Light and dark mode components">
-        <ThemedText>
-          This template has light and dark mode support. The{' '}
-          <ThemedText type="defaultSemiBold">useColorScheme()</ThemedText> hook lets you inspect
-          what the user's current color scheme is, and so you can adjust UI colors accordingly.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/develop/user-interface/color-themes/">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Animations">
-        <ThemedText>
-          This template includes an example of an animated component. The{' '}
-          <ThemedText type="defaultSemiBold">components/HelloWave.tsx</ThemedText> component uses
-          the powerful <ThemedText type="defaultSemiBold">react-native-reanimated</ThemedText> library
-          to create a waving hand animation.
-        </ThemedText>
-        {Platform.select({
-          ios: (
-            <ThemedText>
-              The <ThemedText type="defaultSemiBold">components/ParallaxScrollView.tsx</ThemedText>{' '}
-              component provides a parallax effect for the header image.
-            </ThemedText>
-          ),
-        })}
-      </Collapsible>
-    </ParallaxScrollView>
-  );
-}
-
-const styles = StyleSheet.create({
-  headerImage: {
-    color: '#808080',
-    bottom: -90,
-    left: -35,
-    position: 'absolute',
-  },
-  titleContainer: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-});
-
-```
-
 # supabase\functions\send-match-notification\index.ts
 
 ```ts
@@ -9036,6 +9035,48 @@ serve(async (req) => {
     { headers: { "Content-Type": "application/json" } },
   )
 })
+```
+
+# supabase\functions\invoke-process-match-notifications\index.ts
+
+```ts
+// Follow this setup guide to integrate the Deno language server with your editor:
+// https://deno.land/manual/getting_started/setup_your_environment
+// This enables autocomplete, go to definition, etc.
+
+// Setup type definitions for built-in Supabase Runtime APIs
+import "https://esm.sh/@supabase/functions-js/src/edge-runtime.d.ts"
+
+console.log("Hello from invoke function!")
+
+Deno.serve(async (req) => {
+  const supabaseUrl = Deno.env.get('SUPABASE_URL')!
+  const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!
+
+  const response = await fetch(`${supabaseUrl}/functions/v1/process-match-notifications`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${supabaseAnonKey}`,
+      'Content-Type': 'application/json'
+    }
+  })
+
+  const data = await response.json()
+  return new Response(JSON.stringify(data), { status: response.status })
+})
+
+/* To invoke locally:
+
+  1. Run `supabase start` (see: https://supabase.com/docs/reference/cli/supabase-start)
+  2. Make an HTTP request:
+
+  curl -i --location --request POST 'http://127.0.0.1:54321/functions/v1/invoke-process-match-notifications' \
+    --header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0' \
+    --header 'Content-Type: application/json' \
+    --data '{"name":"Functions"}'
+
+*/
+
 ```
 
 # supabase\functions\process-match-notifications\index.ts
@@ -9128,48 +9169,6 @@ Deno.serve(async (req) => {
 
   return new Response(JSON.stringify({ message: 'Notifications processed' }), { status: 200 })
 })
-```
-
-# supabase\functions\invoke-process-match-notifications\index.ts
-
-```ts
-// Follow this setup guide to integrate the Deno language server with your editor:
-// https://deno.land/manual/getting_started/setup_your_environment
-// This enables autocomplete, go to definition, etc.
-
-// Setup type definitions for built-in Supabase Runtime APIs
-import "https://esm.sh/@supabase/functions-js/src/edge-runtime.d.ts"
-
-console.log("Hello from invoke function!")
-
-Deno.serve(async (req) => {
-  const supabaseUrl = Deno.env.get('SUPABASE_URL')!
-  const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!
-
-  const response = await fetch(`${supabaseUrl}/functions/v1/process-match-notifications`, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${supabaseAnonKey}`,
-      'Content-Type': 'application/json'
-    }
-  })
-
-  const data = await response.json()
-  return new Response(JSON.stringify(data), { status: response.status })
-})
-
-/* To invoke locally:
-
-  1. Run `supabase start` (see: https://supabase.com/docs/reference/cli/supabase-start)
-  2. Make an HTTP request:
-
-  curl -i --location --request POST 'http://127.0.0.1:54321/functions/v1/invoke-process-match-notifications' \
-    --header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0' \
-    --header 'Content-Type: application/json' \
-    --data '{"name":"Functions"}'
-
-*/
-
 ```
 
 # supabase\functions\generate-stream-token\index.ts

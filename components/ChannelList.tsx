@@ -126,7 +126,11 @@ export default function Inbox() {
   useEffect(() => {
     const unsubscribe = navigation.addListener('state', (e) => {
       const currentRoute = e.data.state.routes[e.data.state.index];
-      if (currentRoute.name !== 'ChannelList' && currentRoute.name !== 'ChatChannel') {
+      if (
+        currentRoute.name === "Home" ||
+        currentRoute.name === "History" ||
+        currentRoute.name === "Me"
+      ) {
         disconnectUser();
       }
     });
