@@ -80,18 +80,19 @@ const Stack = createStackNavigator();
 
 function TabNavigator() {
   const navigation = useNavigation();
-  // const { client } = useChatContext();
+  const { client } = useChatContext();
 
-  // const disconnectUser = useCallback(async () => {
-  //     try {
-  //       if (client && client.userID) {
-  //         await client.disconnectUser();
-  //         console.log('User disconnected successfully');
-  //       }
-  //     } catch (error) {
-  //       console.error('Error disconnecting user:', error);
-  //     }
-  //   }, [client]);
+  const disconnectUser = useCallback(async () => {
+    try {
+      if (client && client.userID) {
+        await client.disconnectUser();
+        console.log("User disconnected successfully");
+      }
+    } catch (error) {
+      console.error("Error disconnecting user:", error);
+    }
+  }, [client]);
+
 
   return (
     <Tab.Navigator
@@ -116,7 +117,7 @@ function TabNavigator() {
               <Pressable
                 style={{ marginTop: Platform.OS === "ios" ? 0 : -4 }}
                 onPress={() => {
-                  // disconnectUser()
+                  disconnectUser();
                   navigation.navigate("Home"); // TODO: fix this hack. chat has to be disconnected when navigating from inbox to anywhere. when you close dive/surf, inbox will still be focused when coming from there. So we move to home to reset that.
                   navigation.navigate("Dive");
                 }}
@@ -130,6 +131,17 @@ function TabNavigator() {
 
           return <Image source={iconSource} />;
         },
+        tabBarButton: (props) => (
+          <Pressable
+            {...props}
+            onPress={() => {
+              if (route.name !== "Inbox") {
+                disconnectUser();
+              }
+              props.onPress();
+            }}
+          />
+        ),
         headerShown: false,
         tabBarShowLabel: false,
         tabBarStyle: { height: Platform.OS === "ios" ? 80 : 48 },
@@ -145,6 +157,7 @@ function TabNavigator() {
         name="Inbox"
         component={ChannelList}
         options={{ tabBarBadge: 6 }}
+        initialParams={{ inChatFlow: false }}
       />
       <Tab.Screen name="Me" component={Me} />
     </Tab.Navigator>

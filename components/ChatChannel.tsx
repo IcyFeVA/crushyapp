@@ -11,6 +11,7 @@ import { ActivityIndicator } from "react-native";
 import { Colors } from "@/constants/Colors";
 import { supabase } from "@/lib/supabase";
 
+
 export default function ChatChannelScreen() {
   const navigation = useNavigation();
   const route = useRoute();

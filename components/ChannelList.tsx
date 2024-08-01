@@ -1,164 +1,147 @@
-import React, { useCallback, useEffect, useState } from "react";
-import { useNavigation } from "@react-navigation/native";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase";
 import { Colors } from "@/constants/Colors";
-import { connectUser } from "@/lib/streamChat";
+import { connectUser, chatClient } from "@/lib/streamChat";
 import { useChatContext, ChannelList } from "stream-chat-expo";
-import { StreamChat } from "stream-chat";
 import { ActivityIndicator } from "react-native";
 
-type Match = {
-  id: string;
-  name: string;
-  avatar_url: string;
-};
-
 export default function Inbox() {
-  const [matches, setMatches] = useState<Match[]>([]);
   const navigation = useNavigation();
   const session = useAuth();
   const { client } = useChatContext();
-  const [clientReady, setClientReady] = useState(false);
-  const [myChannels, setChannels] = useState();
-  const [matchesFetched, setMatchesFetched] = useState(false);
-
-  let connectingUser = false;
+  const isConnectedRef = useRef(false);
+  const isInChatChannelRef = useRef(false);
+  const isMountedRef = useRef(true);
+  const [channelsLoaded, setChannelsLoaded] = useState(false);
 
   function generateShortChannelId(userId1: string, userId2: string): string {
-    // Sort the user IDs to ensure consistency
     const sortedIds = [userId1, userId2].sort();
-
-    // Combine the first 8 characters of each ID
     const combined = sortedIds[0].slice(0, 8) + sortedIds[1].slice(0, 8);
-
-    // Simple hash function
     let hash = 0;
     for (let i = 0; i < combined.length; i++) {
       const char = combined.charCodeAt(i);
       hash = (hash << 5) - hash + char;
-      hash = hash & hash; // Convert to 32-bit integer
+      hash = hash & hash;
     }
-
-    // Convert hash to a string and take the first 16 characters
     return Math.abs(hash).toString(36).slice(0, 16);
   }
 
-  // Function to connect user
   const setupClient = useCallback(async () => {
-    if (!session?.user?.id || clientReady) return;
+    if (!session?.user?.id || isConnectedRef.current) return;
 
     try {
-      // TODO: Add logic to check if user is already connected (at the end of the onboarding the user gets created in stream chat
       console.log("Connecting user...");
-      await connectUser({ id: session.user.id });
-      console.log("User connected successfully");
-      setClientReady(true);
+      await connectUser({
+        id: session.user.id,
+        name: session.user.email || "Anonymous User",
+      });
+      if (isMountedRef.current) {
+        isConnectedRef.current = true;
+        console.log("User connected successfully");
+      }
     } catch (error) {
       console.error("Failed to connect user", error);
     }
-  }, [session?.user?.id, clientReady]);
+  }, [session?.user?.id, session?.user?.email]);
 
-  // Function to fetch matches
-  const fetchMatches = useCallback(async () => {
-    if (!clientReady || matchesFetched) return;
+  const disconnectUser = useCallback(async () => {
+    if (isConnectedRef.current) {
+      try {
+        await chatClient.disconnectUser();
+        if (isMountedRef.current) {
+          isConnectedRef.current = false;
+          setChannelsLoaded(false);
+          console.log("User disconnected successfully");
+        }
+      } catch (error) {
+        console.error("Error disconnecting user:", error);
+      }
+    }
+  }, []);
+
+  const fetchAndCreateChannels = useCallback(async () => {
+    if (!isConnectedRef.current) return;
 
     try {
       console.log("Fetching matches...");
+      const { data: matches, error } = await supabase
+        .from("matches")
+        .select(
+          "*, user1:profiles_test!user1_id(*), user2:profiles_test!user2_id(*)"
+        )
+        .or(`user1_id.eq.${session.user.id},user2_id.eq.${session.user.id}`)
+        .eq("matched", true);
 
-      try {
-        const { data: matches, error } = await supabase
-          .from("matches")
-          .select(
-            "*, user1:profiles_test!user1_id(*), user2:profiles_test!user2_id(*)"
-          )
-          .or(`user1_id.eq.${session.user.id},user2_id.eq.${session.user.id}`)
-          .eq("matched", true);
+      if (error) throw error;
 
-        if (error) throw error;
+      console.log("Matches fetched:", matches.length);
 
-        // Ensure all users exist in Stream Chat
-        const allUsers = matches.flatMap((match) => [match.user1, match.user2]);
-        await ensureUsersExist(client, allUsers);
+      if (matches.length === 0) {
+        console.log("No matches found");
+        setChannelsLoaded(true);
+        return;
+      }
 
-        const channelPromises = matches.map(async (match) => {
-          const otherUser =
-            match.user1_id === session.user.id ? match.user2 : match.user1;
-          const channelId = generateShortChannelId(
-            session.user.id,
-            otherUser.id
-          );
+      const channelPromises = matches.map(async (match) => {
+        const otherUser =
+          match.user1_id === session.user.id ? match.user2 : match.user1;
+        const channelId = generateShortChannelId(session.user.id, otherUser.id);
 
-          console.log(
-            `Attempting to create/fetch channel for users: ${session.user.id} and ${otherUser.id}`
-          );
-          console.log(`Generated channel ID: ${channelId}`);
-
+        try {
           let channel = client.channel("messaging", channelId, {
             members: [session.user.id, otherUser.id],
-            name: otherUser.name,
+            name: otherUser.name || "Anonymous User",
           });
-
-          try {
-            await channel.create();
-            console.log("Channel created successfully:", channel.id);
-          } catch (error) {
-            if (error.code === 4) {
-              console.log("Channel already exists:", channel.id);
-            } else {
-              console.error("Error creating channel:", error);
-            }
-          }
-
+          await channel.create();
+          console.log("Channel created/fetched:", channelId);
           return channel;
-        });
+        } catch (error) {
+          console.error("Error creating/fetching channel:", error);
+          return null;
+        }
+      });
 
-        const createdChannels = await Promise.all(channelPromises);
-        setChannels(createdChannels);
-      } catch (error) {
-        console.error("Error fetching matches:", error);
-      }
-
-      setMatchesFetched(true);
+      const createdChannels = (await Promise.all(channelPromises)).filter(Boolean);
+      console.log("Channels created/fetched:", createdChannels.length);
+      setChannelsLoaded(true);
     } catch (error) {
-      console.error("Error fetching matches:", error);
+      console.error("Error fetching and creating channels:", error);
+      setChannelsLoaded(true);
     }
-  }, [clientReady, matchesFetched]);
+  }, [session?.user?.id, client]);
 
-  // Effect for connecting user
+  useFocusEffect(
+    useCallback(() => {
+      setupClient().then(() => {
+        if (isConnectedRef.current) {
+          fetchAndCreateChannels();
+        }
+      });
+    }, [setupClient, fetchAndCreateChannels])
+  );
+
   useEffect(() => {
-    if (client && !clientReady) {
-      setupClient();
-    }
-  }, [client, clientReady, setupClient]);
-
-  // Effect for fetching matches
-  useEffect(() => {
-    if (clientReady && !matchesFetched) {
-      fetchMatches();
-    }
-  }, [clientReady, matchesFetched, fetchMatches]);
-
-  async function ensureUsersExist(
-    client: StreamChat,
-    users: { id: string; name: string }[]
-  ) {
-    for (const user of users) {
-      try {
-        await client.upsertUser({ id: user.id, name: user.name });
-        console.log(`User ${user.id} ensured in Stream Chat`);
-      } catch (error) {
-        console.error(`Error ensuring user ${user.id} exists:`, error);
+    const unsubscribe = navigation.addListener('state', (e) => {
+      const currentRoute = e.data.state.routes[e.data.state.index];
+      if (currentRoute.name !== 'ChannelList' && currentRoute.name !== 'ChatChannel') {
+        disconnectUser();
       }
-    }
-  }
+    });
+
+    return () => {
+      unsubscribe();
+      isMountedRef.current = false;
+    };
+  }, [navigation, disconnectUser]);
 
   if (!session?.user) {
     return null;
   }
 
-  if (!clientReady || !matchesFetched) {
+  if (!isConnectedRef.current || !channelsLoaded) {
     return <ActivityIndicator size="large" color={Colors.light.accent} />;
   }
 

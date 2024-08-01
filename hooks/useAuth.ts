@@ -2,16 +2,16 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { fetchStreamToken } from '@/api/auth';
+import { Session } from '@supabase/supabase-js';
 
 export const useAuth = () => {
-  const [session, setSession] = useState(null);
+  const [session, setSession] = useState<Session | null>(null);
 
   useEffect(() => {
     const getSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-          setSession(session); // Set session without Stream token
+          setSession(session);
       }
     };
 
@@ -19,7 +19,7 @@ export const useAuth = () => {
 
     const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (session) {
-          setSession(session); // Set session without Stream token
+          setSession(session);
       }
     });
 

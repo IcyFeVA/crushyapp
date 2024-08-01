@@ -1029,6 +1029,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 ```ts
 // lib/streamChat.ts
 
+import { fetchStreamToken } from '@/api/auth';
 import { StreamChat } from 'stream-chat';
 
 export const chatClient = StreamChat.getInstance('pcvjbntz7tfy');
@@ -1039,20 +1040,19 @@ export const chatClient = StreamChat.getInstance('pcvjbntz7tfy');
 
 
 
-export const connectUser = async (user: { id: string; }, token: string) => {
-  // try {
-  //   // await chatClient.connectUser(user, token);
-
-
-
-
-  
-
-  //   console.log('User connected successfully');
-  // } catch (error) {
-  //   console.error('Error connecting user to Stream:', error);
-  //   throw error;
-  // }
+export const connectUser = async (user: { id: string; }) => {
+  try {
+    await chatClient.connectUser(
+      user, 
+      async () => {
+        return await fetchStreamToken(user.id)
+      }
+    );
+    console.log('User connected successfully');
+  } catch (error) {
+    console.error('Error connecting user to Stream:', error);
+    throw error;
+  }
 };
 
 export const disconnectUser = async () => {
@@ -1066,7 +1066,7 @@ export const disconnectUser = async () => {
 
 export const createChannel = async (channelId: string, members: string[]) => {
   try {
-    const channel = chatClient.channel('messaging', channelId, {
+    const channel = chatClient.channel('messaging', {
       members,
     });
     await channel.create();
@@ -1555,34 +1555,17 @@ export const useAuth = () => {
 
   useEffect(() => {
     const getSession = async () => {
-      // const { data: { session } } = await supabase.auth.getSession();
-      // if (session) {
-      //   try {
-      //       console.log('getting stream token')
-      //     const streamToken = await fetchStreamToken(session.user.id);
-      //     setSession({ ...session, streamToken });
-      //     console.log('stream token set', streamToken)
-      //   } catch (error) {
-      //     console.error('Failed to fetch Stream token:', error);
-      //     setSession(session); // Set session without Stream token
-      //   }
-      // }
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+          setSession(session); // Set session without Stream token
+      }
     };
 
     getSession();
 
     const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (session) {
-        try {
-          const streamToken = await fetchStreamToken(session.user.id);
-          // setSession({ ...session, streamToken });
-          setSession({ ...session });
-        } catch (error) {
-          console.error('Failed to fetch Stream token:', error);
           setSession(session); // Set session without Stream token
-        }
-      } else {
-        setSession(null);
       }
     });
 
@@ -1688,6 +1671,610 @@ export const usePotentialMatches = () => {
   return { matches, loading, error, fetchMatches, fetchDiveMatches, recordAction };
 };
 
+
+```
+
+# constants\ToastConfig.ts
+
+```ts
+import React from "react"
+import { View, Text } from "react-native-ui-lib"
+import Toast, { BaseToast, ErrorToast } from 'react-native-toast-message';
+
+
+export const toastConfig = {
+
+    success: (props) => (
+        <BaseToast
+            { ...props }
+            style={{ borderLeftColor: 'pink' }}
+contentContainerStyle = {{ paddingHorizontal: 15 }}
+text1Style = {{
+    fontSize: 15,
+        fontWeight: '400'
+}}
+/>
+    ),
+
+error: (props) => (
+    <ErrorToast
+            { ...props }
+            text1Style = {{ fontSize: 17 }}
+text2Style = {{ fontSize: 15 }}
+/>
+    ),
+    /*
+      Or create a completely new type - `default`,
+      building the layout from scratch.
+  
+      I can consume any custom `props` I want.
+      They will be passed when calling the `show` method (see below)
+    */
+    default: ({ text1, text2, props }) => (
+    <View style= {{ display: 'flex', justifyContent: 'center', width: '94%', backgroundColor: Colors.light.accent, borderRadius: 8, padding: 16 }}>
+        <Text style={ { fontFamily: 'HeadingBold', color: 'white' } }> { text1 } < /Text>
+            < Text style = {{ fontFamily: 'BodyRegular', color: 'white' }}> { text2 } < /Text>
+{/* <Text>{props.uuid}</Text> */ }
+</View>
+    )
+};
+```
+
+# constants\Styles.ts
+
+```ts
+import { Colors } from '@/constants/Colors';
+import { Platform, StyleSheet } from 'react-native';
+
+export const defaultStyles = StyleSheet.create({
+    SafeAreaView: {
+        flex: 1,
+        padding: 16,
+        backgroundColor: Colors.light.background,
+    },
+    innerContainer: {
+        flex: 1,
+    },
+    body: {
+        fontFamily: 'BodyRegular',
+        color: Colors.light.text,
+        fontSize: 16,
+        lineHeight: 24
+    },
+    bodyBold: {
+        fontFamily: 'BodyBold',
+        color: Colors.light.text,
+        fontSize: 16,
+        lineHeight: 24
+    },
+    buttonShadow: {
+        ...Platform.select({
+            ios: {
+                shadowColor: "#ccc",
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.5,
+                shadowRadius: 3,
+            },
+            android: {
+                elevation: 3,
+            },
+        }),
+    },
+    h2: {
+        fontSize: 24,
+        fontFamily: 'HeadingBold',
+        color: Colors.light.text
+    },
+    inputLabel: {
+        fontSize: 16,
+        fontFamily: 'BodySemiBold',
+        color: Colors.light.text
+    },
+    button: {
+        display: 'flex',
+        backgroundColor: Colors.light.primary,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 2,
+        borderColor: Colors.light.primaryLight,
+        paddingTop: 6,
+        paddingHorizontal: 32,
+        borderRadius: 8,
+        minHeight: 48,
+    },
+    buttonLabel: {
+        fontSize: 14,
+        fontFamily: 'BodyBold',
+        color: Colors.light.textInverted,
+        textTransform: 'uppercase'
+    },
+    buttonSecondary: {
+        display: 'flex',
+        backgroundColor: Colors.light.background,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: Colors.light.tertiary,
+        paddingTop: 6,
+        paddingHorizontal: 32,
+        borderRadius: 8,
+        minHeight: 48,
+    },
+    buttonSecondaryLabel: {
+        fontSize: 14,
+        fontFamily: 'BodyBold',
+        color: Colors.light.primary,
+        textTransform: 'uppercase'
+    },
+    settingListButton: {
+        display: 'flex',
+        backgroundColor: Colors.light.background,
+        justifyContent: 'space-between',
+        borderWidth: 1,
+        borderColor: Colors.light.tertiary,
+        padding: 16,
+        borderRadius: 8,
+        height: 64,
+        maxHeight: 64,
+        borderTopWidth: 0,
+    },
+    settingListButtonLabel: {
+        fontSize: 16,
+        fontFamily: 'BodySemiBold',
+        color: Colors.light.text
+    },
+    radioButton: {
+        flex: 1,
+        backgroundColor: Colors.light.background,
+        justifyContent: 'space-between',
+        borderWidth: 1,
+        borderColor: Colors.light.tertiary,
+        padding: 16,
+        borderRadius: 8,
+        marginBottom: 16,
+        height: 64,
+    },
+    radioButtonLabel: {
+        fontSize: 16,
+        fontFamily: 'BodySemiBold',
+        color: Colors.light.text
+    },
+    checkboxButton: {
+        flex: 1,
+        borderWidth: 1,
+        borderColor: Colors.light.tertiary,
+        padding: 16,
+        borderRadius: 8,
+        marginBottom: 16,
+        height: 64,
+        backgroundColor: Colors.light.background,
+    },
+    checkboxButtonLabel: {
+        fontSize: 16,
+        fontFamily: 'BodySemiBold',
+        color: Colors.light.text
+    },
+    noRadius: {
+        borderRadius: 0
+    },
+});
+```
+
+# constants\Interests.ts
+
+```ts
+const hobbiesInterests = [
+    [
+        { value: "1", label: "Hiking" },
+        { value: "2", label: "Camping" },
+        { value: "3", label: "Fishing" },
+        { value: "4", label: "Hunting" },
+        { value: "5", label: "Rock Climbing" },
+        { value: "6", label: "Bird Watching" },
+        { value: "7", label: "Kayaking" },
+        { value: "8", label: "Canoeing" },
+        { value: "9", label: "Surfing" },
+        { value: "10", label: "Snowboarding" },
+        { value: "11", label: "Skiing" },
+        { value: "12", label: "Mountain Biking" },
+        { value: "13", label: "Road Biking" },
+        { value: "14", label: "Running" },
+        { value: "15", label: "Jogging" },
+        { value: "16", label: "Trail Running" },
+        { value: "17", label: "Paddleboarding" },
+        { value: "18", label: "Sailing" },
+        { value: "19", label: "Horseback Riding" },
+        { value: "20", label: "Gardening" },
+        { value: "21", label: "Stargazing" },
+        { value: "22", label: "Geocaching" },
+        { value: "23", label: "Off-roading" },
+        { value: "24", label: "Archery" },
+        { value: "25", label: "Skateboarding" },
+    ],
+    [
+        { value: "26", label: "Basketball" },
+        { value: "27", label: "Football (American)" },
+        { value: "28", label: "Soccer" },
+        { value: "29", label: "Baseball" },
+        { value: "30", label: "Softball" },
+        { value: "31", label: "Volleyball" },
+        { value: "32", label: "Tennis" },
+        { value: "33", label: "Badminton" },
+        { value: "34", label: "Golf" },
+        { value: "35", label: "Swimming" },
+        { value: "36", label: "Martial Arts" },
+        { value: "37", label: "Yoga" },
+        { value: "38", label: "Pilates" },
+        { value: "39", label: "CrossFit" },
+        { value: "40", label: "Weightlifting" },
+        { value: "41", label: "Boxing" },
+        { value: "42", label: "Wrestling" },
+        { value: "43", label: "Cheerleading" },
+        { value: "44", label: "Gymnastics" },
+        { value: "45", label: "Dance" },
+        { value: "46", label: "Ice Hockey" },
+        { value: "47", label: "Lacrosse" },
+        { value: "48", label: "Cricket" },
+        { value: "49", label: "Ultimate Frisbee" },
+        { value: "50", label: "Rugby" },
+    ],
+    [
+        { value: "51", label: "Painting" },
+        { value: "52", label: "Drawing" },
+        { value: "53", label: "Sketching" },
+        { value: "54", label: "Sculpting" },
+        { value: "55", label: "Pottery" },
+        { value: "56", label: "Knitting" },
+        { value: "57", label: "Crocheting" },
+        { value: "58", label: "Sewing" },
+        { value: "59", label: "Quilting" },
+        { value: "60", label: "Embroidery" },
+        { value: "61", label: "Woodworking" },
+        { value: "62", label: "Metalworking" },
+        { value: "63", label: "Calligraphy" },
+        { value: "64", label: "Photography" },
+        { value: "65", label: "Videography" },
+        { value: "66", label: "Filmmaking" },
+        { value: "67", label: "Acting" },
+        { value: "68", label: "Singing" },
+        { value: "69", label: "Songwriting" },
+        { value: "70", label: "Playing Musical Instruments (Guitar, Piano, Drums, etc.)" },
+        { value: "71", label: "Dancing (Ballet, Hip Hop, Salsa, etc.)" },
+        { value: "72", label: "Crafting" },
+        { value: "73", label: "Jewelry Making" },
+        { value: "74", label: "Writing (Poetry, Novels, etc.)" },
+        { value: "75", label: "Journaling" },
+    ],
+    [
+        { value: "76", label: "Reading" },
+        { value: "77", label: "Watching Movies" },
+        { value: "78", label: "Binge-watching" },
+        { value: "79", label: "Theater" },
+        { value: "80", label: "Opera" },
+        { value: "81", label: "Stand-up Comedy" },
+        { value: "82", label: "Attending Concerts" },
+        { value: "83", label: "Music Festivals" },
+        { value: "84", label: "Podcasts" },
+        { value: "85", label: "Gaming (Video Games, Board Games, Card Games, etc.)" },
+        { value: "86", label: "Puzzle Solving (Crosswords, Sudoku, etc.)" },
+        { value: "87", label: "Trivia" },
+        { value: "88", label: "Watching Sports" },
+        { value: "89", label: "Cosplaying" },
+        { value: "90", label: "Collecting (Stamps, Coins, Comics, etc.)" },
+        { value: "91", label: "Magic Tricks" },
+    ],
+    [
+        { value: "92", label: "Cooking" },
+        { value: "93", label: "Baking" },
+        { value: "94", label: "Grilling/BBQ" },
+        { value: "95", label: "Mixology" },
+        { value: "96", label: "Wine Tasting" },
+        { value: "97", label: "Beer Brewing" },
+        { value: "98", label: "Coffee Tasting" },
+        { value: "99", label: "Tea Tasting" },
+        { value: "100", label: "Food Blogging" },
+        { value: "101", label: "Trying New Restaurants" },
+        { value: "102", label: "Vegetarian/Vegan Cooking" },
+    ],
+    [
+        { value: "103", label: "Traveling" },
+        { value: "104", label: "Road Trips" },
+        { value: "105", label: "Exploring New Cities" },
+        { value: "106", label: "Visiting Museums" },
+        { value: "107", label: "Visiting Art Galleries" },
+        { value: "108", label: "Attending Festivals" },
+        { value: "109", label: "Volunteering" },
+        { value: "110", label: "Charity Work" },
+        { value: "111", label: "Social Clubs" },
+        { value: "112", label: "Book Clubs" },
+        { value: "113", label: "Networking Events" },
+        { value: "114", label: "Public Speaking" },
+        { value: "115", label: "Debate" },
+        { value: "116", label: "Language Learning" },
+        { value: "117", label: "Cultural Events" },
+    ],
+    [
+        { value: "118", label: "Coding" },
+        { value: "119", label: "Robotics" },
+        { value: "120", label: "3D Printing" },
+        { value: "121", label: "Virtual Reality" },
+        { value: "122", label: "Augmented Reality" },
+        { value: "123", label: "Building Computers" },
+        { value: "124", label: "Electronics" },
+        { value: "125", label: "Astronomy" },
+        { value: "126", label: "Science Experiments" },
+        { value: "127", label: "Drone Flying" },
+    ],
+    [
+        { value: "128", label: "Chess" },
+        { value: "129", label: "Strategy Games" },
+        { value: "130", label: "Philosophy" },
+        { value: "131", label: "History" },
+        { value: "132", label: "Archaeology" },
+        { value: "133", label: "Anthropology" },
+        { value: "134", label: "Psychology" },
+        { value: "135", label: "Economics" },
+        { value: "136", label: "Politics" },
+        { value: "137", label: "Debate" },
+        { value: "138", label: "Mathematics" },
+        { value: "139", label: "Cryptography" },
+        { value: "140", label: "Puzzles" },
+    ],
+    [
+        { value: "141", label: "Bird Watching" },
+        { value: "142", label: "Wildlife Photography" },
+        { value: "143", label: "Beekeeping" },
+        { value: "144", label: "Dog Training" },
+        { value: "145", label: "Cat Care" },
+        { value: "146", label: "Reptile Keeping" },
+        { value: "147", label: "Fish Keeping" },
+        { value: "148", label: "Animal Rescue" },
+        { value: "149", label: "Farming" },
+        { value: "150", label: "Permaculture" },
+    ],
+    [
+        { value: "151", label: "Collecting Antiques" },
+        { value: "152", label: "Miniatures" },
+        { value: "153", label: "Model Building" },
+        { value: "154", label: "Trainspotting" },
+        { value: "155", label: "Urban Exploration" },
+        { value: "156", label: "Home Improvement" },
+        { value: "157", label: "Interior Design" },
+        { value: "158", label: "Feng Shui" },
+        { value: "159", label: "Meditation" },
+        { value: "160", label: "Astrology" },
+        { value: "161", label: "Tarot Reading" },
+        { value: "162", label: "Numerology" },
+        { value: "163", label: "Genealogy" },
+        { value: "164", label: "Thrill Seeking" },
+        { value: "165", label: "Fandom Activities (Sci-Fi, Fantasy, etc.)" },
+        { value: "166", label: "Vlogging" },
+        { value: "167", label: "Blogging" },
+        { value: "168", label: "Sustainable Living" },
+        { value: "169", label: "Zero Waste Lifestyle" },
+        { value: "170", label: "Environmental Activism" }
+    ],
+];
+
+// const hobbiesInterests = [
+//     { value: 1, label: "Hiking" },
+//     { value: 2, label: "Camping" },
+//     { value: 3, label: "Fishing" },
+//     { value: 4, label: "Hunting" },
+//     { value: 5, label: "Rock Climbing" },
+//     { value: 6, label: "Bird Watching" },
+//     { value: 7, label: "Kayaking" },
+//     { value: 8, label: "Canoeing" },
+//     { value: 9, label: "Surfing" },
+//     { value: 10, label: "Snowboarding" },
+//     { value: 11, label: "Skiing" },
+//     { value: 12, label: "Mountain Biking" },
+//     { value: 13, label: "Road Biking" },
+//     { value: 14, label: "Running" },
+//     { value: 15, label: "Jogging" },
+//     { value: 16, label: "Trail Running" },
+//     { value: 17, label: "Paddleboarding" },
+//     { value: 18, label: "Sailing" },
+//     { value: 19, label: "Horseback Riding" },
+//     { value: 20, label: "Gardening" },
+//     { value: 21, label: "Stargazing" },
+//     { value: 22, label: "Geocaching" },
+//     { value: 23, label: "Off-roading" },
+//     { value: 24, label: "Archery" },
+//     { value: 25, label: "Skateboarding" },
+//     { value: 26, label: "Basketball" },
+//     { value: 27, label: "Football (American)" },
+//     { value: 28, label: "Soccer" },
+//     { value: 29, label: "Baseball" },
+//     { value: 30, label: "Softball" },
+//     { value: 31, label: "Volleyball" },
+//     { value: 32, label: "Tennis" },
+//     { value: 33, label: "Badminton" },
+//     { value: 34, label: "Golf" },
+//     { value: 35, label: "Swimming" },
+//     { value: 36, label: "Martial Arts" },
+//     { value: 37, label: "Yoga" },
+//     { value: 38, label: "Pilates" },
+//     { value: 39, label: "CrossFit" },
+//     { value: 40, label: "Weightlifting" },
+//     { value: 41, label: "Boxing" },
+//     { value: 42, label: "Wrestling" },
+//     { value: 43, label: "Cheerleading" },
+//     { value: 44, label: "Gymnastics" },
+//     { value: 45, label: "Dance" },
+//     { value: 46, label: "Ice Hockey" },
+//     { value: 47, label: "Lacrosse" },
+//     { value: 48, label: "Cricket" },
+//     { value: 49, label: "Ultimate Frisbee" },
+//     { value: 50, label: "Rugby" },
+//     { value: 51, label: "Painting" },
+//     { value: 52, label: "Drawing" },
+//     { value: 53, label: "Sketching" },
+//     { value: 54, label: "Sculpting" },
+//     { value: 55, label: "Pottery" },
+//     { value: 56, label: "Knitting" },
+//     { value: 57, label: "Crocheting" },
+//     { value: 58, label: "Sewing" },
+//     { value: 59, label: "Quilting" },
+//     { value: 60, label: "Embroidery" },
+//     { value: 61, label: "Woodworking" },
+//     { value: 62, label: "Metalworking" },
+//     { value: 63, label: "Calligraphy" },
+//     { value: 64, label: "Photography" },
+//     { value: 65, label: "Videography" },
+//     { value: 66, label: "Filmmaking" },
+//     { value: 67, label: "Acting" },
+//     { value: 68, label: "Singing" },
+//     { value: 69, label: "Songwriting" },
+//     { value: 70, label: "Playing Musical Instruments (Guitar, Piano, Drums, etc.)" },
+//     { value: 71, label: "Dancing (Ballet, Hip Hop, Salsa, etc.)" },
+//     { value: 72, label: "Crafting" },
+//     { value: 73, label: "Jewelry Making" },
+//     { value: 74, label: "Writing (Poetry, Novels, etc.)" },
+//     { value: 75, label: "Journaling" },
+//     { value: 76, label: "Reading" },
+//     { value: 77, label: "Watching Movies" },
+//     { value: 78, label: "Binge-watching TV Shows" },
+//     { value: 79, label: "Theater" },
+//     { value: 80, label: "Opera" },
+//     { value: 81, label: "Stand-up Comedy" },
+//     { value: 82, label: "Attending Concerts" },
+//     { value: 83, label: "Music Festivals" },
+//     { value: 84, label: "Podcasts" },
+//     { value: 85, label: "Gaming (Video Games, Board Games, Card Games, etc.)" },
+//     { value: 86, label: "Puzzle Solving (Crosswords, Sudoku, etc.)" },
+//     { value: 87, label: "Trivia" },
+//     { value: 88, label: "Watching Sports" },
+//     { value: 89, label: "Cosplaying" },
+//     { value: 90, label: "Collecting (Stamps, Coins, Comics, etc.)" },
+//     { value: 91, label: "Magic Tricks" },
+//     { value: 92, label: "Cooking" },
+//     { value: 93, label: "Baking" },
+//     { value: 94, label: "Grilling/BBQ" },
+//     { value: 95, label: "Mixology" },
+//     { value: 96, label: "Wine Tasting" },
+//     { value: 97, label: "Beer Brewing" },
+//     { value: 98, label: "Coffee Tasting" },
+//     { value: 99, label: "Tea Tasting" },
+//     { value: 100, label: "Food Blogging" },
+//     { value: 101, label: "Trying New Restaurants" },
+//     { value: 102, label: "Vegetarian/Vegan Cooking" },
+//     { value: 103, label: "Traveling" },
+//     { value: 104, label: "Road Trips" },
+//     { value: 105, label: "Exploring New Cities" },
+//     { value: 106, label: "Visiting Museums" },
+//     { value: 107, label: "Visiting Art Galleries" },
+//     { value: 108, label: "Attending Festivals" },
+//     { value: 109, label: "Volunteering" },
+//     { value: 110, label: "Charity Work" },
+//     { value: 111, label: "Social Clubs" },
+//     { value: 112, label: "Book Clubs" },
+//     { value: 113, label: "Networking Events" },
+//     { value: 114, label: "Public Speaking" },
+//     { value: 115, label: "Debate" },
+//     { value: 116, label: "Language Learning" },
+//     { value: 117, label: "Cultural Events" },
+//     { value: 118, label: "Coding" },
+//     { value: 119, label: "Robotics" },
+//     { value: 120, label: "3D Printing" },
+//     { value: 121, label: "Virtual Reality" },
+//     { value: 122, label: "Augmented Reality" },
+//     { value: 123, label: "Building Computers" },
+//     { value: 124, label: "Electronics" },
+//     { value: 125, label: "Astronomy" },
+//     { value: 126, label: "Science Experiments" },
+//     { value: 127, label: "Drone Flying" },
+//     { value: 128, label: "Chess" },
+//     { value: 129, label: "Strategy Games" },
+//     { value: 130, label: "Philosophy" },
+//     { value: 131, label: "History" },
+//     { value: 132, label: "Archaeology" },
+//     { value: 133, label: "Anthropology" },
+//     { value: 134, label: "Psychology" },
+//     { value: 135, label: "Economics" },
+//     { value: 136, label: "Politics" },
+//     { value: 137, label: "Debate" },
+//     { value: 138, label: "Mathematics" },
+//     { value: 139, label: "Cryptography" },
+//     { value: 140, label: "Puzzles" },
+//     { value: 141, label: "Bird Watching" },
+//     { value: 142, label: "Wildlife Photography" },
+//     { value: 143, label: "Beekeeping" },
+//     { value: 144, label: "Dog Training" },
+//     { value: 145, label: "Cat Care" },
+//     { value: 146, label: "Reptile Keeping" },
+//     { value: 147, label: "Fish Keeping" },
+//     { value: 148, label: "Animal Rescue" },
+//     { value: 149, label: "Farming" },
+//     { value: 150, label: "Permaculture" },
+//     { value: 151, label: "Collecting Antiques" },
+//     { value: 152, label: "Miniatures" },
+//     { value: 153, label: "Model Building" },
+//     { value: 154, label: "Trainspotting" },
+//     { value: 155, label: "Urban Exploration" },
+//     { value: 156, label: "Home Improvement" },
+//     { value: 157, label: "Interior Design" },
+//     { value: 158, label: "Feng Shui" },
+//     { value: 159, label: "Meditation" },
+//     { value: 160, label: "Astrology" },
+//     { value: 161, label: "Tarot Reading" },
+//     { value: 162, label: "Numerology" },
+//     { value: 163, label: "Genealogy" },
+//     { value: 164, label: "Thrill Seeking (Skydiving, Bungee Jumping, etc.)" },
+//     { value: 165, label: "Fandom Activities (Sci-Fi, Fantasy, etc.)" },
+//     { value: 166, label: "Vlogging" },
+//     { value: 167, label: "Blogging" },
+//     { value: 168, label: "Sustainable Living" },
+//     { value: 169, label: "Zero Waste Lifestyle" },
+//     { value: 170, label: "Environmental Activism" }
+// ];
+
+
+
+export default hobbiesInterests;
+
+```
+
+# constants\Colors.ts
+
+```ts
+/**
+ * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
+ * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
+ */
+
+const tintColorLight = '#0a7ea4';
+const tintColorDark = '#fff';
+
+export const Colors = {
+  light: {
+    white: '#FFFFFF',
+    black: '#000000',
+    text: '#341D1D',
+    textSecondary: '#867272',
+    textInverted: '#FFFFFF',
+    background: '#FDFFFF',
+    backgroundSecondary: '#FFFAF8',
+    tint: tintColorLight,
+    icon: '#687076',
+    tabIconDefault: '#687076',
+    tabIconSelected: tintColorLight,
+    primary: '#DA2778',
+    primaryLight: '#F76BB1',
+    accent: '#7A37D0',
+    secondary: '#F1F1F1',
+    tertiary: '#D9D9D9',
+  },
+  dark: {
+    text: '#ECEDEE',
+    background: '#151718',
+    tint: tintColorDark,
+    icon: '#9BA1A6',
+    tabIconDefault: '#9BA1A6',
+    tabIconSelected: tintColorDark,
+    tertiary: '#D9D9D9',
+  },
+};
 
 ```
 
@@ -2086,12 +2673,9 @@ export default Spacer;
 ```tsx
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator, TransitionPresets } from '@react-navigation/stack';
-import { Ionicons } from '@expo/vector-icons';
 import Auth from '@/components/Auth';
 import { View, Text, Image, Pressable, Platform } from 'react-native';
-import { Colors } from '@/constants/Colors';
-import { useNavigation } from '@react-navigation/native'
-// import { BlurView } from 'expo-blur';
+import { NavigationContainer, useFocusEffect, useNavigation } from '@react-navigation/native'
 import Me from '@/components/tabs/me';
 import Surf from '@/components/tabs/surf';
 import Dive from '@/components/tabs/dive';
@@ -2107,14 +2691,13 @@ import FilterSmokingFrequency from '@/app/searchFilters/filterSmoking';
 import FilterDrinkingFrequency from '@/app/searchFilters/filterDrinking';
 import FilterCannabisFrequency from '@/app/searchFilters/filterCannabis';
 import FilterDietPreference from '@/app/searchFilters/filterDietPreference';
-import { useProfile } from '@/hooks/useProfile';
 import { useAppContext } from '@/providers/AppProvider';
 import { clearAllStorage, getData, storeData } from '@/utils/storage';
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import Inbox from '@/components/tabs/inbox'; // Add this import
 import ChannelList from '@/components/ChannelList';
 import ChatChannel from '@/components/ChatChannel';
+import { useChatContext } from 'stream-chat-expo';
 
 const tabIcons = {
     homeActive: require('@/assets/images/icons/tab-home-active.png'),
@@ -2127,6 +2710,8 @@ const tabIcons = {
     meInactive: require('@/assets/images/icons/tab-me.png'),
     exploreInactive: require('@/assets/images/icons/tab-explore.png'),
 };
+
+
 
 
 function HomeScreen() {
@@ -2165,49 +2750,78 @@ const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
 
 
+
 function TabNavigator() {
-    const navigation = useNavigation();
+  const navigation = useNavigation();
+  // const { client } = useChatContext();
 
+  // const disconnectUser = useCallback(async () => {
+  //     try {
+  //       if (client && client.userID) {
+  //         await client.disconnectUser();
+  //         console.log('User disconnected successfully');
+  //       }
+  //     } catch (error) {
+  //       console.error('Error disconnecting user:', error);
+  //     }
+  //   }, [client]);
 
-    return (
-        <Tab.Navigator
-            screenOptions={({ route }) => ({
-                tabBarIcon: ({ focused, color, size }) => {
-                    let iconSource;
+  return (
+    <Tab.Navigator
+      screenOptions={({ route }) => ({
+        tabBarIcon: ({ focused, color, size }) => {
+          let iconSource;
 
-                    if (route.name === 'Home') {
-                        iconSource = focused ? tabIcons.homeActive : tabIcons.homeInactive;
-                    } else if (route.name === 'History') {
-                        iconSource = focused ? tabIcons.historyActive : tabIcons.historyInactive;
-                    } else if (route.name === 'Inbox') {
-                        iconSource = focused ? tabIcons.inboxActive : tabIcons.inboxInactive;
-                    } else if (route.name === 'Me') {
-                        iconSource = focused ? tabIcons.meActive : tabIcons.meInactive;
-                    } else if (route.name === 'Explore') {
-                        return (
-                            <Pressable style={{ marginTop: Platform.OS === 'ios' ? 0 : -4 }} onPress={() => { navigation.navigate('Dive') }}>
-                                <Image source={require('@/assets/images/icons/tab-explore.png')} />
-                            </Pressable>
-                        )
-                    }
+          if (route.name === "Home") {
+            iconSource = focused ? tabIcons.homeActive : tabIcons.homeInactive;
+          } else if (route.name === "History") {
+            iconSource = focused
+              ? tabIcons.historyActive
+              : tabIcons.historyInactive;
+          } else if (route.name === "Inbox") {
+            iconSource = focused
+              ? tabIcons.inboxActive
+              : tabIcons.inboxInactive;
+          } else if (route.name === "Me") {
+            iconSource = focused ? tabIcons.meActive : tabIcons.meInactive;
+          } else if (route.name === "Explore") {
+            return (
+              <Pressable
+                style={{ marginTop: Platform.OS === "ios" ? 0 : -4 }}
+                onPress={() => {
+                  // disconnectUser()
+                  navigation.navigate("Home"); // TODO: fix this hack. chat has to be disconnected when navigating from inbox to anywhere. when you close dive/surf, inbox will still be focused when coming from there. So we move to home to reset that.
+                  navigation.navigate("Dive");
+                }}
+              >
+                <Image
+                  source={require("@/assets/images/icons/tab-explore.png")}
+                />
+              </Pressable>
+            );
+          }
 
-                    return <Image source={iconSource} />
-                },
-                headerShown: false,
-                tabBarShowLabel: false,
-                tabBarStyle: { height: Platform.OS === 'ios' ? 80 : 48 },
-                // tabBarBackground: () => (
-                //     <BlurView tint="light" intensity={100} style={StyleSheet.absoluteFill} />
-                //   ),
-            })}
-        >
-            <Tab.Screen name="Home" component={HomeScreen} />
-            <Tab.Screen name="History" component={SettingsScreen} />
-            <Tab.Screen name="Explore" component={DummySurf} />
-            <Tab.Screen name="Inbox" component={ChannelList} options={{ tabBarBadge: 6 }} />
-            <Tab.Screen name="Me" component={Me} />
-        </Tab.Navigator>
-    );
+          return <Image source={iconSource} />;
+        },
+        headerShown: false,
+        tabBarShowLabel: false,
+        tabBarStyle: { height: Platform.OS === "ios" ? 80 : 48 },
+        // tabBarBackground: () => (
+        //     <BlurView tint="light" intensity={100} style={StyleSheet.absoluteFill} />
+        //   ),
+      })}
+    >
+      <Tab.Screen name="Home" component={HomeScreen} />
+      <Tab.Screen name="History" component={SettingsScreen} />
+      <Tab.Screen name="Explore" component={DummySurf} />
+      <Tab.Screen
+        name="Inbox"
+        component={ChannelList}
+        options={{ tabBarBadge: 6 }}
+      />
+      <Tab.Screen name="Me" component={Me} />
+    </Tab.Navigator>
+  );
 }
 
 
@@ -2217,114 +2831,99 @@ function TabNavigator() {
 
 export default function RootNavigator({ session }) {
     const { showOnboarding, setShowOnboarding } = useAppContext();
+    
+
 
     useEffect(() => {
-        // clearAllStorage()
-        // return;
+      //   clearAllStorage();
+      //   return;
 
-        const checkIfOnboardingDone = async () => {
-            try {
-                const onboardingComplete = await getData('onboardingComplete');
+      const checkIfOnboardingDone = async () => {
+        try {
+          const onboardingComplete = await getData("onboardingComplete");
 
-                if (onboardingComplete === undefined) {
-                    console.log('onboarding status undefined in storage');
+          if (onboardingComplete === undefined) {
+            console.log("onboarding status undefined in storage");
 
-                    const getProfile = async () => {
-                        try {
-                            const { data } = await supabase
-                                .from('profiles_test')
-                                .select('name')
-                                .eq('id', session?.user.id)
-                                .single();
+            const getProfile = async () => {
+              try {
+                const { data } = await supabase
+                  .from("profiles_test")
+                  .select("name")
+                  .eq("id", session?.user.id)
+                  .single();
 
-                            if (data) {
-                                if (data?.name != null) {
-                                    console.log('onboarding done, saving it in storage');
-                                    await storeData('onboardingComplete', true);
-                                } else {
-                                    console.log('onboarding not done');
-                                    setShowOnboarding(true);
-                                }
-                            }
-
-                        } catch (error: any) {
-                            console.log('Error getting profile:', error);
-                        }
-                    };
-
-                    getProfile();
-
-
-                } else {
-                    console.log('onboarding status found in storage', onboardingComplete);
+                if (data) {
+                  if (data?.name != null) {
+                    console.log("onboarding done, saving it in storage");
+                    await storeData("onboardingComplete", true);
+                  } else {
+                    console.log("onboarding not done");
+                    setShowOnboarding(true);
+                  }
                 }
-            } catch (error) {
-                console.error('Error checking onboarding status:', error);
-            }
-        };
+              } catch (error: any) {
+                console.log("Error getting profile:", error);
+              }
+            };
 
-        if (session) {
-            checkIfOnboardingDone();
+            getProfile();
+          } else {
+            console.log(
+              "onboarding status found in storage",
+              onboardingComplete
+            );
+          }
+        } catch (error) {
+          console.error("Error checking onboarding status:", error);
         }
+      };
+
+      if (session) {
+        checkIfOnboardingDone();
+      }
     }, [session?.user.id]);
 
+
+
+
+
+
+
+
+
     return (
-        <Stack.Navigator initialRouteName='Main'>
-            {session ? (
-                showOnboarding === true ? <Stack.Screen name="Onboarding" component={Onboarding} options={{ headerShown: false }} /> : (
-                    <Stack.Group>
-                        <Stack.Group screenOptions={{ headerShown: false, ...TransitionPresets.BottomSheetAndroid }}>
-                            <Stack.Screen name="Main" component={TabNavigator} />
-                            <Stack.Screen name="Surf" component={Surf} options={{ gestureEnabled: true, gestureDirection: 'vertical', gestureResponseDistance: 400 }} />
-                            <Stack.Screen name="Dive" component={Dive} />
-                            <Stack.Screen name="Profile" component={Profile} />
-                            <Stack.Screen name="SearchFilters" component={SearchFilters} />
-                            <Stack.Screen name="ChatChannel" component={ChatChannel} options={{ headerShown: true }} />
+        // <NavigationContainer independent={true}>
+            <Stack.Navigator initialRouteName='Main'>
+                {session ? (
+                    showOnboarding === true ? <Stack.Screen name="Onboarding" component={Onboarding} options={{ headerShown: false }} /> : (
+                        <Stack.Group>
+                            <Stack.Group screenOptions={{ headerShown: false, ...TransitionPresets.BottomSheetAndroid }}>
+                                <Stack.Screen name="Main" component={TabNavigator} />
+                                <Stack.Screen name="Surf" component={Surf} options={{ gestureEnabled: true, gestureDirection: 'vertical', gestureResponseDistance: 400 }} />
+                                <Stack.Screen name="Dive" component={Dive} />
+                                <Stack.Screen name="Profile" component={Profile} />
+                                <Stack.Screen name="SearchFilters" component={SearchFilters} />
+                                <Stack.Screen name="ChatChannel" component={ChatChannel} options={{ headerShown: true }} />
+                            </Stack.Group>
+                            <Stack.Group screenOptions={{ headerShown: false, ...TransitionPresets.SlideFromRightIOS }}>
+                                <Stack.Screen name="filterGenderPreference" component={FilterGenderPreference} />
+                                <Stack.Screen name="filterStarsign" component={FilterStarsign} />
+                                <Stack.Screen name="filterAgeRange" component={FilterAgeRange} />
+                                <Stack.Screen name="filterBodyType" component={FilterBodyType} />
+                                <Stack.Screen name="filterExerciseFrequency" component={FilterExerciseFrequency} />
+                                <Stack.Screen name="filterSmokingFrequency" component={FilterSmokingFrequency} />
+                                <Stack.Screen name="filterDrinkingFrequency" component={FilterDrinkingFrequency} />
+                                <Stack.Screen name="filterCannabisFrequency" component={FilterCannabisFrequency} />
+                                <Stack.Screen name="filterDietPreference" component={FilterDietPreference} />
+                            </Stack.Group>
                         </Stack.Group>
-                        <Stack.Group screenOptions={{ headerShown: false, ...TransitionPresets.SlideFromRightIOS }}>
-                            <Stack.Screen
-                                name="filterGenderPreference"
-                                component={FilterGenderPreference}
-                            />
-                            <Stack.Screen
-                                name="filterStarsign"
-                                component={FilterStarsign}
-                            />
-                            <Stack.Screen
-                                name="filterAgeRange"
-                                component={FilterAgeRange}
-                            />
-                            <Stack.Screen
-                                name="filterBodyType"
-                                component={FilterBodyType}
-                            />
-                            <Stack.Screen
-                                name="filterExerciseFrequency"
-                                component={FilterExerciseFrequency}
-                            />
-                            <Stack.Screen
-                                name="filterSmokingFrequency"
-                                component={FilterSmokingFrequency}
-                            />
-                            <Stack.Screen
-                                name="filterDrinkingFrequency"
-                                component={FilterDrinkingFrequency}
-                            />
-                            <Stack.Screen
-                                name="filterCannabisFrequency"
-                                component={FilterCannabisFrequency}
-                            />
-                            <Stack.Screen
-                                name="filterDietPreference"
-                                component={FilterDietPreference}
-                            />
-                        </Stack.Group>
-                    </Stack.Group>
-                )
-            ) : (
-                <Stack.Screen name="Auth" component={Auth} options={{ headerShown: false }} />
-            )}
-        </Stack.Navigator>
+                    )
+                ) : (
+                    <Stack.Screen name="Auth" component={Auth} options={{ headerShown: false }} />
+                )}
+            </Stack.Navigator>
+        // </NavigationContainer>
     );
 }
 
@@ -2506,116 +3105,281 @@ const styles = StyleSheet.create({
 # components\ChatChannel.tsx
 
 ```tsx
-// components/ChatChannel.tsx
-
-import React from 'react';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Channel, MessageList, MessageInput } from 'stream-chat-expo';
-import { useRoute } from '@react-navigation/native';
+import React, { useEffect, useState, useLayoutEffect } from "react";
+import { SafeAreaView } from "react-native-safe-area-context";
+import {
+  Channel,
+  MessageList,
+  MessageInput,
+  useChatContext,
+} from "stream-chat-expo";
+import { useRoute, useNavigation } from "@react-navigation/native";
+import { ActivityIndicator } from "react-native";
+import { Colors } from "@/constants/Colors";
+import { supabase } from "@/lib/supabase";
 
 export default function ChatChannelScreen() {
+  const navigation = useNavigation();
   const route = useRoute();
-  const { channel } = route.params;
+  const { channelId } = route.params;
+  const { client } = useChatContext();
+  const [channel, setChannel] = useState();
+
+  useEffect(() => {
+    const createAndWatchChannel = async () => {
+      const newChannel = client.channel("messaging", channelId);
+      await newChannel.watch();
+      setChannel(newChannel);
+
+      // Get member IDs
+      const memberIds = Object.keys(newChannel.state.members);
+      console.log("Member IDs:", memberIds);
+
+      // Fetch user data from Supabase
+      const { data: users, error } = await supabase
+        .from("profiles_test")
+        .select("id, name")
+        .in("id", memberIds);
+
+      if (error) {
+        console.error("Error fetching user data:", error);
+        return;
+      }
+
+      console.log("Fetched user data:", users);
+
+      // Map user names
+      const memberNames = memberIds.map((id) => {
+        const user = users.find((u) => u.id === id);
+        return user ? user.name : "Unknown User";
+      });
+
+      console.log("Channel members:", memberNames);
+
+      // Find the other user (assuming 1-on-1 chat)
+      const otherUser = users.find((u) => u.id !== client.userID);
+      const otherUserName = otherUser ? otherUser.name : "Unknown User";
+      console.log("Other user name:", otherUserName);
+
+      // Set the channel name to the other user's name
+      if (otherUserName && otherUserName !== "Unknown User") {
+        navigation.setOptions({
+          headerTitle: otherUserName,
+        });
+      }
+    };
+
+    createAndWatchChannel();
+  }, [channelId, client, navigation, supabase]);
+
+  if (!channelId || !channel) {
+    return <ActivityIndicator size="large" color={Colors.light.accent} />;
+  }
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
-      <Channel channel={channel}>
+      <Channel
+        channel={channel}
+        overrideOwnCapabilities={{
+          uploadFile: false,
+          sendLinks: false,
+        }}
+      >
         <MessageList />
         <MessageInput />
       </Channel>
     </SafeAreaView>
   );
 }
+
 ```
 
 # components\ChannelList.tsx
 
 ```tsx
+import React, { useCallback, useEffect, useState } from "react";
+import { useNavigation } from "@react-navigation/native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/lib/supabase";
+import { Colors } from "@/constants/Colors";
+import { connectUser } from "@/lib/streamChat";
+import { useChatContext, ChannelList } from "stream-chat-expo";
+import { StreamChat } from "stream-chat";
+import { ActivityIndicator } from "react-native";
 
+type Match = {
+  id: string;
+  name: string;
+  avatar_url: string;
+};
 
-
-
-import React, { useEffect, useState } from 'react';
-import { Text } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { ChannelList, useChatContext } from 'stream-chat-expo';
-import { useNavigation } from '@react-navigation/native';
-import { useAuth } from '@/hooks/useAuth';
-
-
-export default function ChannelListScreen() {
+export default function Inbox() {
+  const [matches, setMatches] = useState<Match[]>([]);
   const navigation = useNavigation();
-  const { client } = useChatContext();
   const session = useAuth();
+  const { client } = useChatContext();
   const [clientReady, setClientReady] = useState(false);
-  const [myChannel, setChannel] = useState();
-  
+  const [myChannels, setChannels] = useState();
+  const [matchesFetched, setMatchesFetched] = useState(false);
 
-  useEffect(() => {
-    const setupClient = async () => {
+  let connectingUser = false;
+
+  function generateShortChannelId(userId1: string, userId2: string): string {
+    // Sort the user IDs to ensure consistency
+    const sortedIds = [userId1, userId2].sort();
+
+    // Combine the first 8 characters of each ID
+    const combined = sortedIds[0].slice(0, 8) + sortedIds[1].slice(0, 8);
+
+    // Simple hash function
+    let hash = 0;
+    for (let i = 0; i < combined.length; i++) {
+      const char = combined.charCodeAt(i);
+      hash = (hash << 5) - hash + char;
+      hash = hash & hash; // Convert to 32-bit integer
+    }
+
+    // Convert hash to a string and take the first 16 characters
+    return Math.abs(hash).toString(36).slice(0, 16);
+  }
+
+  // Function to connect user
+  const setupClient = useCallback(async () => {
+    if (!session?.user?.id || clientReady) return;
+
+    try {
+      // TODO: Add logic to check if user is already connected (at the end of the onboarding the user gets created in stream chat
+      console.log("Connecting user...");
+      await connectUser({ id: session.user.id });
+      console.log("User connected successfully");
+      setClientReady(true);
+    } catch (error) {
+      console.error("Failed to connect user", error);
+    }
+  }, [session?.user?.id, clientReady]);
+
+  // Function to fetch matches
+  const fetchMatches = useCallback(async () => {
+    if (!clientReady || matchesFetched) return;
+
+    try {
+      console.log("Fetching matches...");
+
       try {
-        if (!session?.user?.id) return;
+        const { data: matches, error } = await supabase
+          .from("matches")
+          .select(
+            "*, user1:profiles_test!user1_id(*), user2:profiles_test!user2_id(*)"
+          )
+          .or(`user1_id.eq.${session.user.id},user2_id.eq.${session.user.id}`)
+          .eq("matched", true);
 
-        // await client.connectUser(
-        //   {
-        //     id: session.user.id,
-        //     name: session.user.email,
-        //   },
-        //   client.devToken(session.user.id)
-        // );
+        if (error) throw error;
 
-        console.log('connectUser')
-        await client.connectUser(
-          {
-              id: "Crushy",
-              name: 'Crushy',
-              image: 'https://getstream.io/random_svg/?name=John',
-          },
-          // client.devToken('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiQ3J1c2h5In0.7M2-tacCjPbnFaIDf56-oHZ6ammF9euZx9mKs0MhL30'),
-          client.devToken('Crushy'),
-        );
+        // Ensure all users exist in Stream Chat
+        const allUsers = matches.flatMap((match) => [match.user1, match.user2]);
+        await ensureUsersExist(client, allUsers);
 
-        try {
-          const channel = client.channel('messaging', 'mikroleap', {
-            members: ["Crushy", 'mikroleap'],
+        const channelPromises = matches.map(async (match) => {
+          const otherUser =
+            match.user1_id === session.user.id ? match.user2 : match.user1;
+          const channelId = generateShortChannelId(
+            session.user.id,
+            otherUser.id
+          );
+
+          console.log(
+            `Attempting to create/fetch channel for users: ${session.user.id} and ${otherUser.id}`
+          );
+          console.log(`Generated channel ID: ${channelId}`);
+
+          let channel = client.channel("messaging", channelId, {
+            members: [session.user.id, otherUser.id],
+            name: otherUser.name,
           });
-          await channel.watch();
 
-          setChannel(channel);
-          console.log('Channel set up successfully');
-        } catch (error) {
-          console.error('Error setting up channel:', error);
-        }
+          try {
+            await channel.create();
+            console.log("Channel created successfully:", channel.id);
+          } catch (error) {
+            if (error.code === 4) {
+              console.log("Channel already exists:", channel.id);
+            } else {
+              console.error("Error creating channel:", error);
+            }
+          }
 
-        setClientReady(true);
+          return channel;
+        });
+
+        const createdChannels = await Promise.all(channelPromises);
+        setChannels(createdChannels);
       } catch (error) {
-        console.error('Failed to connect user', error);
+        console.error("Error fetching matches:", error);
       }
-    };
 
-    if (client) setupClient();
+      setMatchesFetched(true);
+    } catch (error) {
+      console.error("Error fetching matches:", error);
+    }
+  }, [clientReady, matchesFetched]);
 
-    // return () => {
-    //   client?.disconnectUser();
-    //   setClientReady(false);
-    // };
-  }, [session, client]);
+  // Effect for connecting user
+  useEffect(() => {
+    if (client && !clientReady) {
+      setupClient();
+    }
+  }, [client, clientReady, setupClient]);
 
-  if (!clientReady) return <Text>Loading...</Text>;
+  // Effect for fetching matches
+  useEffect(() => {
+    if (clientReady && !matchesFetched) {
+      fetchMatches();
+    }
+  }, [clientReady, matchesFetched, fetchMatches]);
+
+  async function ensureUsersExist(
+    client: StreamChat,
+    users: { id: string; name: string }[]
+  ) {
+    for (const user of users) {
+      try {
+        await client.upsertUser({ id: user.id, name: user.name });
+        console.log(`User ${user.id} ensured in Stream Chat`);
+      } catch (error) {
+        console.error(`Error ensuring user ${user.id} exists:`, error);
+      }
+    }
+  }
+
+  if (!session?.user) {
+    return null;
+  }
+
+  if (!clientReady || !matchesFetched) {
+    return <ActivityIndicator size="large" color={Colors.light.accent} />;
+  }
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <ChannelList
-        filters={{ members: { $in: ['Crushy'] } }}
-        sort={{}}
+        filters={{
+          type: "messaging",
+          members: { $in: [session.user.id] },
+        }}
+        sort={{ last_message_at: -1 }}
         onSelect={(channel) => {
-          console.log(channel)
-          navigation.navigate('ChatChannel', { channel });
+          console.log("Selected channel:", channel.id);
+          navigation.navigate("ChatChannel", {
+            channelId: channel.id,
+          });
         }}
       />
     </SafeAreaView>
   );
 }
+
 ```
 
 # components\Avatar.tsx
@@ -3427,610 +4191,6 @@ const styles = StyleSheet.create({
 })
 ```
 
-# constants\ToastConfig.ts
-
-```ts
-import React from "react"
-import { View, Text } from "react-native-ui-lib"
-import Toast, { BaseToast, ErrorToast } from 'react-native-toast-message';
-
-
-export const toastConfig = {
-
-    success: (props) => (
-        <BaseToast
-            { ...props }
-            style={{ borderLeftColor: 'pink' }}
-contentContainerStyle = {{ paddingHorizontal: 15 }}
-text1Style = {{
-    fontSize: 15,
-        fontWeight: '400'
-}}
-/>
-    ),
-
-error: (props) => (
-    <ErrorToast
-            { ...props }
-            text1Style = {{ fontSize: 17 }}
-text2Style = {{ fontSize: 15 }}
-/>
-    ),
-    /*
-      Or create a completely new type - `default`,
-      building the layout from scratch.
-  
-      I can consume any custom `props` I want.
-      They will be passed when calling the `show` method (see below)
-    */
-    default: ({ text1, text2, props }) => (
-    <View style= {{ display: 'flex', justifyContent: 'center', width: '94%', backgroundColor: Colors.light.accent, borderRadius: 8, padding: 16 }}>
-        <Text style={ { fontFamily: 'HeadingBold', color: 'white' } }> { text1 } < /Text>
-            < Text style = {{ fontFamily: 'BodyRegular', color: 'white' }}> { text2 } < /Text>
-{/* <Text>{props.uuid}</Text> */ }
-</View>
-    )
-};
-```
-
-# constants\Styles.ts
-
-```ts
-import { Colors } from '@/constants/Colors';
-import { Platform, StyleSheet } from 'react-native';
-
-export const defaultStyles = StyleSheet.create({
-    SafeAreaView: {
-        flex: 1,
-        padding: 16,
-        backgroundColor: Colors.light.background,
-    },
-    innerContainer: {
-        flex: 1,
-    },
-    body: {
-        fontFamily: 'BodyRegular',
-        color: Colors.light.text,
-        fontSize: 16,
-        lineHeight: 24
-    },
-    bodyBold: {
-        fontFamily: 'BodyBold',
-        color: Colors.light.text,
-        fontSize: 16,
-        lineHeight: 24
-    },
-    buttonShadow: {
-        ...Platform.select({
-            ios: {
-                shadowColor: "#ccc",
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.5,
-                shadowRadius: 3,
-            },
-            android: {
-                elevation: 3,
-            },
-        }),
-    },
-    h2: {
-        fontSize: 24,
-        fontFamily: 'HeadingBold',
-        color: Colors.light.text
-    },
-    inputLabel: {
-        fontSize: 16,
-        fontFamily: 'BodySemiBold',
-        color: Colors.light.text
-    },
-    button: {
-        display: 'flex',
-        backgroundColor: Colors.light.primary,
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderWidth: 2,
-        borderColor: Colors.light.primaryLight,
-        paddingTop: 6,
-        paddingHorizontal: 32,
-        borderRadius: 8,
-        minHeight: 48,
-    },
-    buttonLabel: {
-        fontSize: 14,
-        fontFamily: 'BodyBold',
-        color: Colors.light.textInverted,
-        textTransform: 'uppercase'
-    },
-    buttonSecondary: {
-        display: 'flex',
-        backgroundColor: Colors.light.background,
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderWidth: 1,
-        borderColor: Colors.light.tertiary,
-        paddingTop: 6,
-        paddingHorizontal: 32,
-        borderRadius: 8,
-        minHeight: 48,
-    },
-    buttonSecondaryLabel: {
-        fontSize: 14,
-        fontFamily: 'BodyBold',
-        color: Colors.light.primary,
-        textTransform: 'uppercase'
-    },
-    settingListButton: {
-        display: 'flex',
-        backgroundColor: Colors.light.background,
-        justifyContent: 'space-between',
-        borderWidth: 1,
-        borderColor: Colors.light.tertiary,
-        padding: 16,
-        borderRadius: 8,
-        height: 64,
-        maxHeight: 64,
-        borderTopWidth: 0,
-    },
-    settingListButtonLabel: {
-        fontSize: 16,
-        fontFamily: 'BodySemiBold',
-        color: Colors.light.text
-    },
-    radioButton: {
-        flex: 1,
-        backgroundColor: Colors.light.background,
-        justifyContent: 'space-between',
-        borderWidth: 1,
-        borderColor: Colors.light.tertiary,
-        padding: 16,
-        borderRadius: 8,
-        marginBottom: 16,
-        height: 64,
-    },
-    radioButtonLabel: {
-        fontSize: 16,
-        fontFamily: 'BodySemiBold',
-        color: Colors.light.text
-    },
-    checkboxButton: {
-        flex: 1,
-        borderWidth: 1,
-        borderColor: Colors.light.tertiary,
-        padding: 16,
-        borderRadius: 8,
-        marginBottom: 16,
-        height: 64,
-        backgroundColor: Colors.light.background,
-    },
-    checkboxButtonLabel: {
-        fontSize: 16,
-        fontFamily: 'BodySemiBold',
-        color: Colors.light.text
-    },
-    noRadius: {
-        borderRadius: 0
-    },
-});
-```
-
-# constants\Interests.ts
-
-```ts
-const hobbiesInterests = [
-    [
-        { value: "1", label: "Hiking" },
-        { value: "2", label: "Camping" },
-        { value: "3", label: "Fishing" },
-        { value: "4", label: "Hunting" },
-        { value: "5", label: "Rock Climbing" },
-        { value: "6", label: "Bird Watching" },
-        { value: "7", label: "Kayaking" },
-        { value: "8", label: "Canoeing" },
-        { value: "9", label: "Surfing" },
-        { value: "10", label: "Snowboarding" },
-        { value: "11", label: "Skiing" },
-        { value: "12", label: "Mountain Biking" },
-        { value: "13", label: "Road Biking" },
-        { value: "14", label: "Running" },
-        { value: "15", label: "Jogging" },
-        { value: "16", label: "Trail Running" },
-        { value: "17", label: "Paddleboarding" },
-        { value: "18", label: "Sailing" },
-        { value: "19", label: "Horseback Riding" },
-        { value: "20", label: "Gardening" },
-        { value: "21", label: "Stargazing" },
-        { value: "22", label: "Geocaching" },
-        { value: "23", label: "Off-roading" },
-        { value: "24", label: "Archery" },
-        { value: "25", label: "Skateboarding" },
-    ],
-    [
-        { value: "26", label: "Basketball" },
-        { value: "27", label: "Football (American)" },
-        { value: "28", label: "Soccer" },
-        { value: "29", label: "Baseball" },
-        { value: "30", label: "Softball" },
-        { value: "31", label: "Volleyball" },
-        { value: "32", label: "Tennis" },
-        { value: "33", label: "Badminton" },
-        { value: "34", label: "Golf" },
-        { value: "35", label: "Swimming" },
-        { value: "36", label: "Martial Arts" },
-        { value: "37", label: "Yoga" },
-        { value: "38", label: "Pilates" },
-        { value: "39", label: "CrossFit" },
-        { value: "40", label: "Weightlifting" },
-        { value: "41", label: "Boxing" },
-        { value: "42", label: "Wrestling" },
-        { value: "43", label: "Cheerleading" },
-        { value: "44", label: "Gymnastics" },
-        { value: "45", label: "Dance" },
-        { value: "46", label: "Ice Hockey" },
-        { value: "47", label: "Lacrosse" },
-        { value: "48", label: "Cricket" },
-        { value: "49", label: "Ultimate Frisbee" },
-        { value: "50", label: "Rugby" },
-    ],
-    [
-        { value: "51", label: "Painting" },
-        { value: "52", label: "Drawing" },
-        { value: "53", label: "Sketching" },
-        { value: "54", label: "Sculpting" },
-        { value: "55", label: "Pottery" },
-        { value: "56", label: "Knitting" },
-        { value: "57", label: "Crocheting" },
-        { value: "58", label: "Sewing" },
-        { value: "59", label: "Quilting" },
-        { value: "60", label: "Embroidery" },
-        { value: "61", label: "Woodworking" },
-        { value: "62", label: "Metalworking" },
-        { value: "63", label: "Calligraphy" },
-        { value: "64", label: "Photography" },
-        { value: "65", label: "Videography" },
-        { value: "66", label: "Filmmaking" },
-        { value: "67", label: "Acting" },
-        { value: "68", label: "Singing" },
-        { value: "69", label: "Songwriting" },
-        { value: "70", label: "Playing Musical Instruments (Guitar, Piano, Drums, etc.)" },
-        { value: "71", label: "Dancing (Ballet, Hip Hop, Salsa, etc.)" },
-        { value: "72", label: "Crafting" },
-        { value: "73", label: "Jewelry Making" },
-        { value: "74", label: "Writing (Poetry, Novels, etc.)" },
-        { value: "75", label: "Journaling" },
-    ],
-    [
-        { value: "76", label: "Reading" },
-        { value: "77", label: "Watching Movies" },
-        { value: "78", label: "Binge-watching" },
-        { value: "79", label: "Theater" },
-        { value: "80", label: "Opera" },
-        { value: "81", label: "Stand-up Comedy" },
-        { value: "82", label: "Attending Concerts" },
-        { value: "83", label: "Music Festivals" },
-        { value: "84", label: "Podcasts" },
-        { value: "85", label: "Gaming (Video Games, Board Games, Card Games, etc.)" },
-        { value: "86", label: "Puzzle Solving (Crosswords, Sudoku, etc.)" },
-        { value: "87", label: "Trivia" },
-        { value: "88", label: "Watching Sports" },
-        { value: "89", label: "Cosplaying" },
-        { value: "90", label: "Collecting (Stamps, Coins, Comics, etc.)" },
-        { value: "91", label: "Magic Tricks" },
-    ],
-    [
-        { value: "92", label: "Cooking" },
-        { value: "93", label: "Baking" },
-        { value: "94", label: "Grilling/BBQ" },
-        { value: "95", label: "Mixology" },
-        { value: "96", label: "Wine Tasting" },
-        { value: "97", label: "Beer Brewing" },
-        { value: "98", label: "Coffee Tasting" },
-        { value: "99", label: "Tea Tasting" },
-        { value: "100", label: "Food Blogging" },
-        { value: "101", label: "Trying New Restaurants" },
-        { value: "102", label: "Vegetarian/Vegan Cooking" },
-    ],
-    [
-        { value: "103", label: "Traveling" },
-        { value: "104", label: "Road Trips" },
-        { value: "105", label: "Exploring New Cities" },
-        { value: "106", label: "Visiting Museums" },
-        { value: "107", label: "Visiting Art Galleries" },
-        { value: "108", label: "Attending Festivals" },
-        { value: "109", label: "Volunteering" },
-        { value: "110", label: "Charity Work" },
-        { value: "111", label: "Social Clubs" },
-        { value: "112", label: "Book Clubs" },
-        { value: "113", label: "Networking Events" },
-        { value: "114", label: "Public Speaking" },
-        { value: "115", label: "Debate" },
-        { value: "116", label: "Language Learning" },
-        { value: "117", label: "Cultural Events" },
-    ],
-    [
-        { value: "118", label: "Coding" },
-        { value: "119", label: "Robotics" },
-        { value: "120", label: "3D Printing" },
-        { value: "121", label: "Virtual Reality" },
-        { value: "122", label: "Augmented Reality" },
-        { value: "123", label: "Building Computers" },
-        { value: "124", label: "Electronics" },
-        { value: "125", label: "Astronomy" },
-        { value: "126", label: "Science Experiments" },
-        { value: "127", label: "Drone Flying" },
-    ],
-    [
-        { value: "128", label: "Chess" },
-        { value: "129", label: "Strategy Games" },
-        { value: "130", label: "Philosophy" },
-        { value: "131", label: "History" },
-        { value: "132", label: "Archaeology" },
-        { value: "133", label: "Anthropology" },
-        { value: "134", label: "Psychology" },
-        { value: "135", label: "Economics" },
-        { value: "136", label: "Politics" },
-        { value: "137", label: "Debate" },
-        { value: "138", label: "Mathematics" },
-        { value: "139", label: "Cryptography" },
-        { value: "140", label: "Puzzles" },
-    ],
-    [
-        { value: "141", label: "Bird Watching" },
-        { value: "142", label: "Wildlife Photography" },
-        { value: "143", label: "Beekeeping" },
-        { value: "144", label: "Dog Training" },
-        { value: "145", label: "Cat Care" },
-        { value: "146", label: "Reptile Keeping" },
-        { value: "147", label: "Fish Keeping" },
-        { value: "148", label: "Animal Rescue" },
-        { value: "149", label: "Farming" },
-        { value: "150", label: "Permaculture" },
-    ],
-    [
-        { value: "151", label: "Collecting Antiques" },
-        { value: "152", label: "Miniatures" },
-        { value: "153", label: "Model Building" },
-        { value: "154", label: "Trainspotting" },
-        { value: "155", label: "Urban Exploration" },
-        { value: "156", label: "Home Improvement" },
-        { value: "157", label: "Interior Design" },
-        { value: "158", label: "Feng Shui" },
-        { value: "159", label: "Meditation" },
-        { value: "160", label: "Astrology" },
-        { value: "161", label: "Tarot Reading" },
-        { value: "162", label: "Numerology" },
-        { value: "163", label: "Genealogy" },
-        { value: "164", label: "Thrill Seeking" },
-        { value: "165", label: "Fandom Activities (Sci-Fi, Fantasy, etc.)" },
-        { value: "166", label: "Vlogging" },
-        { value: "167", label: "Blogging" },
-        { value: "168", label: "Sustainable Living" },
-        { value: "169", label: "Zero Waste Lifestyle" },
-        { value: "170", label: "Environmental Activism" }
-    ],
-];
-
-// const hobbiesInterests = [
-//     { value: 1, label: "Hiking" },
-//     { value: 2, label: "Camping" },
-//     { value: 3, label: "Fishing" },
-//     { value: 4, label: "Hunting" },
-//     { value: 5, label: "Rock Climbing" },
-//     { value: 6, label: "Bird Watching" },
-//     { value: 7, label: "Kayaking" },
-//     { value: 8, label: "Canoeing" },
-//     { value: 9, label: "Surfing" },
-//     { value: 10, label: "Snowboarding" },
-//     { value: 11, label: "Skiing" },
-//     { value: 12, label: "Mountain Biking" },
-//     { value: 13, label: "Road Biking" },
-//     { value: 14, label: "Running" },
-//     { value: 15, label: "Jogging" },
-//     { value: 16, label: "Trail Running" },
-//     { value: 17, label: "Paddleboarding" },
-//     { value: 18, label: "Sailing" },
-//     { value: 19, label: "Horseback Riding" },
-//     { value: 20, label: "Gardening" },
-//     { value: 21, label: "Stargazing" },
-//     { value: 22, label: "Geocaching" },
-//     { value: 23, label: "Off-roading" },
-//     { value: 24, label: "Archery" },
-//     { value: 25, label: "Skateboarding" },
-//     { value: 26, label: "Basketball" },
-//     { value: 27, label: "Football (American)" },
-//     { value: 28, label: "Soccer" },
-//     { value: 29, label: "Baseball" },
-//     { value: 30, label: "Softball" },
-//     { value: 31, label: "Volleyball" },
-//     { value: 32, label: "Tennis" },
-//     { value: 33, label: "Badminton" },
-//     { value: 34, label: "Golf" },
-//     { value: 35, label: "Swimming" },
-//     { value: 36, label: "Martial Arts" },
-//     { value: 37, label: "Yoga" },
-//     { value: 38, label: "Pilates" },
-//     { value: 39, label: "CrossFit" },
-//     { value: 40, label: "Weightlifting" },
-//     { value: 41, label: "Boxing" },
-//     { value: 42, label: "Wrestling" },
-//     { value: 43, label: "Cheerleading" },
-//     { value: 44, label: "Gymnastics" },
-//     { value: 45, label: "Dance" },
-//     { value: 46, label: "Ice Hockey" },
-//     { value: 47, label: "Lacrosse" },
-//     { value: 48, label: "Cricket" },
-//     { value: 49, label: "Ultimate Frisbee" },
-//     { value: 50, label: "Rugby" },
-//     { value: 51, label: "Painting" },
-//     { value: 52, label: "Drawing" },
-//     { value: 53, label: "Sketching" },
-//     { value: 54, label: "Sculpting" },
-//     { value: 55, label: "Pottery" },
-//     { value: 56, label: "Knitting" },
-//     { value: 57, label: "Crocheting" },
-//     { value: 58, label: "Sewing" },
-//     { value: 59, label: "Quilting" },
-//     { value: 60, label: "Embroidery" },
-//     { value: 61, label: "Woodworking" },
-//     { value: 62, label: "Metalworking" },
-//     { value: 63, label: "Calligraphy" },
-//     { value: 64, label: "Photography" },
-//     { value: 65, label: "Videography" },
-//     { value: 66, label: "Filmmaking" },
-//     { value: 67, label: "Acting" },
-//     { value: 68, label: "Singing" },
-//     { value: 69, label: "Songwriting" },
-//     { value: 70, label: "Playing Musical Instruments (Guitar, Piano, Drums, etc.)" },
-//     { value: 71, label: "Dancing (Ballet, Hip Hop, Salsa, etc.)" },
-//     { value: 72, label: "Crafting" },
-//     { value: 73, label: "Jewelry Making" },
-//     { value: 74, label: "Writing (Poetry, Novels, etc.)" },
-//     { value: 75, label: "Journaling" },
-//     { value: 76, label: "Reading" },
-//     { value: 77, label: "Watching Movies" },
-//     { value: 78, label: "Binge-watching TV Shows" },
-//     { value: 79, label: "Theater" },
-//     { value: 80, label: "Opera" },
-//     { value: 81, label: "Stand-up Comedy" },
-//     { value: 82, label: "Attending Concerts" },
-//     { value: 83, label: "Music Festivals" },
-//     { value: 84, label: "Podcasts" },
-//     { value: 85, label: "Gaming (Video Games, Board Games, Card Games, etc.)" },
-//     { value: 86, label: "Puzzle Solving (Crosswords, Sudoku, etc.)" },
-//     { value: 87, label: "Trivia" },
-//     { value: 88, label: "Watching Sports" },
-//     { value: 89, label: "Cosplaying" },
-//     { value: 90, label: "Collecting (Stamps, Coins, Comics, etc.)" },
-//     { value: 91, label: "Magic Tricks" },
-//     { value: 92, label: "Cooking" },
-//     { value: 93, label: "Baking" },
-//     { value: 94, label: "Grilling/BBQ" },
-//     { value: 95, label: "Mixology" },
-//     { value: 96, label: "Wine Tasting" },
-//     { value: 97, label: "Beer Brewing" },
-//     { value: 98, label: "Coffee Tasting" },
-//     { value: 99, label: "Tea Tasting" },
-//     { value: 100, label: "Food Blogging" },
-//     { value: 101, label: "Trying New Restaurants" },
-//     { value: 102, label: "Vegetarian/Vegan Cooking" },
-//     { value: 103, label: "Traveling" },
-//     { value: 104, label: "Road Trips" },
-//     { value: 105, label: "Exploring New Cities" },
-//     { value: 106, label: "Visiting Museums" },
-//     { value: 107, label: "Visiting Art Galleries" },
-//     { value: 108, label: "Attending Festivals" },
-//     { value: 109, label: "Volunteering" },
-//     { value: 110, label: "Charity Work" },
-//     { value: 111, label: "Social Clubs" },
-//     { value: 112, label: "Book Clubs" },
-//     { value: 113, label: "Networking Events" },
-//     { value: 114, label: "Public Speaking" },
-//     { value: 115, label: "Debate" },
-//     { value: 116, label: "Language Learning" },
-//     { value: 117, label: "Cultural Events" },
-//     { value: 118, label: "Coding" },
-//     { value: 119, label: "Robotics" },
-//     { value: 120, label: "3D Printing" },
-//     { value: 121, label: "Virtual Reality" },
-//     { value: 122, label: "Augmented Reality" },
-//     { value: 123, label: "Building Computers" },
-//     { value: 124, label: "Electronics" },
-//     { value: 125, label: "Astronomy" },
-//     { value: 126, label: "Science Experiments" },
-//     { value: 127, label: "Drone Flying" },
-//     { value: 128, label: "Chess" },
-//     { value: 129, label: "Strategy Games" },
-//     { value: 130, label: "Philosophy" },
-//     { value: 131, label: "History" },
-//     { value: 132, label: "Archaeology" },
-//     { value: 133, label: "Anthropology" },
-//     { value: 134, label: "Psychology" },
-//     { value: 135, label: "Economics" },
-//     { value: 136, label: "Politics" },
-//     { value: 137, label: "Debate" },
-//     { value: 138, label: "Mathematics" },
-//     { value: 139, label: "Cryptography" },
-//     { value: 140, label: "Puzzles" },
-//     { value: 141, label: "Bird Watching" },
-//     { value: 142, label: "Wildlife Photography" },
-//     { value: 143, label: "Beekeeping" },
-//     { value: 144, label: "Dog Training" },
-//     { value: 145, label: "Cat Care" },
-//     { value: 146, label: "Reptile Keeping" },
-//     { value: 147, label: "Fish Keeping" },
-//     { value: 148, label: "Animal Rescue" },
-//     { value: 149, label: "Farming" },
-//     { value: 150, label: "Permaculture" },
-//     { value: 151, label: "Collecting Antiques" },
-//     { value: 152, label: "Miniatures" },
-//     { value: 153, label: "Model Building" },
-//     { value: 154, label: "Trainspotting" },
-//     { value: 155, label: "Urban Exploration" },
-//     { value: 156, label: "Home Improvement" },
-//     { value: 157, label: "Interior Design" },
-//     { value: 158, label: "Feng Shui" },
-//     { value: 159, label: "Meditation" },
-//     { value: 160, label: "Astrology" },
-//     { value: 161, label: "Tarot Reading" },
-//     { value: 162, label: "Numerology" },
-//     { value: 163, label: "Genealogy" },
-//     { value: 164, label: "Thrill Seeking (Skydiving, Bungee Jumping, etc.)" },
-//     { value: 165, label: "Fandom Activities (Sci-Fi, Fantasy, etc.)" },
-//     { value: 166, label: "Vlogging" },
-//     { value: 167, label: "Blogging" },
-//     { value: 168, label: "Sustainable Living" },
-//     { value: 169, label: "Zero Waste Lifestyle" },
-//     { value: 170, label: "Environmental Activism" }
-// ];
-
-
-
-export default hobbiesInterests;
-
-```
-
-# constants\Colors.ts
-
-```ts
-/**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
- */
-
-const tintColorLight = '#0a7ea4';
-const tintColorDark = '#fff';
-
-export const Colors = {
-  light: {
-    white: '#FFFFFF',
-    black: '#000000',
-    text: '#341D1D',
-    textSecondary: '#867272',
-    textInverted: '#FFFFFF',
-    background: '#FDFFFF',
-    backgroundSecondary: '#FFFAF8',
-    tint: tintColorLight,
-    icon: '#687076',
-    tabIconDefault: '#687076',
-    tabIconSelected: tintColorLight,
-    primary: '#DA2778',
-    primaryLight: '#F76BB1',
-    accent: '#7A37D0',
-    secondary: '#F1F1F1',
-    tertiary: '#D9D9D9',
-  },
-  dark: {
-    text: '#ECEDEE',
-    background: '#151718',
-    tint: tintColorDark,
-    icon: '#9BA1A6',
-    tabIconDefault: '#9BA1A6',
-    tabIconSelected: tintColorDark,
-    tertiary: '#D9D9D9',
-  },
-};
-
-```
-
 # app-example\_layout.tsx
 
 ```tsx
@@ -4512,260 +4672,341 @@ import { useNavigation } from '@react-navigation/native'
 import { useAppContext } from '@/providers/AppProvider';
 import { storeData } from '@/utils/storage';
 import { isLoading } from 'expo-font';
+import { connectUser } from "@/lib/streamChat";
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 const useOnboardingStore = create((set) => ({
-    name: '',
-    age: null,
-    gender: null,
-    pronouns: [],
-    relationship: null,
-    genderPreferences: null,
-    interests: [],
-    photoUploaded: false,
-    dataUploaded: false,
-    onboardingCompleted: false,
-    setName: () => set((state: { name: string; }) => ({ name: state.name })),
-    setAge: () => set((state: { age: string; }) => ({ age: state.age })),
-    setGender: () => set((state: { gender: string; }) => ({ gender: state.gender })),
-    setPronouns: () => set((state: { pronouns: object; }) => ({ pronouns: state.pronouns })),
-    setRelationship: () => set((state: { relationship: string; }) => ({ relationship: state.relationship })),
-    setGenderPreferences: () => set((state: { genderPreferences: string; }) => ({ genderPreferences: state.genderPreferences })),
-    setInterests: () => set((state: { interests: object; }) => ({ interests: state.interests })),
-}))
-
-
+  name: "",
+  age: null,
+  gender: null,
+  pronouns: [],
+  relationship: null,
+  genderPreferences: null,
+  interests: [],
+  photoUploaded: false,
+  dataUploaded: false,
+  onboardingCompleted: false,
+  setName: () => set((state: { name: string }) => ({ name: state.name })),
+  setAge: () => set((state: { age: string }) => ({ age: state.age })),
+  setGender: () =>
+    set((state: { gender: string }) => ({ gender: state.gender })),
+  setPronouns: () =>
+    set((state: { pronouns: object }) => ({ pronouns: state.pronouns })),
+  setRelationship: () =>
+    set((state: { relationship: string }) => ({
+      relationship: state.relationship,
+    })),
+  setGenderPreferences: () =>
+    set((state: { genderPreferences: string }) => ({
+      genderPreferences: state.genderPreferences,
+    })),
+  setInterests: () =>
+    set((state: { interests: object }) => ({ interests: state.interests })),
+}));
 
 export default function Onboarding() {
-    const session = useAuth();
-    const [currentStep, setCurrentStep] = useState(0);
-    const flatListRef = useRef(null);
-    const { isLoading, setIsLoading } = useAppContext();
-    const [listKey, setListKey] = useState(0); // used to force re-render of FlatList
-    const [name, age, gender, pronouns, relationship, genderPreferences, interests, photoUploaded, dataUploaded, onboardingCompleted] = useOnboardingStore(
-        useShallow((state) => [state.name, state.age, state.gender, state.pronouns, state.relationship, state.genderPreferences, state.interests, state.photoUploaded, state.dataUploaded, state.onboardingCompleted]),
-    )
-    const toastConfig = {
-        default: ({ text1, text2, props }) => (
-            <View style={{ display: 'flex', justifyContent: 'center', width: '94%', backgroundColor: Colors.light.accent, borderColor: Colors.light.white, borderRadius: 8, padding: 16 }}>
-                <Text style={{ fontFamily: 'HeadingBold', color: Colors.light.textInverted }}>{text1}</Text>
-                <Text style={{ fontFamily: 'BodyRegular', color: Colors.light.textInverted }}>{text2}</Text>
-            </View>
-        )
-    };
+  const session = useAuth();
+  const [currentStep, setCurrentStep] = useState(0);
+  const flatListRef = useRef(null);
+  const { isLoading, setIsLoading } = useAppContext();
+  const [listKey, setListKey] = useState(0); // used to force re-render of FlatList
+  const [
+    name,
+    age,
+    gender,
+    pronouns,
+    relationship,
+    genderPreferences,
+    interests,
+    photoUploaded,
+    dataUploaded,
+    onboardingCompleted,
+  ] = useOnboardingStore(
+    useShallow((state) => [
+      state.name,
+      state.age,
+      state.gender,
+      state.pronouns,
+      state.relationship,
+      state.genderPreferences,
+      state.interests,
+      state.photoUploaded,
+      state.dataUploaded,
+      state.onboardingCompleted,
+    ])
+  );
+  const toastConfig = {
+    default: ({ text1, text2, props }) => (
+      <View
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          width: "94%",
+          backgroundColor: Colors.light.accent,
+          borderColor: Colors.light.white,
+          borderRadius: 8,
+          padding: 16,
+        }}
+      >
+        <Text
+          style={{
+            fontFamily: "HeadingBold",
+            color: Colors.light.textInverted,
+          }}
+        >
+          {text1}
+        </Text>
+        <Text
+          style={{
+            fontFamily: "BodyRegular",
+            color: Colors.light.textInverted,
+          }}
+        >
+          {text2}
+        </Text>
+      </View>
+    ),
+  };
 
-    const steps: object[] = [
-        { key: '1', title: 'Step 1', component: StepName },
-        { key: '2', title: 'Step 2', component: StepAge },
-        { key: '3', title: 'Step 3', component: StepGender },
-        { key: '4', title: 'Step 4', component: StepPronouns },
-        { key: '6', title: 'Step 6', component: StepRelationship },
-        { key: '7', title: 'Step 7', component: StepGenderPreferences },
-        { key: '8', title: 'Step 8', component: StepInterests },
-        { key: '9', title: 'Step 9', component: StepPhoto },
-    ];
+  const steps: object[] = [
+    { key: "1", title: "Step 1", component: StepName },
+    { key: "2", title: "Step 2", component: StepAge },
+    { key: "3", title: "Step 3", component: StepGender },
+    { key: "4", title: "Step 4", component: StepPronouns },
+    { key: "6", title: "Step 6", component: StepRelationship },
+    { key: "7", title: "Step 7", component: StepGenderPreferences },
+    { key: "8", title: "Step 8", component: StepInterests },
+    { key: "9", title: "Step 9", component: StepPhoto },
+  ];
 
+  function handleNext() {
+    console.log("currentStep:", currentStep);
 
-
-    function handleNext() {
-
-        console.log('currentStep:', currentStep);
-
-        if (currentStep === 0) {
-            if (name.length < 2) {
-                Toast.show({
-                    type: 'default',
-                    text1: '👋 Hey',
-                    text2: 'Your name is too short',
-                });
-                return
-            }
-            // check if name containes the words crushy or crush or official
-            const words = ['crushy', 'crush', 'official', 'admin', 'administrator', 'moderator', 'ceo', 'cmo', 'cto'];
-            const contains = words.some(word => name.toLowerCase().includes(word));
-            if (contains) {
-                Toast.show({
-                    type: 'default',
-                    text1: '👋 Hey',
-                    text2: 'This name is not allowed',
-                });
-                return
-            }
-        }
-        if (currentStep === 1) {
-            if (age === null || parseInt(age) > 111 || parseInt(age) < 17) {
-                Toast.show({
-                    type: 'default',
-                    text1: '👋 Check your age',
-                    text2: 'You have to be 17 or older to continue',
-                });
-                return
-            }
-        }
-        if (currentStep === 2) {
-            if (gender === null) {
-                Toast.show({
-                    type: 'default',
-                    text1: '👋 Hey',
-                    text2: 'Please select your gender',
-                });
-                return
-            }
-        }
-
-        if (currentStep === 3) {
-            if (pronouns === null || pronouns < 1) {
-                Toast.show({
-                    type: 'default',
-                    text1: '👋 Hey',
-                    text2: 'Please select at least one pronoun',
-                });
-                return
-            }
-        }
-
-        if (currentStep === 4) {
-            if (relationship === null || relationship < 1) {
-                Toast.show({
-                    type: 'default',
-                    text1: '👋 Hey',
-                    text2: 'Please select what you are looking for',
-                });
-                return
-            }
-        }
-
-        if (currentStep === 5) {
-            if (genderPreferences === null || genderPreferences < 1) {
-                Toast.show({
-                    type: 'default',
-                    text1: '👋 Hey',
-                    text2: 'Please select your gender preferences',
-                });
-                return
-            }
-        }
-
-        if (currentStep === 6) {
-            if (interests.length === 0) {
-                Toast.show({
-                    type: 'default',
-                    text1: '👋 Hey',
-                    text2: 'Please select at least one hobby or interest',
-                });
-                return
-            }
-        }
-
-        if (currentStep === 7) {
-            if (photoUploaded === false) {
-                Toast.show({
-                    type: 'default',
-                    text1: '👋 Hey',
-                    text2: 'Please upload a photo',
-                });
-                return
-            } else {
-                saveData();
-                return
-            }
-        }
-
-        if (currentStep < steps.length - 1) {
-            setCurrentStep(currentStep + 1);
-            if (flatListRef.current) {
-                flatListRef.current.scrollToIndex({ index: currentStep + 1 });
-            }
-        }
-    };
-
-    const handleBack = () => {
-        if (currentStep > 0) {
-            setCurrentStep(currentStep - 1);
-            if (flatListRef.current) {
-                flatListRef.current.scrollToIndex({ index: currentStep - 1 });
-            }
-        }
-    };
-
-
-    const saveData = async () => {
-
-        console.log('name:', name);
-        console.log('age:', age);
-        console.log('gender:', gender);
-        console.log('pronouns:', pronouns);
-        console.log('relationship:', relationship);
-        console.log('genderPreferences:', genderPreferences);
-        console.log('interests:', interests);
-
-
-        try {
-            const { data, error } = await supabase
-                .from('profiles_test')
-                .update({
-                    name: name,
-                    age: age,
-                    gender: gender,
-                    pronouns: pronouns,
-                    looking_for: relationship,
-                    gender_preference: genderPreferences,
-                    interests: interests,
-                })
-                .eq('id', session?.user.id)
-                .select();
-
-            if (error) {
-                console.error(error);
-            } else {
-                console.log(data);
-                useOnboardingStore.setState({ dataUploaded: true })
-            }
-        } catch (error) {
-            console.error(error);
-        }
+    if (currentStep === 0) {
+      if (name.length < 2) {
+        Toast.show({
+          type: "default",
+          text1: "👋 Hey",
+          text2: "Your name is too short",
+        });
+        return;
+      }
+      // check if name containes the words crushy or crush or official
+      const words = [
+        "crushy",
+        "crush",
+        "official",
+        "admin",
+        "administrator",
+        "moderator",
+        "ceo",
+        "cmo",
+        "cto",
+      ];
+      const contains = words.some((word) => name.toLowerCase().includes(word));
+      if (contains) {
+        Toast.show({
+          type: "default",
+          text1: "👋 Hey",
+          text2: "This name is not allowed",
+        });
+        return;
+      }
+    }
+    if (currentStep === 1) {
+      if (age === null || parseInt(age) > 111 || parseInt(age) < 17) {
+        Toast.show({
+          type: "default",
+          text1: "👋 Check your age",
+          text2: "You have to be 17 or older to continue",
+        });
+        return;
+      }
+    }
+    if (currentStep === 2) {
+      if (gender === null) {
+        Toast.show({
+          type: "default",
+          text1: "👋 Hey",
+          text2: "Please select your gender",
+        });
+        return;
+      }
     }
 
+    if (currentStep === 3) {
+      if (pronouns === null || pronouns < 1) {
+        Toast.show({
+          type: "default",
+          text1: "👋 Hey",
+          text2: "Please select at least one pronoun",
+        });
+        return;
+      }
+    }
 
+    if (currentStep === 4) {
+      if (relationship === null || relationship < 1) {
+        Toast.show({
+          type: "default",
+          text1: "👋 Hey",
+          text2: "Please select what you are looking for",
+        });
+        return;
+      }
+    }
 
+    if (currentStep === 5) {
+      if (genderPreferences === null || genderPreferences < 1) {
+        Toast.show({
+          type: "default",
+          text1: "👋 Hey",
+          text2: "Please select your gender preferences",
+        });
+        return;
+      }
+    }
 
-    return (
-        <SafeAreaView style={styles.safeArea}>
-            <View>
-                {dataUploaded ? (
-                    <StepFinal />
-                ) : (
-                    <View className='flex h-full justify-between bg-white'>
-                        <FlatList
-                            ref={flatListRef}
-                            data={steps}
-                            horizontal
-                            showsHorizontalScrollIndicator={false}
-                            pagingEnabled
-                            scrollEnabled={false}
-                            renderItem={({ item }) => React.createElement(item.component)}
-                            keyExtractor={item => item.key}
-                        />
-                        <View style={styles.buttonContainer}>
-                            {currentStep > 0 ? (
-                                <Button onPress={handleBack} style={[defaultStyles.buttonSecondary, defaultStyles.buttonShadow]} disabled={isLoading}>
-                                    <Text style={defaultStyles.buttonSecondaryLabel}>Back</Text>
-                                </Button>
-                            ) : (
-                                <View style={{ width: 16 }}></View>
-                            )}
-                            <Button onPress={handleNext} style={[defaultStyles.button, defaultStyles.buttonShadow]} disabled={isLoading}>
-                                <Text style={defaultStyles.buttonLabel}>Next</Text>
-                            </Button>
-                        </View>
-                    </View>
-                )}
-                <Toast config={toastConfig} />
+    if (currentStep === 6) {
+      if (interests.length === 0) {
+        Toast.show({
+          type: "default",
+          text1: "👋 Hey",
+          text2: "Please select at least one hobby or interest",
+        });
+        return;
+      }
+    }
+
+    if (currentStep === 7) {
+      if (photoUploaded === false) {
+        Toast.show({
+          type: "default",
+          text1: "👋 Hey",
+          text2: "Please upload a photo",
+        });
+        return;
+      } else {
+        saveData();
+        return;
+      }
+    }
+
+    if (currentStep < steps.length - 1) {
+      setCurrentStep(currentStep + 1);
+      if (flatListRef.current) {
+        flatListRef.current.scrollToIndex({ index: currentStep + 1 });
+      }
+    }
+  }
+
+  const handleBack = () => {
+    if (currentStep > 0) {
+      setCurrentStep(currentStep - 1);
+      if (flatListRef.current) {
+        flatListRef.current.scrollToIndex({ index: currentStep - 1 });
+      }
+    }
+  };
+
+  const saveData = async () => {
+    console.log("name:", name);
+    console.log("age:", age);
+    console.log("gender:", gender);
+    console.log("pronouns:", pronouns);
+    console.log("relationship:", relationship);
+    console.log("genderPreferences:", genderPreferences);
+    console.log("interests:", interests);
+
+    try {
+      const { data, error } = await supabase
+        .from("profiles_test")
+        .update({
+          name: name,
+          age: age,
+          gender: gender,
+          pronouns: pronouns,
+          looking_for: relationship,
+          gender_preference: genderPreferences,
+          interests: interests,
+        })
+        .eq("id", session?.user.id)
+        .select();
+
+      // Create user in Stream Chat
+      await createStreamChatUser(session.user);
+
+      if (error) {
+        console.error(error);
+      } else {
+        console.log(data);
+        useOnboardingStore.setState({ dataUploaded: true });
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  async function createStreamChatUser(user) {
+    try {
+      await connectUser({ id: user.id, name: name });
+      console.log("User created in Stream Chat");
+    } catch (error) {
+      console.error("Error creating user in Stream Chat:", error);
+      // TODO: Handle user creation error
+      // Optionally, you might want to delete the Supabase user if Stream Chat user creation fails
+      // await supabase.auth.api.deleteUser(user.id);
+      throw new Error("Failed to create user in chat system");
+    }
+  }
+
+  return (
+    <SafeAreaView style={styles.safeArea}>
+      <View>
+        {dataUploaded ? (
+          <StepFinal />
+        ) : (
+          <View className="flex h-full justify-between bg-white">
+            <FlatList
+              ref={flatListRef}
+              data={steps}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              pagingEnabled
+              scrollEnabled={false}
+              renderItem={({ item }) => React.createElement(item.component)}
+              keyExtractor={(item) => item.key}
+            />
+            <View style={styles.buttonContainer}>
+              {currentStep > 0 ? (
+                <Button
+                  onPress={handleBack}
+                  style={[
+                    defaultStyles.buttonSecondary,
+                    defaultStyles.buttonShadow,
+                  ]}
+                  disabled={isLoading}
+                >
+                  <Text style={defaultStyles.buttonSecondaryLabel}>Back</Text>
+                </Button>
+              ) : (
+                <View style={{ width: 16 }}></View>
+              )}
+              <Button
+                onPress={handleNext}
+                style={[defaultStyles.button, defaultStyles.buttonShadow]}
+                disabled={isLoading}
+              >
+                <Text style={defaultStyles.buttonLabel}>Next</Text>
+              </Button>
             </View>
-        </SafeAreaView >
-    );
+          </View>
+        )}
+        <Toast config={toastConfig} />
+      </View>
+    </SafeAreaView>
+  );
 };
 
 
@@ -5813,31 +6054,58 @@ getPotentialDiveMatches: async (userId: string, limit: number) => {
 # api\auth.ts
 
 ```ts
-// api/auth.ts
-
 import { supabase } from '@/lib/supabase';
 
 export async function fetchStreamToken(userId: string): Promise<string> {
   try {
+    console.log("Fetching Stream token for user:", userId);
     const { data, error } = await supabase.functions.invoke('generate-stream-token', {
       body: { user: { id: userId } },
     });
 
-    if (error) throw error;
-    if (!data || !data.token) throw new Error('No token received');
+    if (error) {
+      console.error("Supabase function error:", error);
+      throw error;
+    }
+    if (!data || !data.token) {
+      console.error("No token received. Data:", data);
+      throw new Error('No token received');
+    }
 
+    console.log("Stream token fetched successfully");
     return data.token;
   } catch (error) {
     console.error('Error fetching Stream token:', error);
+    if (error.response) {
+      console.error('Response status:', error.response.status);
+      console.error('Response data:', await error.response.text());
+    }
     throw error;
   }
 }
-```
 
-# supabase\.temp\cli-latest
 
-```
-v1.187.3
+/*
+usage in component:
+
+
+import { fetchStreamToken } from '@/api/auth';
+
+// In your component or hook
+useEffect(() => {
+  const getStreamToken = async () => {
+    try {
+      const token = await fetchStreamToken(userId);
+      console.log("Received token:", token);
+      // Use the token here
+    } catch (error) {
+      console.error("Error getting stream token:", error);
+    }
+  };
+
+  getStreamToken();
+}, [userId]);
+*/
 ```
 
 # scripts\sql\current sql setup.txt
@@ -5876,6 +6144,12 @@ END;
 $$ LANGUAGE plpgsql;
 ```
 
+# supabase\.temp\cli-latest
+
+```
+v1.187.3
+```
+
 # components\__tests__\ThemedText-test.tsx
 
 ```tsx
@@ -5890,141 +6164,6 @@ it(`renders correctly`, () => {
   expect(tree).toMatchSnapshot();
 });
 
-```
-
-# components\ui\Textfields.tsx
-
-```tsx
-
-import { TextInput } from 'react-native';
-import { styled } from 'nativewind';
-
-const Textfield = styled(TextInput, 'w-full radius-4 text-lg bg-gray-100 p-2 rounded-lg h-12 border-2 border-gray-200');
-
-
-export { Textfield }
-```
-
-# components\ui\Containers.tsx
-
-```tsx
-
-import { View } from 'react-native';
-import { styled } from 'nativewind';
-
-const Pageview = styled(View, 'p-6');
-
-
-export { Pageview }
-
-
-```
-
-# components\ui\Buttons.tsx
-
-```tsx
-
-import { Text, Button } from 'react-native-ui-lib';
-import { styled } from 'nativewind';
-
-const PrimaryButton = styled(Button, 'w-full h-12 rounded-lg justify-center bg-primary-600 border-2 border-primary-400 shadow active:shadow-none');
-const PrimaryButtonText = styled(Text, 'uppercase text-center text-white font-bold');
-
-const SecondaryButton = styled(Button, 'w-full h-12 rounded-lg justify-center bg-white border-2 border-primary-200 shadow active:shadow-none');
-const SecondaryButtonText = styled(Text, 'uppercase text-center text-primary-700 font-bold');
-
-
-export { PrimaryButton, PrimaryButtonText, SecondaryButton, SecondaryButtonText }
-```
-
-# components\navigation\TabBarIcon.tsx
-
-```tsx
-// You can explore the built-in icon families and icons on the web at https://icons.expo.fyi/
-
-import Ionicons from '@expo/vector-icons/Ionicons';
-import { type IconProps } from '@expo/vector-icons/build/createIconSet';
-import { type ComponentProps } from 'react';
-
-export function TabBarIcon({ style, ...rest }: IconProps<ComponentProps<typeof Ionicons>['name']>) {
-  return <Ionicons size={28} style={[{ marginBottom: -3 }, style]} {...rest} />;
-}
-
-```
-
-# components\onboarding\StepInterests.tsx
-
-```tsx
-import React, { useCallback, useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
-import { FlashList } from '@shopify/flash-list';
-import { Checkbox } from 'react-native-ui-lib';
-import { Colors } from '@/constants/Colors';
-import { defaultStyles } from '@/constants/Styles';
-import hobbiesInterests from '@/constants/Interests';
-import Spacer from '@/components/Spacer';
-
-const StepInterests = ({ onInterestsSelected }) => {
-    const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
-    const flattenedInterests = React.useMemo(() => hobbiesInterests.flat(), []);
-
-    const handleInterestToggle = useCallback((interest: string) => {
-        setSelectedInterests(prevInterests => {
-            if (prevInterests.includes(interest)) {
-                return prevInterests.filter(i => i !== interest);
-            } else {
-                return [...prevInterests, interest];
-            }
-        });
-    }, []);
-
-    useEffect(() => {
-        onInterestsSelected(selectedInterests);
-    }, [selectedInterests, onInterestsSelected]);
-
-    const renderItem = useCallback(({ item }) => (
-        <Pressable onPress={() => handleInterestToggle(item.value)}>
-            <Checkbox
-                color={selectedInterests.includes(item.value) ? Colors.light.text : Colors.light.tertiary}
-                label={item.label}
-                value={selectedInterests.includes(item.value)}
-                containerStyle={[defaultStyles.checkboxButton, { borderColor: selectedInterests.includes(item.value) ? Colors.light.text : Colors.light.tertiary }]}
-                labelStyle={defaultStyles.checkboxButtonLabel}
-                onValueChange={() => handleInterestToggle(item.value)}
-            />
-        </Pressable>
-    ), [selectedInterests, handleInterestToggle]);
-
-    return (
-        <View style={styles.container}>
-            <Text style={defaultStyles.h2}>Interests ({selectedInterests.length})</Text>
-            <Spacer height={8} />
-            <Text style={defaultStyles.body}>
-                This helps us find people with the same hobbies and interests.
-            </Text>
-            <Spacer height={24} />
-            <FlashList
-                data={flattenedInterests}
-                renderItem={renderItem}
-                estimatedItemSize={75}
-                keyExtractor={(item) => item.value}
-                contentContainerStyle={styles.listContainer}
-            />
-        </View>
-    );
-};
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        padding: 16,
-    },
-    listContainer: {
-        paddingBottom: 16,
-    },
-});
-
-export default StepInterests;
 ```
 
 # components\tabs\surf.tsx
@@ -6602,97 +6741,97 @@ type Match = {
 };
 
 export default function Inbox() {
-    const [matches, setMatches] = useState<Match[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const navigation = useNavigation();
-    const session = useAuth();
+    // const [matches, setMatches] = useState<Match[]>([]);
+    // const [loading, setLoading] = useState(true);
+    // const [error, setError] = useState(null);
+    // const navigation = useNavigation();
+    // const session = useAuth();
 
-    useEffect(() => {
-        if (session?.user) {
-            fetchMatches();
-        }
-    }, [session]);
+    // useEffect(() => {
+    //     if (session?.user) {
+    //         fetchMatches();
+    //     }
+    // }, [session]);
 
-    const fetchMatches = async () => {
-        try {
-            setLoading(true);
-            const { data, error } = await supabase
-                .from('matches')
-                .select(`
-                    id,
-                    matched_at,
-                    profiles_test!matches_user2_id_fkey (
-                        id,
-                        name,
-                        avatar_url
-                    )
-                    `)
-                .eq('user1_id', session?.user.id)
+    // const fetchMatches = async () => {
+    //     try {
+    //         setLoading(true);
+    //         const { data, error } = await supabase
+    //             .from('matches')
+    //             .select(`
+    //                 id,
+    //                 matched_at,
+    //                 profiles_test!matches_user2_id_fkey (
+    //                     id,
+    //                     name,
+    //                     avatar_url
+    //                 )
+    //                 `)
+    //             .eq('user1_id', session?.user.id)
 
-            //.not('matched_at', 'is', null);
+    //         //.not('matched_at', 'is', null);
 
-            if (error) throw error;
+    //         if (error) throw error;
 
-            setMatches(data.map((match: any) => ({
-                id: match.profiles_test.id,
-                name: match.profiles_test.name,
-                avatar_url: match.profiles_test.avatar_url,
-                matched_at: match.matched_at
-            })));
-        } catch (error) {
-            console.error('Error fetching matches:', error);
-            setError(error.message);
-        } finally {
-            setLoading(false);
-        }
-    };
+    //         setMatches(data.map((match: any) => ({
+    //             id: match.profiles_test.id,
+    //             name: match.profiles_test.name,
+    //             avatar_url: match.profiles_test.avatar_url,
+    //             matched_at: match.matched_at
+    //         })));
+    //     } catch (error) {
+    //         console.error('Error fetching matches:', error);
+    //         setError(error.message);
+    //     } finally {
+    //         setLoading(false);
+    //     }
+    // };
 
-    const renderMatch = ({ item }: { item: Match }) => (
-        <Pressable
-            style={styles.matchItem}
-            onPress={() => navigation.navigate('Chat', { matchId: item.id, matchName: item.name })}
-        >
-            <Text style={styles.matchName}>{item.name}</Text>
-        </Pressable>
-    );
+    // const renderMatch = ({ item }: { item: Match }) => (
+    //     <Pressable
+    //         style={styles.matchItem}
+    //         onPress={() => navigation.navigate('Chat', { matchId: item.id, matchName: item.name })}
+    //     >
+    //         <Text style={styles.matchName}>{item.name}</Text>
+    //     </Pressable>
+    // );
 
-    if (loading) {
-        return (
-            <SafeAreaView style={defaultStyles.SafeAreaView}>
-                <View style={styles.centerContainer}>
-                    <ActivityIndicator size="large" />
-                </View>
-            </SafeAreaView>
-        );
-    }
+    // if (loading) {
+    //     return (
+    //         <SafeAreaView style={defaultStyles.SafeAreaView}>
+    //             <View style={styles.centerContainer}>
+    //                 <ActivityIndicator size="large" />
+    //             </View>
+    //         </SafeAreaView>
+    //     );
+    // }
 
-    if (error) {
-        return (
-            <SafeAreaView style={defaultStyles.SafeAreaView}>
-                <View style={styles.centerContainer}>
-                    <Text style={styles.errorText}>Error: {error}</Text>
-                </View>
-            </SafeAreaView>
-        );
-    }
+    // if (error) {
+    //     return (
+    //         <SafeAreaView style={defaultStyles.SafeAreaView}>
+    //             <View style={styles.centerContainer}>
+    //                 <Text style={styles.errorText}>Error: {error}</Text>
+    //             </View>
+    //         </SafeAreaView>
+    //     );
+    // }
 
-    return (
-        <SafeAreaView style={defaultStyles.SafeAreaView}>
-            <View style={defaultStyles.innerContainer}>
-                <Text style={defaultStyles.h2}>Inbox</Text>
-                {matches.length > 0 ? (
-                    <FlatList
-                        data={matches}
-                        renderItem={renderMatch}
-                        keyExtractor={(item) => item.id}
-                    />
-                ) : (
-                    <Text style={styles.noMatchesText}>No matches yet</Text>
-                )}
-            </View>
-        </SafeAreaView>
-    );
+    // return (
+    //     <SafeAreaView style={defaultStyles.SafeAreaView}>
+    //         <View style={defaultStyles.innerContainer}>
+    //             <Text style={defaultStyles.h2}>Inbox</Text>
+    //             {matches.length > 0 ? (
+    //                 <FlatList
+    //                     data={matches}
+    //                     renderItem={renderMatch}
+    //                     keyExtractor={(item) => item.id}
+    //                 />
+    //             ) : (
+    //                 <Text style={styles.noMatchesText}>No matches yet</Text>
+    //             )}
+    //         </View>
+    //     </SafeAreaView>
+    // );
 }
 
 const styles = StyleSheet.create({
@@ -7254,9 +7393,144 @@ const styles = StyleSheet.create({
 
 ```
 
+# components\ui\Textfields.tsx
+
+```tsx
+
+import { TextInput } from 'react-native';
+import { styled } from 'nativewind';
+
+const Textfield = styled(TextInput, 'w-full radius-4 text-lg bg-gray-100 p-2 rounded-lg h-12 border-2 border-gray-200');
+
+
+export { Textfield }
+```
+
+# components\ui\Containers.tsx
+
+```tsx
+
+import { View } from 'react-native';
+import { styled } from 'nativewind';
+
+const Pageview = styled(View, 'p-6');
+
+
+export { Pageview }
+
+
+```
+
+# components\ui\Buttons.tsx
+
+```tsx
+
+import { Text, Button } from 'react-native-ui-lib';
+import { styled } from 'nativewind';
+
+const PrimaryButton = styled(Button, 'w-full h-12 rounded-lg justify-center bg-primary-600 border-2 border-primary-400 shadow active:shadow-none');
+const PrimaryButtonText = styled(Text, 'uppercase text-center text-white font-bold');
+
+const SecondaryButton = styled(Button, 'w-full h-12 rounded-lg justify-center bg-white border-2 border-primary-200 shadow active:shadow-none');
+const SecondaryButtonText = styled(Text, 'uppercase text-center text-primary-700 font-bold');
+
+
+export { PrimaryButton, PrimaryButtonText, SecondaryButton, SecondaryButtonText }
+```
+
+# components\onboarding\StepInterests.tsx
+
+```tsx
+import React, { useCallback, useState, useEffect } from 'react';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
+import { Checkbox } from 'react-native-ui-lib';
+import { Colors } from '@/constants/Colors';
+import { defaultStyles } from '@/constants/Styles';
+import hobbiesInterests from '@/constants/Interests';
+import Spacer from '@/components/Spacer';
+
+const StepInterests = ({ onInterestsSelected }) => {
+    const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
+    const flattenedInterests = React.useMemo(() => hobbiesInterests.flat(), []);
+
+    const handleInterestToggle = useCallback((interest: string) => {
+        setSelectedInterests(prevInterests => {
+            if (prevInterests.includes(interest)) {
+                return prevInterests.filter(i => i !== interest);
+            } else {
+                return [...prevInterests, interest];
+            }
+        });
+    }, []);
+
+    useEffect(() => {
+        onInterestsSelected(selectedInterests);
+    }, [selectedInterests, onInterestsSelected]);
+
+    const renderItem = useCallback(({ item }) => (
+        <Pressable onPress={() => handleInterestToggle(item.value)}>
+            <Checkbox
+                color={selectedInterests.includes(item.value) ? Colors.light.text : Colors.light.tertiary}
+                label={item.label}
+                value={selectedInterests.includes(item.value)}
+                containerStyle={[defaultStyles.checkboxButton, { borderColor: selectedInterests.includes(item.value) ? Colors.light.text : Colors.light.tertiary }]}
+                labelStyle={defaultStyles.checkboxButtonLabel}
+                onValueChange={() => handleInterestToggle(item.value)}
+            />
+        </Pressable>
+    ), [selectedInterests, handleInterestToggle]);
+
+    return (
+        <View style={styles.container}>
+            <Text style={defaultStyles.h2}>Interests ({selectedInterests.length})</Text>
+            <Spacer height={8} />
+            <Text style={defaultStyles.body}>
+                This helps us find people with the same hobbies and interests.
+            </Text>
+            <Spacer height={24} />
+            <FlashList
+                data={flattenedInterests}
+                renderItem={renderItem}
+                estimatedItemSize={75}
+                keyExtractor={(item) => item.value}
+                contentContainerStyle={styles.listContainer}
+            />
+        </View>
+    );
+};
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        padding: 16,
+    },
+    listContainer: {
+        paddingBottom: 16,
+    },
+});
+
+export default StepInterests;
+```
+
 # assets\sounds\notification.wav
 
 This is a binary file of the type: Binary
+
+# components\navigation\TabBarIcon.tsx
+
+```tsx
+// You can explore the built-in icon families and icons on the web at https://icons.expo.fyi/
+
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { type IconProps } from '@expo/vector-icons/build/createIconSet';
+import { type ComponentProps } from 'react';
+
+export function TabBarIcon({ style, ...rest }: IconProps<ComponentProps<typeof Ionicons>['name']>) {
+  return <Ionicons size={28} style={[{ marginBottom: -3 }, style]} {...rest} />;
+}
+
+```
 
 # assets\images\splash.png
 
@@ -7393,233 +7667,6 @@ This is a binary file of the type: Binary
 # assets\fonts\Copernicus-Bold.ttf
 
 This is a binary file of the type: Binary
-
-# app-example\(tabs)\_layout.tsx
-
-```tsx
-import { Tabs } from 'expo-router';
-import React from 'react';
-
-import { TabBarIcon } from '@/components/navigation/TabBarIcon';
-import { Colors } from '@/constants/Colors';
-import { useColorScheme } from '@/hooks/useColorScheme';
-
-export default function TabLayout() {
-  const colorScheme = useColorScheme();
-
-  return (
-    <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-        headerShown: false,
-      }}>
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Home',
-          tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon name={focused ? 'home' : 'home-outline'} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="explore"
-        options={{
-          title: 'Explore',
-          tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon name={focused ? 'code-slash' : 'code-slash-outline'} color={color} />
-          ),
-        }}
-      />
-    </Tabs>
-  );
-}
-
-```
-
-# app-example\(tabs)\index.tsx
-
-```tsx
-import { Image, StyleSheet, Platform } from 'react-native';
-
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
-
-export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({ ios: 'cmd + d', android: 'cmd + m' })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          Tap the Explore tab to learn more about what's included in this starter app.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          When you're ready, run{' '}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
-  );
-}
-
-const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-  },
-});
-
-```
-
-# app-example\(tabs)\explore.tsx
-
-```tsx
-import Ionicons from '@expo/vector-icons/Ionicons';
-import { StyleSheet, Image, Platform } from 'react-native';
-
-import { Collapsible } from '@/components/Collapsible';
-import { ExternalLink } from '@/components/ExternalLink';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
-
-export default function TabTwoScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
-      headerImage={<Ionicons size={310} name="code-slash" style={styles.headerImage} />}>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Explore</ThemedText>
-      </ThemedView>
-      <ThemedText>This app includes example code to help you get started.</ThemedText>
-      <Collapsible title="File-based routing">
-        <ThemedText>
-          This app has two screens:{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/explore.tsx</ThemedText>
-        </ThemedText>
-        <ThemedText>
-          The layout file in <ThemedText type="defaultSemiBold">app/(tabs)/_layout.tsx</ThemedText>{' '}
-          sets up the tab navigator.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/router/introduction">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Android, iOS, and web support">
-        <ThemedText>
-          You can open this project on Android, iOS, and the web. To open the web version, press{' '}
-          <ThemedText type="defaultSemiBold">w</ThemedText> in the terminal running this project.
-        </ThemedText>
-      </Collapsible>
-      <Collapsible title="Images">
-        <ThemedText>
-          For static images, you can use the <ThemedText type="defaultSemiBold">@2x</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">@3x</ThemedText> suffixes to provide files for
-          different screen densities
-        </ThemedText>
-        <Image source={require('@/assets/images/react-logo.png')} style={{ alignSelf: 'center' }} />
-        <ExternalLink href="https://reactnative.dev/docs/images">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Custom fonts">
-        <ThemedText>
-          Open <ThemedText type="defaultSemiBold">app/_layout.tsx</ThemedText> to see how to load{' '}
-          <ThemedText style={{ fontFamily: 'SpaceMono' }}>
-            custom fonts such as this one.
-          </ThemedText>
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/versions/latest/sdk/font">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Light and dark mode components">
-        <ThemedText>
-          This template has light and dark mode support. The{' '}
-          <ThemedText type="defaultSemiBold">useColorScheme()</ThemedText> hook lets you inspect
-          what the user's current color scheme is, and so you can adjust UI colors accordingly.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/develop/user-interface/color-themes/">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Animations">
-        <ThemedText>
-          This template includes an example of an animated component. The{' '}
-          <ThemedText type="defaultSemiBold">components/HelloWave.tsx</ThemedText> component uses
-          the powerful <ThemedText type="defaultSemiBold">react-native-reanimated</ThemedText> library
-          to create a waving hand animation.
-        </ThemedText>
-        {Platform.select({
-          ios: (
-            <ThemedText>
-              The <ThemedText type="defaultSemiBold">components/ParallaxScrollView.tsx</ThemedText>{' '}
-              component provides a parallax effect for the header image.
-            </ThemedText>
-          ),
-        })}
-      </Collapsible>
-    </ParallaxScrollView>
-  );
-}
-
-const styles = StyleSheet.create({
-  headerImage: {
-    color: '#808080',
-    bottom: -90,
-    left: -35,
-    position: 'absolute',
-  },
-  titleContainer: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-});
-
-```
 
 # app\searchFilters\index.tsx
 
@@ -8686,6 +8733,233 @@ const styles = StyleSheet.create({
 });
 ```
 
+# app-example\(tabs)\_layout.tsx
+
+```tsx
+import { Tabs } from 'expo-router';
+import React from 'react';
+
+import { TabBarIcon } from '@/components/navigation/TabBarIcon';
+import { Colors } from '@/constants/Colors';
+import { useColorScheme } from '@/hooks/useColorScheme';
+
+export default function TabLayout() {
+  const colorScheme = useColorScheme();
+
+  return (
+    <Tabs
+      screenOptions={{
+        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
+        headerShown: false,
+      }}>
+      <Tabs.Screen
+        name="index"
+        options={{
+          title: 'Home',
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon name={focused ? 'home' : 'home-outline'} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="explore"
+        options={{
+          title: 'Explore',
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon name={focused ? 'code-slash' : 'code-slash-outline'} color={color} />
+          ),
+        }}
+      />
+    </Tabs>
+  );
+}
+
+```
+
+# app-example\(tabs)\index.tsx
+
+```tsx
+import { Image, StyleSheet, Platform } from 'react-native';
+
+import { HelloWave } from '@/components/HelloWave';
+import ParallaxScrollView from '@/components/ParallaxScrollView';
+import { ThemedText } from '@/components/ThemedText';
+import { ThemedView } from '@/components/ThemedView';
+
+export default function HomeScreen() {
+  return (
+    <ParallaxScrollView
+      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
+      headerImage={
+        <Image
+          source={require('@/assets/images/partial-react-logo.png')}
+          style={styles.reactLogo}
+        />
+      }>
+      <ThemedView style={styles.titleContainer}>
+        <ThemedText type="title">Welcome!</ThemedText>
+        <HelloWave />
+      </ThemedView>
+      <ThemedView style={styles.stepContainer}>
+        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
+        <ThemedText>
+          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
+          Press{' '}
+          <ThemedText type="defaultSemiBold">
+            {Platform.select({ ios: 'cmd + d', android: 'cmd + m' })}
+          </ThemedText>{' '}
+          to open developer tools.
+        </ThemedText>
+      </ThemedView>
+      <ThemedView style={styles.stepContainer}>
+        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
+        <ThemedText>
+          Tap the Explore tab to learn more about what's included in this starter app.
+        </ThemedText>
+      </ThemedView>
+      <ThemedView style={styles.stepContainer}>
+        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
+        <ThemedText>
+          When you're ready, run{' '}
+          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
+          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
+          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
+          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
+        </ThemedText>
+      </ThemedView>
+    </ParallaxScrollView>
+  );
+}
+
+const styles = StyleSheet.create({
+  titleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  stepContainer: {
+    gap: 8,
+    marginBottom: 8,
+  },
+  reactLogo: {
+    height: 178,
+    width: 290,
+    bottom: 0,
+    left: 0,
+    position: 'absolute',
+  },
+});
+
+```
+
+# app-example\(tabs)\explore.tsx
+
+```tsx
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { StyleSheet, Image, Platform } from 'react-native';
+
+import { Collapsible } from '@/components/Collapsible';
+import { ExternalLink } from '@/components/ExternalLink';
+import ParallaxScrollView from '@/components/ParallaxScrollView';
+import { ThemedText } from '@/components/ThemedText';
+import { ThemedView } from '@/components/ThemedView';
+
+export default function TabTwoScreen() {
+  return (
+    <ParallaxScrollView
+      headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
+      headerImage={<Ionicons size={310} name="code-slash" style={styles.headerImage} />}>
+      <ThemedView style={styles.titleContainer}>
+        <ThemedText type="title">Explore</ThemedText>
+      </ThemedView>
+      <ThemedText>This app includes example code to help you get started.</ThemedText>
+      <Collapsible title="File-based routing">
+        <ThemedText>
+          This app has two screens:{' '}
+          <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> and{' '}
+          <ThemedText type="defaultSemiBold">app/(tabs)/explore.tsx</ThemedText>
+        </ThemedText>
+        <ThemedText>
+          The layout file in <ThemedText type="defaultSemiBold">app/(tabs)/_layout.tsx</ThemedText>{' '}
+          sets up the tab navigator.
+        </ThemedText>
+        <ExternalLink href="https://docs.expo.dev/router/introduction">
+          <ThemedText type="link">Learn more</ThemedText>
+        </ExternalLink>
+      </Collapsible>
+      <Collapsible title="Android, iOS, and web support">
+        <ThemedText>
+          You can open this project on Android, iOS, and the web. To open the web version, press{' '}
+          <ThemedText type="defaultSemiBold">w</ThemedText> in the terminal running this project.
+        </ThemedText>
+      </Collapsible>
+      <Collapsible title="Images">
+        <ThemedText>
+          For static images, you can use the <ThemedText type="defaultSemiBold">@2x</ThemedText> and{' '}
+          <ThemedText type="defaultSemiBold">@3x</ThemedText> suffixes to provide files for
+          different screen densities
+        </ThemedText>
+        <Image source={require('@/assets/images/react-logo.png')} style={{ alignSelf: 'center' }} />
+        <ExternalLink href="https://reactnative.dev/docs/images">
+          <ThemedText type="link">Learn more</ThemedText>
+        </ExternalLink>
+      </Collapsible>
+      <Collapsible title="Custom fonts">
+        <ThemedText>
+          Open <ThemedText type="defaultSemiBold">app/_layout.tsx</ThemedText> to see how to load{' '}
+          <ThemedText style={{ fontFamily: 'SpaceMono' }}>
+            custom fonts such as this one.
+          </ThemedText>
+        </ThemedText>
+        <ExternalLink href="https://docs.expo.dev/versions/latest/sdk/font">
+          <ThemedText type="link">Learn more</ThemedText>
+        </ExternalLink>
+      </Collapsible>
+      <Collapsible title="Light and dark mode components">
+        <ThemedText>
+          This template has light and dark mode support. The{' '}
+          <ThemedText type="defaultSemiBold">useColorScheme()</ThemedText> hook lets you inspect
+          what the user's current color scheme is, and so you can adjust UI colors accordingly.
+        </ThemedText>
+        <ExternalLink href="https://docs.expo.dev/develop/user-interface/color-themes/">
+          <ThemedText type="link">Learn more</ThemedText>
+        </ExternalLink>
+      </Collapsible>
+      <Collapsible title="Animations">
+        <ThemedText>
+          This template includes an example of an animated component. The{' '}
+          <ThemedText type="defaultSemiBold">components/HelloWave.tsx</ThemedText> component uses
+          the powerful <ThemedText type="defaultSemiBold">react-native-reanimated</ThemedText> library
+          to create a waving hand animation.
+        </ThemedText>
+        {Platform.select({
+          ios: (
+            <ThemedText>
+              The <ThemedText type="defaultSemiBold">components/ParallaxScrollView.tsx</ThemedText>{' '}
+              component provides a parallax effect for the header image.
+            </ThemedText>
+          ),
+        })}
+      </Collapsible>
+    </ParallaxScrollView>
+  );
+}
+
+const styles = StyleSheet.create({
+  headerImage: {
+    color: '#808080',
+    bottom: -90,
+    left: -35,
+    position: 'absolute',
+  },
+  titleContainer: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+});
+
+```
+
 # supabase\functions\send-match-notification\index.ts
 
 ```ts
@@ -8856,48 +9130,6 @@ Deno.serve(async (req) => {
 })
 ```
 
-# supabase\functions\generate-stream-token\index.ts
-
-```ts
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { StreamChat } from 'https://esm.sh/stream-chat@8.37.0'
-
-const STREAM_API_KEY = Deno.env.get('STREAM_API_KEY')
-const STREAM_API_SECRET = Deno.env.get('STREAM_API_SECRET')
-
-if (!STREAM_API_KEY || !STREAM_API_SECRET) {
-  throw new Error('STREAM_API_KEY or STREAM_API_SECRET is not set')
-}
-
-const serverClient = StreamChat.getInstance(STREAM_API_KEY, STREAM_API_SECRET);
-
-serve(async (req) => {
-  try {
-    const { user } = await req.json()
-
-    if (!user || !user.id) {
-      return new Response(
-        JSON.stringify({ error: 'User ID is required' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      )
-    }
-
-    const token = serverClient.createToken(user.id)
-
-    return new Response(
-      JSON.stringify({ token }),
-      { headers: { 'Content-Type': 'application/json' } }
-    )
-  } catch (error) {
-    console.error('Error in generate-stream-token:', error)
-    return new Response(
-      JSON.stringify({ error: 'Internal Server Error', details: error.message }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    )
-  }
-})
-```
-
 # supabase\functions\invoke-process-match-notifications\index.ts
 
 ```ts
@@ -8937,6 +9169,94 @@ Deno.serve(async (req) => {
     --data '{"name":"Functions"}'
 
 */
+
+```
+
+# supabase\functions\generate-stream-token\index.ts
+
+```ts
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { create, getNumericDate } from "https://deno.land/x/djwt@v2.8/mod.ts"
+import { crypto } from "https://deno.land/std@0.177.0/crypto/mod.ts"
+
+const STREAM_API_KEY = Deno.env.get('STREAM_API_KEY')
+const STREAM_API_SECRET = Deno.env.get('STREAM_API_SECRET')
+
+if (!STREAM_API_KEY || !STREAM_API_SECRET) {
+  throw new Error('STREAM_API_KEY or STREAM_API_SECRET is not set')
+}
+
+async function JWTUserToken(
+  apiSecret: string,
+  payload: { user_id: string; exp?: number; iat?: number; }
+) {
+  const encoder = new TextEncoder();
+  const keyBuf = encoder.encode(apiSecret);
+  const key = await crypto.subtle.importKey(
+    "raw",
+    keyBuf,
+    { name: "HMAC", hash: "SHA-256" },
+    true,
+    ["sign", "verify"]
+  );
+
+  const header = { alg: "HS256", typ: "JWT" };
+
+  if (!payload.iat) {
+    payload.iat = getNumericDate(new Date());
+  }
+
+  if (!payload.exp) {
+    payload.exp = getNumericDate(new Date(Date.now() + 60 * 60 * 1000)); // 1 hour from now
+  }
+
+  return await create(header, payload, key);
+}
+
+serve(async (req) => {
+  try {
+    console.log("Request received");
+    const { user } = await req.json()
+    console.log("User data:", user);
+
+    if (!user || !user.id) {
+      console.log("User ID is missing");
+      return new Response(
+        JSON.stringify({ error: 'User ID is required' }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      )
+    }
+
+    const payload = {
+      user_id: user.id,
+    };
+
+    console.log("Generating token for user:", user.id);
+    const token = await JWTUserToken(STREAM_API_SECRET, payload);
+    console.log("Token generated successfully");
+
+    return new Response(
+      JSON.stringify({ token }),
+      { headers: { 'Content-Type': 'application/json' } }
+    )
+  } catch (error) {
+    console.error('Error in generate-stream-token:', error)
+    return new Response(
+      JSON.stringify({ error: 'Internal Server Error', details: error.message }),
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
+    )
+  }
+})
+
+
+
+
+
+
+
+
+
+
 
 ```
 
@@ -9027,30 +9347,6 @@ This is a binary file of the type: Image
 This is a binary file of the type: Image
 
 # assets\images\onboarding\onboarding1.png
-
-This is a binary file of the type: Image
-
-# assets\images\logo\logo_crushy@3x.png
-
-This is a binary file of the type: Image
-
-# assets\images\logo\logo_crushy@2x.png
-
-This is a binary file of the type: Image
-
-# assets\images\logo\logo_crushy.png
-
-This is a binary file of the type: Image
-
-# assets\images\dummies\dummy3.png
-
-This is a binary file of the type: Image
-
-# assets\images\dummies\dummy2.png
-
-This is a binary file of the type: Image
-
-# assets\images\dummies\dummy1.png
 
 This is a binary file of the type: Image
 
@@ -9171,6 +9467,30 @@ This is a binary file of the type: Image
 This is a binary file of the type: Image
 
 # assets\images\icons\iconSharedInterest.png
+
+This is a binary file of the type: Image
+
+# assets\images\logo\logo_crushy@3x.png
+
+This is a binary file of the type: Image
+
+# assets\images\logo\logo_crushy@2x.png
+
+This is a binary file of the type: Image
+
+# assets\images\logo\logo_crushy.png
+
+This is a binary file of the type: Image
+
+# assets\images\dummies\dummy3.png
+
+This is a binary file of the type: Image
+
+# assets\images\dummies\dummy2.png
+
+This is a binary file of the type: Image
+
+# assets\images\dummies\dummy1.png
 
 This is a binary file of the type: Image
 
