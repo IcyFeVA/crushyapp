@@ -83,7 +83,60 @@ getPotentialDiveMatches: async (userId: string, limit: number) => {
     }
   },
 
+  getOrCreateConversation: async (user1Id: string, user2Id: string) => {
+    const { data, error } = await supabase.rpc('get_or_create_conversation', {
+      user1_id: user1Id,
+      user2_id: user2Id
+    });
+    if (error) throw error;
+    return data;
+  },
 
+  getRecentConversations: async (userId: string) => {
+    const { data, error } = await supabase.rpc('get_recent_conversations', {
+      user_id: userId
+    });
+    
+    if (error) throw error;
+    
+    return data || [];
+  },
+
+  sendMessage: async (conversationId: string, senderId: string, content: string) => {
+    const { data, error } = await supabase
+      .from('messages')
+      .insert({
+        conversation_id: conversationId,
+        sender_id: senderId,
+        content: content
+      })
+      .select();
+    if (error) throw error;
+    return data[0];
+  },
+
+  getMessages: async (conversationId: string) => {
+    const { data, error } = await supabase
+      .from('messages')
+      .select('*')
+      .eq('conversation_id', conversationId)
+      .order('created_at', { ascending: true });
+    if (error) throw error;
+    return data;
+  },
+
+  subscribeToMessages: (conversationId: string, callback: (payload: any) => void) => {
+    return supabase
+      .channel(`messages:${conversationId}`)
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'messages',
+        filter: `conversation_id=eq.${conversationId}`
+      }, callback)
+      .subscribe();
+  }, 
+  
 
 
 };

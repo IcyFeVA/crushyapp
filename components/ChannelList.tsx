@@ -1,169 +1,287 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
-import { useNavigation, useFocusEffect } from "@react-navigation/native";
+// components/tabs/inbox.tsx
+import React, { useEffect, useState } from "react";
+import { View, Text, FlatList, Pressable, StyleSheet } from "react-native";
+import { useNavigation } from "@react-navigation/native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/lib/supabase";
+import { api } from "@/api/supabaseApi";
 import { Colors } from "@/constants/Colors";
-import { connectUser, chatClient } from "@/lib/streamChat";
-import { useChatContext, ChannelList } from "stream-chat-expo";
-import { ActivityIndicator } from "react-native";
+import { defaultStyles } from "@/constants/Styles";
+import { supabase } from "@/lib/supabase";
+import { useTabFocus } from "@/hooks/useTabFocus";
 
-export default function Inbox() {
+const Tab = createMaterialTopTabNavigator();
+
+type Conversation = {
+  conversation_id: string;
+  user2_id: string;
+  other_user_name: string;
+  last_message: string;
+  last_message_time: string;
+};
+
+type Match = {
+  id: string;
+  user2_id: string;
+  other_user_name: string;
+  created_at: string;
+};
+
+const startConversationForMatch = async (matchId: string) => {
+  const { data, error } = await supabase.rpc("create_conversation_for_match", {
+    match_id: matchId,
+  });
+
+  if (error) throw error;
+
+  return data; // This will be the conversation_id
+};
+
+function MatchesTab({ refreshKey, refresh }) {
+  const [matches, setMatches] = useState<Match[]>([]);
+  const [loading, setLoading] = useState(true);
   const navigation = useNavigation();
   const session = useAuth();
-  const { client } = useChatContext();
-  const isConnectedRef = useRef(false);
-  const isInChatChannelRef = useRef(false);
-  const isMountedRef = useRef(true);
-  const [channelsLoaded, setChannelsLoaded] = useState(false);
 
-  function generateShortChannelId(userId1: string, userId2: string): string {
-    const sortedIds = [userId1, userId2].sort();
-    const combined = sortedIds[0].slice(0, 8) + sortedIds[1].slice(0, 8);
-    let hash = 0;
-    for (let i = 0; i < combined.length; i++) {
-      const char = combined.charCodeAt(i);
-      hash = (hash << 5) - hash + char;
-      hash = hash & hash;
+  useEffect(() => {
+    if (session?.user) {
+      fetchMatches();
     }
-    return Math.abs(hash).toString(36).slice(0, 16);
-  }
+  }, [session, refreshKey]);
 
-  const setupClient = useCallback(async () => {
-    if (!session?.user?.id || isConnectedRef.current) return;
-
+  const fetchMatches = async () => {
     try {
-      console.log("Connecting user...");
-      await connectUser({
-        id: session.user.id,
-        name: session.user.email || "Anonymous User",
-      });
-      if (isMountedRef.current) {
-        isConnectedRef.current = true;
-        console.log("User connected successfully");
-      }
-    } catch (error) {
-      console.error("Failed to connect user", error);
-    }
-  }, [session?.user?.id, session?.user?.email]);
-
-  const disconnectUser = useCallback(async () => {
-    if (isConnectedRef.current) {
-      try {
-        await chatClient.disconnectUser();
-        if (isMountedRef.current) {
-          isConnectedRef.current = false;
-          setChannelsLoaded(false);
-          console.log("User disconnected successfully");
-        }
-      } catch (error) {
-        console.error("Error disconnecting user:", error);
-      }
-    }
-  }, []);
-
-  const fetchAndCreateChannels = useCallback(async () => {
-    if (!isConnectedRef.current) return;
-
-    try {
-      console.log("Fetching matches...");
-      const { data: matches, error } = await supabase
+      setLoading(true);
+      const { data, error } = await supabase
         .from("matches")
         .select(
-          "*, user1:profiles_test!user1_id(*), user2:profiles_test!user2_id(*)"
+          `
+          id,
+          user2_id,
+          profiles_test!matches_user2_id_fkey(name),
+          created_at
+        `
         )
-        .or(`user1_id.eq.${session.user.id},user2_id.eq.${session.user.id}`)
-        .eq("matched", true);
+        .eq("user1_id", session.user.id)
+        .is("conversation_id", null);
 
       if (error) throw error;
 
-      console.log("Matches fetched:", matches.length);
-
-      if (matches.length === 0) {
-        console.log("No matches found");
-        setChannelsLoaded(true);
-        return;
-      }
-
-      const channelPromises = matches.map(async (match) => {
-        const otherUser =
-          match.user1_id === session.user.id ? match.user2 : match.user1;
-        const channelId = generateShortChannelId(session.user.id, otherUser.id);
-
-        try {
-          let channel = client.channel("messaging", channelId, {
-            members: [session.user.id, otherUser.id],
-            name: otherUser.name || "Anonymous User",
-          });
-          await channel.create();
-          console.log("Channel created/fetched:", channelId);
-          return channel;
-        } catch (error) {
-          console.error("Error creating/fetching channel:", error);
-          return null;
-        }
-      });
-
-      const createdChannels = (await Promise.all(channelPromises)).filter(Boolean);
-      console.log("Channels created/fetched:", createdChannels.length);
-      setChannelsLoaded(true);
+      setMatches(
+        data.map((match) => ({
+          ...match,
+          other_user_name: match.profiles_test.name,
+        }))
+      );
     } catch (error) {
-      console.error("Error fetching and creating channels:", error);
-      setChannelsLoaded(true);
+      console.error("Error fetching matches:", error);
+    } finally {
+      setLoading(false);
     }
-  }, [session?.user?.id, client]);
+  };
 
-  useFocusEffect(
-    useCallback(() => {
-      setupClient().then(() => {
-        if (isConnectedRef.current) {
-          fetchAndCreateChannels();
+  const handleStartConversation = async (
+    matchId: string,
+    otherUserId: string,
+    otherUserName: string
+  ) => {
+    try {
+      const { data, error } = await supabase.rpc(
+        "create_conversation_for_match",
+        {
+          match_id: matchId,
         }
-      });
-    }, [setupClient, fetchAndCreateChannels])
+      );
+
+      if (error) throw error;
+
+      if (data) {
+        navigation.navigate("ChatChannel", {
+          conversationId: data,
+          otherUserId,
+          otherUserName,
+        });
+        refresh(); // This will trigger a refresh of both tabs
+      } else {
+        console.error("No conversation ID returned");
+      }
+    } catch (error) {
+      console.error("Error starting conversation:", error);
+    }
+  };
+  const renderMatchItem = ({ item }: { item: Match }) => (
+    <View style={styles.matchItem}>
+      <Text style={styles.userName}>{item.other_user_name}</Text>
+      <Text style={styles.matchedAt}>
+        created on {new Date(item.created_at).toLocaleDateString()}
+      </Text>
+      <Pressable
+        style={styles.startChatButton}
+        onPress={() =>
+          handleStartConversation(item.id, item.user2_id, item.other_user_name)
+        }
+      >
+        <Text style={styles.startChatButtonText}>Start Chat</Text>
+      </Pressable>
+    </View>
   );
 
-  useEffect(() => {
-    const unsubscribe = navigation.addListener('state', (e) => {
-      const currentRoute = e.data.state.routes[e.data.state.index];
-      if (
-        currentRoute.name === "Home" ||
-        currentRoute.name === "History" ||
-        currentRoute.name === "Me"
-      ) {
-        disconnectUser();
-      }
-    });
-
-    return () => {
-      unsubscribe();
-      isMountedRef.current = false;
-    };
-  }, [navigation, disconnectUser]);
-
-  if (!session?.user) {
-    return null;
-  }
-
-  if (!isConnectedRef.current || !channelsLoaded) {
-    return <ActivityIndicator size="large" color={Colors.light.accent} />;
+  if (loading) {
+    return (
+      <View style={styles.centerContainer}>
+        <Text>Loading matches...</Text>
+      </View>
+    );
   }
 
   return (
-    <SafeAreaView style={{ flex: 1 }}>
-      <ChannelList
-        filters={{
-          type: "messaging",
-          members: { $in: [session.user.id] },
-        }}
-        sort={{ last_message_at: -1 }}
-        onSelect={(channel) => {
-          console.log("Selected channel:", channel.id);
-          navigation.navigate("ChatChannel", {
-            channelId: channel.id,
-          });
-        }}
-      />
+    <View style={defaultStyles.innerContainer}>
+      {matches.length > 0 ? (
+        <FlatList
+          data={matches}
+          renderItem={renderMatchItem}
+          keyExtractor={(item) => item.id}
+        />
+      ) : (
+        <Text style={styles.noMatchesText}>No new matches</Text>
+      )}
+    </View>
+  );
+}
+
+function ChatsTab({ refreshKey, refresh }) {
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [loading, setLoading] = useState(true);
+  const navigation = useNavigation();
+  const session = useAuth();
+
+  useEffect(() => {
+    if (session?.user) {
+      fetchConversations();
+    }
+  }, [session, refreshKey]);
+
+  const fetchConversations = async () => {
+    try {
+      setLoading(true);
+      const data = await api.getRecentConversations(session.user.id);
+      setConversations(data);
+    } catch (error) {
+      console.error("Error fetching conversations:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const renderConversationItem = ({ item }: { item: Conversation }) => (
+    <Pressable
+      style={styles.conversationItem}
+      onPress={() =>
+        navigation.navigate("ChatChannel", {
+          conversationId: item.conversation_id,
+          otherUserId: item.user2_id,
+          otherUserName: item.other_user_name,
+        })
+      }
+    >
+      <Text style={styles.userName}>{item.other_user_name}</Text>
+      <Text style={styles.lastMessage}>{item.last_message}</Text>
+    </Pressable>
+  );
+
+  if (loading) {
+    return (
+      <View style={styles.centerContainer}>
+        <Text>Loading conversations...</Text>
+      </View>
+    );
+  }
+
+  return (
+    <View style={defaultStyles.innerContainer}>
+      {conversations.length > 0 ? (
+        <FlatList
+          data={conversations}
+          renderItem={renderConversationItem}
+          keyExtractor={(item) => item.conversation_id}
+        />
+      ) : (
+        <Text style={styles.noConversationsText}>No conversations yet</Text>
+      )}
+    </View>
+  );
+}
+
+export default function Inbox() {
+  const { refreshKey, refresh } = useTabFocus();
+
+  return (
+    <SafeAreaView style={defaultStyles.SafeAreaView}>
+      <Tab.Navigator>
+        <Tab.Screen name="Matches">
+          {(props) => (
+            <MatchesTab {...props} refreshKey={refreshKey} refresh={refresh} />
+          )}
+        </Tab.Screen>
+        <Tab.Screen name="Chats">
+          {(props) => (
+            <ChatsTab {...props} refreshKey={refreshKey} refresh={refresh} />
+          )}
+        </Tab.Screen>
+      </Tab.Navigator>
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  centerContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  matchItem: {
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.light.tertiary,
+  },
+  conversationItem: {
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.light.tertiary,
+  },
+  userName: {
+    fontSize: 16,
+    fontWeight: "bold",
+    marginBottom: 5,
+  },
+  matchedAt: {
+    fontSize: 14,
+    color: Colors.light.textSecondary,
+    marginBottom: 10,
+  },
+  lastMessage: {
+    fontSize: 14,
+    color: Colors.light.textSecondary,
+  },
+  startChatButton: {
+    backgroundColor: Colors.light.primary,
+    padding: 10,
+    borderRadius: 5,
+    alignItems: "center",
+  },
+  startChatButtonText: {
+    color: Colors.light.textInverted,
+    fontWeight: "bold",
+  },
+  noMatchesText: {
+    textAlign: "center",
+    marginTop: 20,
+    fontSize: 16,
+  },
+  noConversationsText: {
+    textAlign: "center",
+    marginTop: 20,
+    fontSize: 16,
+  },
+});

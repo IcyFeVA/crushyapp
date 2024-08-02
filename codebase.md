@@ -1302,381 +1302,6 @@ export const getFieldOptions = (field, language = 'en') => {
 }; 
 ```
 
-# hooks\useWarmUpBrowser.ts
-
-```ts
-import { useEffect } from 'react';
-import * as WebBrowser from 'expo-web-browser';
-
-export const useWarmUpBrowser = () => {
-    useEffect(() => {
-        void WebBrowser.warmUpAsync();
-        return () => {
-            void WebBrowser.coolDownAsync();
-        };
-    }, []);
-};
-```
-
-# hooks\useThemeColor.ts
-
-```ts
-/**
- * Learn more about light and dark modes:
- * https://docs.expo.dev/guides/color-schemes/
- */
-
-import { useColorScheme } from 'react-native';
-
-import { Colors } from '@/constants/Colors';
-
-export function useThemeColor(
-  props: { light?: string; dark?: string },
-  colorName: keyof typeof Colors.light & keyof typeof Colors.dark
-) {
-  const theme = useColorScheme() ?? 'light';
-  const colorFromProps = props[theme];
-
-  if (colorFromProps) {
-    return colorFromProps;
-  } else {
-    return Colors[theme][colorName];
-  }
-}
-
-```
-
-# hooks\useProfile.ts
-
-```ts
-// src/hooks/useProfile.ts
-import { useEffect, useState } from 'react';
-import { supabase } from '../lib/supabase';
-import { Alert } from 'react-native';
-import { Session } from '@supabase/supabase-js';
-
-export const useProfile = (session: Session | null) => {
-    const [onboardingDone, setOnboardingDone] = useState<boolean>(false);
-
-    useEffect(() => {
-        if (session) {
-            const getProfile = async () => {
-                try {
-                    const { data } = await supabase
-                        .from('profiles_test')
-                        .select('name')
-                        .eq('id', session?.user.id)
-                        .single();
-
-                        if(data) {
-                            console.log('database data received', data)
-                            setOnboardingDone(data?.name != null);
-                        }
-                    
-                } catch (error: any) { 
-                    Alert.alert(error.message);
-                }
-            };
-
-            getProfile();
-        }
-    }, [session]);
-
-    return onboardingDone;
-};
-
-```
-
-# hooks\useNotifications.ts
-
-```ts
-import { useState, useEffect, useRef } from 'react';
-import { Platform } from 'react-native';
-import * as Device from 'expo-device';
-import * as Notifications from 'expo-notifications';
-import Constants from 'expo-constants';
-import { supabase } from '@/lib/supabase';
-import { useAuth } from '@/hooks/useAuth';
-
-Notifications.setNotificationHandler({
-    handleNotification: async () => ({
-        shouldShowAlert: true,
-        shouldPlaySound: false,
-        shouldSetBadge: false,
-    }),
-});
-
-export function useNotifications() {
-    const [expoPushToken, setExpoPushToken] = useState('');
-    const [notification, setNotification] = useState(false);
-    const [matchNotifications, setMatchNotifications] = useState([]);
-    const notificationListener = useRef();
-    const responseListener = useRef();
-    const session = useAuth();
-
-    useEffect(() => {
-        registerForPushNotificationsAsync().then(token => setExpoPushToken(token));
-
-        notificationListener.current = Notifications.addNotificationReceivedListener(notification => {
-            setNotification(notification);
-        });
-
-        responseListener.current = Notifications.addNotificationResponseReceivedListener(response => {
-            console.log(response);
-        });
-
-        return () => {
-            Notifications.removeNotificationSubscription(notificationListener.current);
-            Notifications.removeNotificationSubscription(responseListener.current);
-        };
-    }, []);
-
-    useEffect(() => {
-        let subscription;
-
-        const setupMatchNotifications = async () => {
-            if (session?.user.id) {
-                // Initial fetch of unread notifications
-                const { data, error } = await supabase
-                    .rpc('get_unread_match_notifications', { user_id: session.user.id });
-
-                if (data) {
-                    setMatchNotifications(data);
-                    console.log('Initial match notifications:', data);
-                }
-
-                // Set up realtime subscription
-                subscription = supabase
-                    .channel('match_notifications')
-                    .on(
-                        'postgres_changes',
-                        {
-                            event: 'INSERT',
-                            schema: 'public',
-                            table: 'match_notifications',
-                            filter: `user_id=eq.${session.user.id}`,
-                        },
-                        (payload) => {
-                            console.log('New match notification:', payload);
-                            setMatchNotifications(prevNotifications => [...prevNotifications, payload.new]);
-                        }
-                    )
-                    .subscribe();
-            }
-        };
-
-        setupMatchNotifications();
-
-        // Cleanup function
-        return () => {
-            if (subscription) {
-                supabase.removeChannel(subscription);
-            }
-        };
-    }, [session?.user.id]);
-
-    return { expoPushToken, notification, matchNotifications };
-}
-
-async function registerForPushNotificationsAsync() {
-    let token;
-
-    if (Platform.OS === 'android') {
-        await Notifications.setNotificationChannelAsync('default', {
-            name: 'default',
-            importance: Notifications.AndroidImportance.MAX,
-            vibrationPattern: [0, 250, 250, 250],
-            lightColor: '#FF231F7C',
-        });
-    }
-
-    if (Device.isDevice) {
-        const { status: existingStatus } = await Notifications.getPermissionsAsync();
-        let finalStatus = existingStatus;
-        if (existingStatus !== 'granted') {
-            const { status } = await Notifications.requestPermissionsAsync();
-            finalStatus = status;
-        }
-        if (finalStatus !== 'granted') {
-            alert('Failed to get push token for push notification!');
-            return;
-        }
-        token = (await Notifications.getExpoPushTokenAsync({ projectId: Constants.expoConfig.extra.eas.projectId })).data;
-    } else {
-        console.log('Must use physical device for Push Notifications');
-    }
-    console.log('token', token)
-    // Store the token in Supabase
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-        const { error } = await supabase
-            .from('profiles_test')
-            .update({ push_token: token })
-            .eq('id', user.id);
-
-        if (error) {
-            console.error('Error storing push token:', error);
-        }
-    }
-
-    return token;
-}
-```
-
-# hooks\useColorScheme.web.ts
-
-```ts
-// NOTE: The default React Native styling doesn't support server rendering.
-// Server rendered styles should not change between the first render of the HTML
-// and the first render on the client. Typically, web developers will use CSS media queries
-// to render different styles on the client and server, these aren't directly supported in React Native
-// but can be achieved using a styling library like Nativewind.
-export function useColorScheme() {
-  return 'light';
-}
-
-```
-
-# hooks\useColorScheme.ts
-
-```ts
-export { useColorScheme } from 'react-native';
-
-```
-
-# hooks\useAuth.ts
-
-```ts
-// hooks/useAuth.ts
-
-import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
-import { Session } from '@supabase/supabase-js';
-
-export const useAuth = () => {
-  const [session, setSession] = useState<Session | null>(null);
-
-  useEffect(() => {
-    const getSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-          setSession(session);
-      }
-    };
-
-    getSession();
-
-    const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (session) {
-          setSession(session);
-      }
-    });
-
-    return () => {
-      authListener.subscription.unsubscribe();
-    };
-  }, []);
-
-  return session;
-};
-```
-
-# hooks\useApi.ts
-
-```ts
-import { useState, useCallback } from 'react';
-import { api } from '@/api/supabaseApi';
-import { useAuth } from '@/hooks/useAuth';
-
-export const useProfile = () => {
-  const session = useAuth();
-  const [profileDetails, setProfileDetails] = useState(null);
-  const [currentUserProfile, setCurrentUserProfile] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-
-  const fetchCurrentUserProfile = useCallback(async () => {
-    if (!session?.user?.id) return;
-    setLoading(true);
-    try {
-        const data = await api.getCurrentUserProfile(session.user.id);
-        console.log('Fetched Current User Profile:', data);
-        setCurrentUserProfile(data);
-    } catch (err) {
-        console.error('Error fetching current user profile:', err);
-        setError(err);
-    } finally {
-        setLoading(false);
-    }
-}, [session]);
-
-const fetchProfileDetails = useCallback(async (userId: string) => {
-    if (!userId) return null;
-    try {
-        const data = await api.getProfileDetails(userId);
-        console.log('Fetched Profile Details:', data);
-        return data;
-    } catch (err) {
-        console.error('Error fetching profile details:', err);
-        setError(err);
-        return null;
-    }
-}, []);
-
-  return { profileDetails, loading, error, fetchProfileDetails, fetchCurrentUserProfile, currentUserProfile };
-};
-
-export const usePotentialMatches = () => {
-  const session = useAuth();
-  const [matches, setMatches] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-
-  const fetchMatches = useCallback(async (limit = 10) => {
-    if (!session?.user?.id) return;
-    setLoading(true);
-    try {
-      const data = await api.getPotentialMatches(session.user.id, limit);
-      setMatches(data);
-    } catch (err) {
-      setError(err);
-    } finally {
-      setLoading(false);
-    }
-  }, [session]);
-
-
-
-  const fetchDiveMatches = useCallback(async (limit = 10) => {
-    if (!session?.user?.id) return;
-    setLoading(true);
-    try {
-        const data = await api.getPotentialDiveMatches(session.user.id, limit);
-        console.log('Fetched Dive Matches:', data);
-        setMatches(data);
-    } catch (err) {
-        console.error('Error fetching dive matches:', err);
-        setError(err);
-    } finally {
-        setLoading(false);
-    }
-}, [session]);
-
-  const recordAction = useCallback(async (matchedUserId: string, action: 'like' | 'dislike') => {
-    if (!session?.user?.id) return;
-    try {
-      await api.recordMatchAction(session.user.id, matchedUserId, action);
-    } catch (err) {
-      setError(err);
-    }
-  }, [session]);
-
-  return { matches, loading, error, fetchMatches, fetchDiveMatches, recordAction };
-};
-
-
-```
-
 # constants\ToastConfig.ts
 
 ```ts
@@ -2281,6 +1906,381 @@ export const Colors = {
 
 ```
 
+# hooks\useWarmUpBrowser.ts
+
+```ts
+import { useEffect } from 'react';
+import * as WebBrowser from 'expo-web-browser';
+
+export const useWarmUpBrowser = () => {
+    useEffect(() => {
+        void WebBrowser.warmUpAsync();
+        return () => {
+            void WebBrowser.coolDownAsync();
+        };
+    }, []);
+};
+```
+
+# hooks\useThemeColor.ts
+
+```ts
+/**
+ * Learn more about light and dark modes:
+ * https://docs.expo.dev/guides/color-schemes/
+ */
+
+import { useColorScheme } from 'react-native';
+
+import { Colors } from '@/constants/Colors';
+
+export function useThemeColor(
+  props: { light?: string; dark?: string },
+  colorName: keyof typeof Colors.light & keyof typeof Colors.dark
+) {
+  const theme = useColorScheme() ?? 'light';
+  const colorFromProps = props[theme];
+
+  if (colorFromProps) {
+    return colorFromProps;
+  } else {
+    return Colors[theme][colorName];
+  }
+}
+
+```
+
+# hooks\useProfile.ts
+
+```ts
+// src/hooks/useProfile.ts
+import { useEffect, useState } from 'react';
+import { supabase } from '../lib/supabase';
+import { Alert } from 'react-native';
+import { Session } from '@supabase/supabase-js';
+
+export const useProfile = (session: Session | null) => {
+    const [onboardingDone, setOnboardingDone] = useState<boolean>(false);
+
+    useEffect(() => {
+        if (session) {
+            const getProfile = async () => {
+                try {
+                    const { data } = await supabase
+                        .from('profiles_test')
+                        .select('name')
+                        .eq('id', session?.user.id)
+                        .single();
+
+                        if(data) {
+                            console.log('database data received', data)
+                            setOnboardingDone(data?.name != null);
+                        }
+                    
+                } catch (error: any) { 
+                    Alert.alert(error.message);
+                }
+            };
+
+            getProfile();
+        }
+    }, [session]);
+
+    return onboardingDone;
+};
+
+```
+
+# hooks\useNotifications.ts
+
+```ts
+import { useState, useEffect, useRef } from 'react';
+import { Platform } from 'react-native';
+import * as Device from 'expo-device';
+import * as Notifications from 'expo-notifications';
+import Constants from 'expo-constants';
+import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/hooks/useAuth';
+
+Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+        shouldShowAlert: true,
+        shouldPlaySound: false,
+        shouldSetBadge: false,
+    }),
+});
+
+export function useNotifications() {
+    const [expoPushToken, setExpoPushToken] = useState('');
+    const [notification, setNotification] = useState(false);
+    const [matchNotifications, setMatchNotifications] = useState([]);
+    const notificationListener = useRef();
+    const responseListener = useRef();
+    const session = useAuth();
+
+    useEffect(() => {
+        registerForPushNotificationsAsync().then(token => setExpoPushToken(token));
+
+        notificationListener.current = Notifications.addNotificationReceivedListener(notification => {
+            setNotification(notification);
+        });
+
+        responseListener.current = Notifications.addNotificationResponseReceivedListener(response => {
+            console.log(response);
+        });
+
+        return () => {
+            Notifications.removeNotificationSubscription(notificationListener.current);
+            Notifications.removeNotificationSubscription(responseListener.current);
+        };
+    }, []);
+
+    useEffect(() => {
+        let subscription;
+
+        const setupMatchNotifications = async () => {
+            if (session?.user.id) {
+                // Initial fetch of unread notifications
+                const { data, error } = await supabase
+                    .rpc('get_unread_match_notifications', { user_id: session.user.id });
+
+                if (data) {
+                    setMatchNotifications(data);
+                    console.log('Initial match notifications:', data);
+                }
+
+                // Set up realtime subscription
+                subscription = supabase
+                    .channel('match_notifications')
+                    .on(
+                        'postgres_changes',
+                        {
+                            event: 'INSERT',
+                            schema: 'public',
+                            table: 'match_notifications',
+                            filter: `user_id=eq.${session.user.id}`,
+                        },
+                        (payload) => {
+                            console.log('New match notification:', payload);
+                            setMatchNotifications(prevNotifications => [...prevNotifications, payload.new]);
+                        }
+                    )
+                    .subscribe();
+            }
+        };
+
+        setupMatchNotifications();
+
+        // Cleanup function
+        return () => {
+            if (subscription) {
+                supabase.removeChannel(subscription);
+            }
+        };
+    }, [session?.user.id]);
+
+    return { expoPushToken, notification, matchNotifications };
+}
+
+async function registerForPushNotificationsAsync() {
+    let token;
+
+    if (Platform.OS === 'android') {
+        await Notifications.setNotificationChannelAsync('default', {
+            name: 'default',
+            importance: Notifications.AndroidImportance.MAX,
+            vibrationPattern: [0, 250, 250, 250],
+            lightColor: '#FF231F7C',
+        });
+    }
+
+    if (Device.isDevice) {
+        const { status: existingStatus } = await Notifications.getPermissionsAsync();
+        let finalStatus = existingStatus;
+        if (existingStatus !== 'granted') {
+            const { status } = await Notifications.requestPermissionsAsync();
+            finalStatus = status;
+        }
+        if (finalStatus !== 'granted') {
+            alert('Failed to get push token for push notification!');
+            return;
+        }
+        token = (await Notifications.getExpoPushTokenAsync({ projectId: Constants.expoConfig.extra.eas.projectId })).data;
+    } else {
+        console.log('Must use physical device for Push Notifications');
+    }
+    console.log('token', token)
+    // Store the token in Supabase
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+        const { error } = await supabase
+            .from('profiles_test')
+            .update({ push_token: token })
+            .eq('id', user.id);
+
+        if (error) {
+            console.error('Error storing push token:', error);
+        }
+    }
+
+    return token;
+}
+```
+
+# hooks\useColorScheme.web.ts
+
+```ts
+// NOTE: The default React Native styling doesn't support server rendering.
+// Server rendered styles should not change between the first render of the HTML
+// and the first render on the client. Typically, web developers will use CSS media queries
+// to render different styles on the client and server, these aren't directly supported in React Native
+// but can be achieved using a styling library like Nativewind.
+export function useColorScheme() {
+  return 'light';
+}
+
+```
+
+# hooks\useColorScheme.ts
+
+```ts
+export { useColorScheme } from 'react-native';
+
+```
+
+# hooks\useAuth.ts
+
+```ts
+// hooks/useAuth.ts
+
+import { useState, useEffect } from 'react';
+import { supabase } from '@/lib/supabase';
+import { Session } from '@supabase/supabase-js';
+
+export const useAuth = () => {
+  const [session, setSession] = useState<Session | null>(null);
+
+  useEffect(() => {
+    const getSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+          setSession(session);
+      }
+    };
+
+    getSession();
+
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (session) {
+          setSession(session);
+      }
+    });
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, []);
+
+  return session;
+};
+```
+
+# hooks\useApi.ts
+
+```ts
+import { useState, useCallback } from 'react';
+import { api } from '@/api/supabaseApi';
+import { useAuth } from '@/hooks/useAuth';
+
+export const useProfile = () => {
+  const session = useAuth();
+  const [profileDetails, setProfileDetails] = useState(null);
+  const [currentUserProfile, setCurrentUserProfile] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const fetchCurrentUserProfile = useCallback(async () => {
+    if (!session?.user?.id) return;
+    setLoading(true);
+    try {
+        const data = await api.getCurrentUserProfile(session.user.id);
+        console.log('Fetched Current User Profile:', data);
+        setCurrentUserProfile(data);
+    } catch (err) {
+        console.error('Error fetching current user profile:', err);
+        setError(err);
+    } finally {
+        setLoading(false);
+    }
+}, [session]);
+
+const fetchProfileDetails = useCallback(async (userId: string) => {
+    if (!userId) return null;
+    try {
+        const data = await api.getProfileDetails(userId);
+        console.log('Fetched Profile Details:', data);
+        return data;
+    } catch (err) {
+        console.error('Error fetching profile details:', err);
+        setError(err);
+        return null;
+    }
+}, []);
+
+  return { profileDetails, loading, error, fetchProfileDetails, fetchCurrentUserProfile, currentUserProfile };
+};
+
+export const usePotentialMatches = () => {
+  const session = useAuth();
+  const [matches, setMatches] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const fetchMatches = useCallback(async (limit = 10) => {
+    if (!session?.user?.id) return;
+    setLoading(true);
+    try {
+      const data = await api.getPotentialMatches(session.user.id, limit);
+      setMatches(data);
+    } catch (err) {
+      setError(err);
+    } finally {
+      setLoading(false);
+    }
+  }, [session]);
+
+
+
+  const fetchDiveMatches = useCallback(async (limit = 10) => {
+    if (!session?.user?.id) return;
+    setLoading(true);
+    try {
+        const data = await api.getPotentialDiveMatches(session.user.id, limit);
+        console.log('Fetched Dive Matches:', data);
+        setMatches(data);
+    } catch (err) {
+        console.error('Error fetching dive matches:', err);
+        setError(err);
+    } finally {
+        setLoading(false);
+    }
+}, [session]);
+
+  const recordAction = useCallback(async (matchedUserId: string, action: 'like' | 'dislike') => {
+    if (!session?.user?.id) return;
+    try {
+      await api.recordMatchAction(session.user.id, matchedUserId, action);
+    } catch (err) {
+      setError(err);
+    }
+  }, [session]);
+
+  return { matches, loading, error, fetchMatches, fetchDiveMatches, recordAction };
+};
+
+
+```
+
 # components\TypewriterEffect.tsx
 
 ```tsx
@@ -2726,49 +2726,37 @@ function HomeScreen() {
 }
 
 function DummySurf() {
-    return <View />;
+  return (
+    <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+      <Text>Explore</Text>
+    </View>
+  );
 }
 
 function SettingsScreen() {
-    return (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-            <Text>Settings!</Text>
-        </View>
-    );
+  return (
+    <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+      <Text>Settings!</Text>
+    </View>
+  );
 }
 
 const SettingsStack = createStackNavigator();
 
 function SettingsStackScreen() {
-    return (
-        <SettingsStack.Navigator>
-            <SettingsStack.Screen name="Settings" component={SettingsScreen} />
-            <SettingsStack.Screen name="Details" component={SettingsScreen} />
-        </SettingsStack.Navigator>
-    );
+  return (
+    <SettingsStack.Navigator>
+      <SettingsStack.Screen name="Settings" component={SettingsScreen} />
+      <SettingsStack.Screen name="Details" component={SettingsScreen} />
+    </SettingsStack.Navigator>
+  );
 }
-
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
 
-
-
 function TabNavigator() {
   const navigation = useNavigation();
-  const { client } = useChatContext();
-
-  const disconnectUser = useCallback(async () => {
-    try {
-      if (client && client.userID) {
-        await client.disconnectUser();
-        console.log("User disconnected successfully");
-      }
-    } catch (error) {
-      console.error("Error disconnecting user:", error);
-    }
-  }, [client]);
-
 
   return (
     <Tab.Navigator
@@ -2789,19 +2777,13 @@ function TabNavigator() {
           } else if (route.name === "Me") {
             iconSource = focused ? tabIcons.meActive : tabIcons.meInactive;
           } else if (route.name === "Explore") {
+            iconSource = focused ? tabIcons.meActive : tabIcons.meInactive;
             return (
-              <Pressable
+              <Image
                 style={{ marginTop: Platform.OS === "ios" ? 0 : -4 }}
-                onPress={() => {
-                  disconnectUser();
-                  navigation.navigate("Home"); // TODO: fix this hack. chat has to be disconnected when navigating from inbox to anywhere. when you close dive/surf, inbox will still be focused when coming from there. So we move to home to reset that.
-                  navigation.navigate("Dive");
-                }}
-              >
-                <Image
-                  source={require("@/assets/images/icons/tab-explore.png")}
-                />
-              </Pressable>
+                source={require("@/assets/images/icons/tab-explore.png")}
+                pointerEvents="none"
+              />
             );
           }
 
@@ -2811,10 +2793,13 @@ function TabNavigator() {
           <Pressable
             {...props}
             onPress={() => {
-              if (route.name !== "Inbox") {
-                disconnectUser();
-              }
               props.onPress();
+              if (route.name === "Explore") {
+                setTimeout(() => {
+                  navigation.navigate("Home");
+                  navigation.navigate("Surf");
+                }, 100);
+              }
             }}
           />
         ),
@@ -3342,7 +3327,11 @@ export default function Inbox() {
   useEffect(() => {
     const unsubscribe = navigation.addListener('state', (e) => {
       const currentRoute = e.data.state.routes[e.data.state.index];
-      if (currentRoute.name !== 'ChannelList' && currentRoute.name !== 'ChatChannel') {
+      if (
+        currentRoute.name === "Home" ||
+        currentRoute.name === "History" ||
+        currentRoute.name === "Me"
+      ) {
         disconnectUser();
       }
     });
@@ -6107,12 +6096,6 @@ useEffect(() => {
 */
 ```
 
-# supabase\.temp\cli-latest
-
-```
-v1.187.3
-```
-
 # scripts\sql\current sql setup.txt
 
 ```txt
@@ -6149,6 +6132,12 @@ END;
 $$ LANGUAGE plpgsql;
 ```
 
+# supabase\.temp\cli-latest
+
+```
+v1.187.3
+```
+
 # components\__tests__\ThemedText-test.tsx
 
 ```tsx
@@ -6163,81 +6152,6 @@ it(`renders correctly`, () => {
   expect(tree).toMatchSnapshot();
 });
 
-```
-
-# components\onboarding\StepInterests.tsx
-
-```tsx
-import React, { useCallback, useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
-import { FlashList } from '@shopify/flash-list';
-import { Checkbox } from 'react-native-ui-lib';
-import { Colors } from '@/constants/Colors';
-import { defaultStyles } from '@/constants/Styles';
-import hobbiesInterests from '@/constants/Interests';
-import Spacer from '@/components/Spacer';
-
-const StepInterests = ({ onInterestsSelected }) => {
-    const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
-    const flattenedInterests = React.useMemo(() => hobbiesInterests.flat(), []);
-
-    const handleInterestToggle = useCallback((interest: string) => {
-        setSelectedInterests(prevInterests => {
-            if (prevInterests.includes(interest)) {
-                return prevInterests.filter(i => i !== interest);
-            } else {
-                return [...prevInterests, interest];
-            }
-        });
-    }, []);
-
-    useEffect(() => {
-        onInterestsSelected(selectedInterests);
-    }, [selectedInterests, onInterestsSelected]);
-
-    const renderItem = useCallback(({ item }) => (
-        <Pressable onPress={() => handleInterestToggle(item.value)}>
-            <Checkbox
-                color={selectedInterests.includes(item.value) ? Colors.light.text : Colors.light.tertiary}
-                label={item.label}
-                value={selectedInterests.includes(item.value)}
-                containerStyle={[defaultStyles.checkboxButton, { borderColor: selectedInterests.includes(item.value) ? Colors.light.text : Colors.light.tertiary }]}
-                labelStyle={defaultStyles.checkboxButtonLabel}
-                onValueChange={() => handleInterestToggle(item.value)}
-            />
-        </Pressable>
-    ), [selectedInterests, handleInterestToggle]);
-
-    return (
-        <View style={styles.container}>
-            <Text style={defaultStyles.h2}>Interests ({selectedInterests.length})</Text>
-            <Spacer height={8} />
-            <Text style={defaultStyles.body}>
-                This helps us find people with the same hobbies and interests.
-            </Text>
-            <Spacer height={24} />
-            <FlashList
-                data={flattenedInterests}
-                renderItem={renderItem}
-                estimatedItemSize={75}
-                keyExtractor={(item) => item.value}
-                contentContainerStyle={styles.listContainer}
-            />
-        </View>
-    );
-};
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        padding: 16,
-    },
-    listContainer: {
-        paddingBottom: 16,
-    },
-});
-
-export default StepInterests;
 ```
 
 # components\ui\Textfields.tsx
@@ -7512,6 +7426,81 @@ const styles = StyleSheet.create({
 
 ```
 
+# components\onboarding\StepInterests.tsx
+
+```tsx
+import React, { useCallback, useState, useEffect } from 'react';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
+import { Checkbox } from 'react-native-ui-lib';
+import { Colors } from '@/constants/Colors';
+import { defaultStyles } from '@/constants/Styles';
+import hobbiesInterests from '@/constants/Interests';
+import Spacer from '@/components/Spacer';
+
+const StepInterests = ({ onInterestsSelected }) => {
+    const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
+    const flattenedInterests = React.useMemo(() => hobbiesInterests.flat(), []);
+
+    const handleInterestToggle = useCallback((interest: string) => {
+        setSelectedInterests(prevInterests => {
+            if (prevInterests.includes(interest)) {
+                return prevInterests.filter(i => i !== interest);
+            } else {
+                return [...prevInterests, interest];
+            }
+        });
+    }, []);
+
+    useEffect(() => {
+        onInterestsSelected(selectedInterests);
+    }, [selectedInterests, onInterestsSelected]);
+
+    const renderItem = useCallback(({ item }) => (
+        <Pressable onPress={() => handleInterestToggle(item.value)}>
+            <Checkbox
+                color={selectedInterests.includes(item.value) ? Colors.light.text : Colors.light.tertiary}
+                label={item.label}
+                value={selectedInterests.includes(item.value)}
+                containerStyle={[defaultStyles.checkboxButton, { borderColor: selectedInterests.includes(item.value) ? Colors.light.text : Colors.light.tertiary }]}
+                labelStyle={defaultStyles.checkboxButtonLabel}
+                onValueChange={() => handleInterestToggle(item.value)}
+            />
+        </Pressable>
+    ), [selectedInterests, handleInterestToggle]);
+
+    return (
+        <View style={styles.container}>
+            <Text style={defaultStyles.h2}>Interests ({selectedInterests.length})</Text>
+            <Spacer height={8} />
+            <Text style={defaultStyles.body}>
+                This helps us find people with the same hobbies and interests.
+            </Text>
+            <Spacer height={24} />
+            <FlashList
+                data={flattenedInterests}
+                renderItem={renderItem}
+                estimatedItemSize={75}
+                keyExtractor={(item) => item.value}
+                contentContainerStyle={styles.listContainer}
+            />
+        </View>
+    );
+};
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        padding: 16,
+    },
+    listContainer: {
+        paddingBottom: 16,
+    },
+});
+
+export default StepInterests;
+```
+
 # components\navigation\TabBarIcon.tsx
 
 ```tsx
@@ -7526,6 +7515,146 @@ export function TabBarIcon({ style, ...rest }: IconProps<ComponentProps<typeof I
 }
 
 ```
+
+# assets\sounds\notification.wav
+
+This is a binary file of the type: Binary
+
+# assets\images\splash.png
+
+This is a binary file of the type: Image
+
+# assets\images\react-logo@3x.png
+
+This is a binary file of the type: Image
+
+# assets\images\react-logo@2x.png
+
+This is a binary file of the type: Image
+
+# assets\images\react-logo.png
+
+This is a binary file of the type: Image
+
+# assets\images\partial-react-logo.png
+
+This is a binary file of the type: Image
+
+# assets\images\icon.png
+
+This is a binary file of the type: Image
+
+# assets\images\favicon.png
+
+This is a binary file of the type: Image
+
+# assets\images\adaptive-icon.png
+
+This is a binary file of the type: Image
+
+# assets\fonts\RobotoSlab-Thin.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\RobotoSlab-SemiBold.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\RobotoSlab-Regular.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\RobotoSlab-Medium.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\RobotoSlab-Light.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\RobotoSlab-ExtraLight.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\RobotoSlab-ExtraBold.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\RobotoSlab-Bold.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\RobotoSlab-Black.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-SemiBoldItalic.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-SemiBold.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-Regular.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-MediumItalic.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-Medium.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-LightItalic.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-Light.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-Italic.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-ExtraLightItalic.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-ExtraLight.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-ExtraBoldItalic.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-ExtraBold.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-BoldItalic.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-Bold.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\Copernicus-Extrabold.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\Copernicus-Book.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\Copernicus-Bold.ttf
+
+This is a binary file of the type: Binary
 
 # app-example\(tabs)\_layout.tsx
 
@@ -7753,146 +7882,6 @@ const styles = StyleSheet.create({
 });
 
 ```
-
-# assets\sounds\notification.wav
-
-This is a binary file of the type: Binary
-
-# assets\images\splash.png
-
-This is a binary file of the type: Image
-
-# assets\images\react-logo@3x.png
-
-This is a binary file of the type: Image
-
-# assets\images\react-logo@2x.png
-
-This is a binary file of the type: Image
-
-# assets\images\react-logo.png
-
-This is a binary file of the type: Image
-
-# assets\images\partial-react-logo.png
-
-This is a binary file of the type: Image
-
-# assets\images\icon.png
-
-This is a binary file of the type: Image
-
-# assets\images\favicon.png
-
-This is a binary file of the type: Image
-
-# assets\images\adaptive-icon.png
-
-This is a binary file of the type: Image
-
-# assets\fonts\RobotoSlab-Thin.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\RobotoSlab-SemiBold.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\RobotoSlab-Regular.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\RobotoSlab-Medium.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\RobotoSlab-Light.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\RobotoSlab-ExtraLight.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\RobotoSlab-ExtraBold.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\RobotoSlab-Bold.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\RobotoSlab-Black.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-SemiBoldItalic.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-SemiBold.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-Regular.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-MediumItalic.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-Medium.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-LightItalic.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-Light.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-Italic.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-ExtraLightItalic.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-ExtraLight.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-ExtraBoldItalic.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-ExtraBold.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-BoldItalic.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-Bold.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\Copernicus-Extrabold.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\Copernicus-Book.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\Copernicus-Bold.ttf
-
-This is a binary file of the type: Binary
 
 # app\searchFilters\index.tsx
 
@@ -8959,6 +8948,98 @@ const styles = StyleSheet.create({
 });
 ```
 
+# supabase\functions\process-match-notifications\index.ts
+
+```ts
+import "https://esm.sh/@supabase/functions-js/src/edge-runtime.d.ts"
+
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+
+console.log("Hello from process-match function!")
+
+const supabaseUrl = Deno.env.get('SUPABASE_URL')!
+const supabaseServiceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+
+const supabase = createClient(supabaseUrl, supabaseServiceRoleKey)
+
+async function sendPushNotification(pushToken: string, title: string, body: string) {
+  const message = {
+    to: pushToken,
+    sound: 'default',
+    title: title,
+    body: body,
+    data: { someData: 'goes here' },
+  }
+
+  const response = await fetch('https://exp.host/--/api/v2/push/send', {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      'Accept-encoding': 'gzip, deflate',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(message),
+  })
+
+  return await response.json()
+}
+
+Deno.serve(async (req) => {
+  const authHeader = req.headers.get('Authorization')
+  if (authHeader !== `Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}`) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 })
+  }
+
+  const { data: pendingNotifications, error } = await supabase
+    .from('pending_match_notifications')
+    .select('*')
+    .eq('processed', false)
+    .limit(50)
+    
+  if (error) {
+    console.error('Error fetching pending notifications:', error)
+    return new Response(JSON.stringify({ error: 'Failed to fetch pending notifications' }), { status: 500 })
+  }
+
+  for (const notification of pendingNotifications) {
+    for (const userId of [notification.user1_id, notification.user2_id]) {
+      const { data: userData, error: userError } = await supabase
+        .from('profiles')
+        .select('push_token')
+        .eq('id', userId)
+        .single()
+
+      if (userError || !userData?.push_token) {
+        console.error(`Failed to fetch user data or push token not found for user ${userId}`)
+        continue
+      }
+
+      const notificationTitle = "New Match!"
+      const notificationBody = `You have a new match! Open the app to find out who.`
+
+      try {
+        await sendPushNotification(userData.push_token, notificationTitle, notificationBody)
+        console.log(`Notification sent to user ${userId}`)
+      } catch (error) {
+        console.error(`Failed to send notification to user ${userId}:`, error)
+      }
+    }
+
+    // Mark the notification as processed
+    const { error: updateError } = await supabase
+      .from('pending_match_notifications')
+      .update({ processed: true })
+      .eq('id', notification.id)
+
+    if (updateError) {
+      console.error(`Failed to mark notification ${notification.id} as processed:`, updateError)
+    }
+  }
+
+  return new Response(JSON.stringify({ message: 'Notifications processed' }), { status: 200 })
+})
+```
+
 # supabase\functions\send-match-notification\index.ts
 
 ```ts
@@ -9079,98 +9160,6 @@ Deno.serve(async (req) => {
 
 ```
 
-# supabase\functions\process-match-notifications\index.ts
-
-```ts
-import "https://esm.sh/@supabase/functions-js/src/edge-runtime.d.ts"
-
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-
-console.log("Hello from process-match function!")
-
-const supabaseUrl = Deno.env.get('SUPABASE_URL')!
-const supabaseServiceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-
-const supabase = createClient(supabaseUrl, supabaseServiceRoleKey)
-
-async function sendPushNotification(pushToken: string, title: string, body: string) {
-  const message = {
-    to: pushToken,
-    sound: 'default',
-    title: title,
-    body: body,
-    data: { someData: 'goes here' },
-  }
-
-  const response = await fetch('https://exp.host/--/api/v2/push/send', {
-    method: 'POST',
-    headers: {
-      Accept: 'application/json',
-      'Accept-encoding': 'gzip, deflate',
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(message),
-  })
-
-  return await response.json()
-}
-
-Deno.serve(async (req) => {
-  const authHeader = req.headers.get('Authorization')
-  if (authHeader !== `Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}`) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 })
-  }
-
-  const { data: pendingNotifications, error } = await supabase
-    .from('pending_match_notifications')
-    .select('*')
-    .eq('processed', false)
-    .limit(50)
-    
-  if (error) {
-    console.error('Error fetching pending notifications:', error)
-    return new Response(JSON.stringify({ error: 'Failed to fetch pending notifications' }), { status: 500 })
-  }
-
-  for (const notification of pendingNotifications) {
-    for (const userId of [notification.user1_id, notification.user2_id]) {
-      const { data: userData, error: userError } = await supabase
-        .from('profiles')
-        .select('push_token')
-        .eq('id', userId)
-        .single()
-
-      if (userError || !userData?.push_token) {
-        console.error(`Failed to fetch user data or push token not found for user ${userId}`)
-        continue
-      }
-
-      const notificationTitle = "New Match!"
-      const notificationBody = `You have a new match! Open the app to find out who.`
-
-      try {
-        await sendPushNotification(userData.push_token, notificationTitle, notificationBody)
-        console.log(`Notification sent to user ${userId}`)
-      } catch (error) {
-        console.error(`Failed to send notification to user ${userId}:`, error)
-      }
-    }
-
-    // Mark the notification as processed
-    const { error: updateError } = await supabase
-      .from('pending_match_notifications')
-      .update({ processed: true })
-      .eq('id', notification.id)
-
-    if (updateError) {
-      console.error(`Failed to mark notification ${notification.id} as processed:`, updateError)
-    }
-  }
-
-  return new Response(JSON.stringify({ message: 'Notifications processed' }), { status: 200 })
-})
-```
-
 # supabase\functions\generate-stream-token\index.ts
 
 ```ts
@@ -9259,36 +9248,6 @@ serve(async (req) => {
 
 ```
 
-# components\__tests__\__snapshots__\ThemedText-test.tsx.snap
-
-```snap
-// Jest Snapshot v1, https://goo.gl/fbAQLP
-
-exports[`renders correctly 1`] = `
-<Text
-  style={
-    [
-      {
-        "color": "#11181C",
-      },
-      {
-        "fontSize": 16,
-        "lineHeight": 24,
-      },
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-    ]
-  }
->
-  Snapshot test!
-</Text>
-`;
-
-```
-
 # assets\images\onboarding\onboarding5@3x.png
 
 This is a binary file of the type: Image
@@ -9346,6 +9305,48 @@ This is a binary file of the type: Image
 This is a binary file of the type: Image
 
 # assets\images\onboarding\onboarding1.png
+
+This is a binary file of the type: Image
+
+# components\__tests__\__snapshots__\ThemedText-test.tsx.snap
+
+```snap
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`renders correctly 1`] = `
+<Text
+  style={
+    [
+      {
+        "color": "#11181C",
+      },
+      {
+        "fontSize": 16,
+        "lineHeight": 24,
+      },
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+    ]
+  }
+>
+  Snapshot test!
+</Text>
+`;
+
+```
+
+# assets\images\logo\logo_crushy@3x.png
+
+This is a binary file of the type: Image
+
+# assets\images\logo\logo_crushy@2x.png
+
+This is a binary file of the type: Image
+
+# assets\images\logo\logo_crushy.png
 
 This is a binary file of the type: Image
 
@@ -9466,18 +9467,6 @@ This is a binary file of the type: Image
 This is a binary file of the type: Image
 
 # assets\images\icons\iconSharedInterest.png
-
-This is a binary file of the type: Image
-
-# assets\images\logo\logo_crushy@3x.png
-
-This is a binary file of the type: Image
-
-# assets\images\logo\logo_crushy@2x.png
-
-This is a binary file of the type: Image
-
-# assets\images\logo\logo_crushy.png
 
 This is a binary file of the type: Image
 

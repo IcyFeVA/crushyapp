@@ -26,6 +26,7 @@ import ChannelList from '@/components/ChannelList';
 import ChatChannel from '@/components/ChatChannel';
 import { useChatContext } from 'stream-chat-expo';
 
+
 const tabIcons = {
     homeActive: require('@/assets/images/icons/tab-home-active.png'),
     homeInactive: require('@/assets/images/icons/tab-home.png'),
