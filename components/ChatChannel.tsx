@@ -1,4 +1,10 @@
-import React, { useEffect, useState, useRef, useCallback } from "react";
+import React, {
+  useEffect,
+  useState,
+  useRef,
+  useCallback,
+  useMemo,
+} from "react";
 import {
   View,
   Text,
@@ -19,6 +25,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase";
 import { Colors } from "@/constants/Colors";
 import { defaultStyles } from "@/constants/Styles";
+import { Ionicons } from "@expo/vector-icons";
 
 type Message = {
   id: string;
@@ -28,6 +35,7 @@ type Message = {
   edited?: boolean;
   pending?: boolean;
   local_id?: string;
+  read_by?: string[];
 };
 
 const formatDate = (date: Date) => {
@@ -85,6 +93,95 @@ export default function ChatChannel() {
       subscription.unsubscribe();
     };
   }, []);
+
+  useEffect(() => {
+    const subscription = supabase
+      .channel("messages")
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "messages",
+          filter: `conversation_id=eq.${conversationId}`,
+        },
+        (payload) => {
+          setMessages((prevMessages) =>
+            prevMessages.map((msg) =>
+              msg.id === payload.new.id ? { ...msg, ...payload.new } : msg
+            )
+          );
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(subscription);
+    };
+  }, [conversationId]);
+
+  const markMessagesAsRead = useCallback(async () => {
+    if (!session?.user?.id || !conversationId) return;
+
+    try {
+      await supabase.rpc("mark_messages_as_read", {
+        conversation_id: conversationId,
+        user_id: session.user.id,
+      });
+
+      // Update local state to reflect read status
+      setMessages((prevMessages) =>
+        prevMessages.map((msg) =>
+          msg.sender_id !== session.user.id
+            ? { ...msg, read_by: [...(msg.read_by || []), session.user.id] }
+            : msg
+        )
+      );
+    } catch (error) {
+      console.error("Error marking messages as read:", error);
+    }
+  }, [conversationId, session?.user?.id]);
+
+  useEffect(() => {
+    markMessagesAsRead();
+    const interval = setInterval(markMessagesAsRead, 5000); // Check every 5 seconds
+    return () => clearInterval(interval);
+  }, [markMessagesAsRead]);
+
+  const lastSentMessage = useMemo(() => {
+    const userMessages = messages.filter(
+      (msg) => msg.sender_id === session?.user?.id
+    );
+    return userMessages[0]; // Since messages are in reverse chronological order
+  }, [messages, session?.user?.id]);
+
+  const renderReadReceipt = useCallback(() => {
+    if (!lastSentMessage) return null;
+
+    if (!lastSentMessage.read_by || lastSentMessage.read_by.length === 0) {
+      return (
+        <View style={styles.readReceiptContainer}>
+          <Ionicons
+            name="checkmark"
+            size={16}
+            color={Colors.light.textSecondary}
+          />
+          <Text style={styles.readReceiptText}>Sent</Text>
+        </View>
+      );
+    } else {
+      return (
+        <View style={styles.readReceiptContainer}>
+          <Ionicons
+            name="checkmark-done"
+            size={16}
+            color={Colors.light.accent}
+          />
+          <Text style={styles.readReceiptText}>Read</Text>
+        </View>
+      );
+    }
+  }, [lastSentMessage]);
 
   const handleNewMessage = useCallback((payload: { new: Message }) => {
     const newMessage = payload.new;
@@ -375,6 +472,7 @@ export default function ChatChannel() {
           keyExtractor={(item) => item.id}
           inverted
         />
+        {renderReadReceipt()}
         {editingMessage ? (
           <View style={styles.editContainer}>
             <TextInput
@@ -421,6 +519,9 @@ const styles = StyleSheet.create({
     marginHorizontal: 10,
     borderRadius: 10,
     maxWidth: "70%",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-end",
   },
   sentMessage: {
     alignSelf: "flex-end",
@@ -523,5 +624,17 @@ const styles = StyleSheet.create({
     color: Colors.light.textSecondary,
     marginLeft: 5,
     alignSelf: "flex-end",
+  },
+  readReceiptContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "flex-end",
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+  },
+  readReceiptText: {
+    fontSize: 12,
+    color: Colors.light.textSecondary,
+    marginLeft: 5,
   },
 });
