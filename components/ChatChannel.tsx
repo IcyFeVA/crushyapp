@@ -10,6 +10,7 @@ import {
   Platform,
   Alert,
   ActivityIndicator,
+  TouchableOpacity,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRoute, useNavigation } from "@react-navigation/native";
@@ -41,6 +42,10 @@ const formatDate = (date: Date) => {
   }
 };
 
+const formatTime = (date: Date) => {
+  return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+};
+
 export default function ChatChannel() {
   const route = useRoute();
   const navigation = useNavigation();
@@ -50,6 +55,9 @@ export default function ChatChannel() {
   const [isLoading, setIsLoading] = useState(true);
   const session = useAuth();
   const flatListRef = useRef(null);
+  const [visibleTimestamps, setVisibleTimestamps] = useState<
+    Record<string, boolean>
+  >({});
 
   useEffect(() => {
     navigation.setOptions({ headerTitle: otherUserName });
@@ -188,6 +196,13 @@ export default function ChatChannel() {
     return messagesWithLabels.reverse();
   }, []);
 
+  const toggleTimestamp = useCallback((messageId: string) => {
+    setVisibleTimestamps((prev) => ({
+      ...prev,
+      [messageId]: !prev[messageId],
+    }));
+  }, []);
+
   const renderItem = useCallback(
     ({ item, index }) => {
       if (item.type === "date") {
@@ -198,22 +213,36 @@ export default function ChatChannel() {
         );
       }
 
+      const messageTime = new Date(item.created_at);
+      const isCurrentUser = item.sender_id === session?.user?.id;
+      const isTimestampVisible = visibleTimestamps[item.id];
+
       return (
-        <View
-          style={[
-            styles.messageContainer,
-            item.sender_id === session?.user?.id
-              ? styles.sentMessage
-              : styles.receivedMessage,
-            item.pending && styles.pendingMessage,
-          ]}
-        >
-          <Text style={styles.messageText}>{item.content}</Text>
-          {item.pending && <Text style={styles.pendingText}>Sending...</Text>}
-        </View>
+        <TouchableOpacity onPress={() => toggleTimestamp(item.id)}>
+          <View
+            style={[
+              styles.messageContainer,
+              isCurrentUser ? styles.sentMessage : styles.receivedMessage,
+              item.pending && styles.pendingMessage,
+            ]}
+          >
+            <Text style={styles.messageText}>{item.content}</Text>
+            {isTimestampVisible && (
+              <Text
+                style={[
+                  styles.timeText,
+                  isCurrentUser ? styles.sentTimeText : styles.receivedTimeText,
+                ]}
+              >
+                {formatTime(messageTime)}
+              </Text>
+            )}
+            {item.pending && <Text style={styles.pendingText}>Sending...</Text>}
+          </View>
+        </TouchableOpacity>
       );
     },
-    [session?.user?.id]
+    [session?.user?.id, visibleTimestamps, toggleTimestamp]
   );
 
   if (isLoading) {
