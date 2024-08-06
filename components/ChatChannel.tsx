@@ -27,6 +27,20 @@ type Message = {
   local_id?: string;
 };
 
+const formatDate = (date: Date) => {
+  const today = new Date();
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+
+  if (date.toDateString() === today.toDateString()) {
+    return "Today";
+  } else if (date.toDateString() === yesterday.toDateString()) {
+    return "Yesterday";
+  } else {
+    return date.toLocaleDateString();
+  }
+};
+
 export default function ChatChannel() {
   const route = useRoute();
   const navigation = useNavigation();
@@ -147,21 +161,58 @@ export default function ChatChannel() {
     }
   };
 
-  const renderMessage = useCallback(
-    ({ item }: { item: Message }) => (
-      <View
-        style={[
-          styles.messageContainer,
-          item.sender_id === session?.user?.id
-            ? styles.sentMessage
-            : styles.receivedMessage,
-          item.pending && styles.pendingMessage,
-        ]}
-      >
-        <Text style={styles.messageText}>{item.content}</Text>
-        {item.pending && <Text style={styles.pendingText}>Sending...</Text>}
-      </View>
-    ),
+  const getMessagesWithDateLabels = useCallback((messages: Message[]) => {
+    let currentDate = "";
+    const messagesWithLabels = [];
+
+    // Reverse the messages array to process them in chronological order
+    const reversedMessages = [...messages].reverse();
+
+    reversedMessages.forEach((message, index) => {
+      const messageDate = new Date(message.created_at);
+      const formattedDate = formatDate(messageDate);
+
+      if (formattedDate !== currentDate) {
+        currentDate = formattedDate;
+        messagesWithLabels.push({
+          id: `date-${index}`,
+          type: "date",
+          date: formattedDate,
+        });
+      }
+
+      messagesWithLabels.push(message);
+    });
+
+    // Reverse the array again to maintain the inverted order for FlatList
+    return messagesWithLabels.reverse();
+  }, []);
+
+  const renderItem = useCallback(
+    ({ item, index }) => {
+      if (item.type === "date") {
+        return (
+          <View style={styles.dateContainer}>
+            <Text style={styles.dateText}>{item.date}</Text>
+          </View>
+        );
+      }
+
+      return (
+        <View
+          style={[
+            styles.messageContainer,
+            item.sender_id === session?.user?.id
+              ? styles.sentMessage
+              : styles.receivedMessage,
+            item.pending && styles.pendingMessage,
+          ]}
+        >
+          <Text style={styles.messageText}>{item.content}</Text>
+          {item.pending && <Text style={styles.pendingText}>Sending...</Text>}
+        </View>
+      );
+    },
     [session?.user?.id]
   );
 
@@ -181,6 +232,8 @@ export default function ChatChannel() {
     );
   }
 
+  const messagesWithDateLabels = getMessagesWithDateLabels(messages);
+
   return (
     <SafeAreaView style={defaultStyles.SafeAreaView}>
       <KeyboardAvoidingView
@@ -190,8 +243,8 @@ export default function ChatChannel() {
       >
         <FlatList
           ref={flatListRef}
-          data={messages}
-          renderItem={renderMessage}
+          data={getMessagesWithDateLabels(messages)}
+          renderItem={renderItem}
           keyExtractor={(item) => item.id}
           inverted
         />
@@ -273,5 +326,17 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+  },
+  dateContainer: {
+    alignItems: "center",
+    marginVertical: 10,
+  },
+  dateText: {
+    backgroundColor: Colors.light.tertiary,
+    color: Colors.light.text,
+    fontSize: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 10,
   },
 });
