@@ -11,6 +11,7 @@ import {
   Alert,
   ActivityIndicator,
   TouchableOpacity,
+  ActionSheetIOS,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRoute, useNavigation } from "@react-navigation/native";
@@ -58,6 +59,8 @@ export default function ChatChannel() {
   const [visibleTimestamps, setVisibleTimestamps] = useState<
     Record<string, boolean>
   >({});
+  const [editingMessage, setEditingMessage] = useState<Message | null>(null);
+  const [editText, setEditText] = useState("");
 
   useEffect(() => {
     navigation.setOptions({ headerTitle: otherUserName });
@@ -203,6 +206,94 @@ export default function ChatChannel() {
     }));
   }, []);
 
+  const handleLongPress = useCallback(
+    (message: Message) => {
+      if (message.sender_id !== session?.user?.id) return;
+
+      if (Platform.OS === "ios") {
+        ActionSheetIOS.showActionSheetWithOptions(
+          {
+            options: ["Cancel", "Edit", "Delete"],
+            destructiveButtonIndex: 2,
+            cancelButtonIndex: 0,
+          },
+          (buttonIndex) => {
+            if (buttonIndex === 1) {
+              setEditingMessage(message);
+              setEditText(message.content);
+            } else if (buttonIndex === 2) {
+              handleDeleteMessage(message);
+            }
+          }
+        );
+      } else {
+        // For Android, you might want to use a custom modal or a third-party library like react-native-action-sheet
+        Alert.alert("Message Options", "What would you like to do?", [
+          { text: "Cancel", style: "cancel" },
+          {
+            text: "Edit",
+            onPress: () => {
+              setEditingMessage(message);
+              setEditText(message.content);
+            },
+          },
+          {
+            text: "Delete",
+            onPress: () => handleDeleteMessage(message),
+            style: "destructive",
+          },
+        ]);
+      }
+    },
+    [session?.user?.id]
+  );
+
+  const handleEditMessage = async () => {
+    if (!editingMessage || !editText.trim()) return;
+
+    try {
+      const { data, error } = await supabase
+        .from("messages")
+        .update({ content: editText.trim() })
+        .eq("id", editingMessage.id)
+        .select();
+
+      if (error) throw error;
+
+      setMessages((prevMessages) =>
+        prevMessages.map((msg) =>
+          msg.id === editingMessage.id
+            ? { ...msg, content: editText.trim() }
+            : msg
+        )
+      );
+
+      setEditingMessage(null);
+      setEditText("");
+    } catch (error) {
+      console.error("Error editing message:", error);
+      Alert.alert("Error", "Failed to edit message. Please try again.");
+    }
+  };
+
+  const handleDeleteMessage = async (message: Message) => {
+    try {
+      const { error } = await supabase
+        .from("messages")
+        .delete()
+        .eq("id", message.id);
+
+      if (error) throw error;
+
+      setMessages((prevMessages) =>
+        prevMessages.filter((msg) => msg.id !== message.id)
+      );
+    } catch (error) {
+      console.error("Error deleting message:", error);
+      Alert.alert("Error", "Failed to delete message. Please try again.");
+    }
+  };
+
   const renderItem = useCallback(
     ({ item, index }) => {
       if (item.type === "date") {
@@ -218,7 +309,10 @@ export default function ChatChannel() {
       const isTimestampVisible = visibleTimestamps[item.id];
 
       return (
-        <TouchableOpacity onPress={() => toggleTimestamp(item.id)}>
+        <TouchableOpacity
+          onPress={() => toggleTimestamp(item.id)}
+          onLongPress={() => handleLongPress(item)}
+        >
           <View
             style={[
               styles.messageContainer,
@@ -242,7 +336,7 @@ export default function ChatChannel() {
         </TouchableOpacity>
       );
     },
-    [session?.user?.id, visibleTimestamps, toggleTimestamp]
+    [session?.user?.id, visibleTimestamps, toggleTimestamp, handleLongPress]
   );
 
   if (isLoading) {
@@ -277,17 +371,37 @@ export default function ChatChannel() {
           keyExtractor={(item) => item.id}
           inverted
         />
-        <View style={styles.inputContainer}>
-          <TextInput
-            style={styles.input}
-            value={inputMessage}
-            onChangeText={setInputMessage}
-            placeholder="Type a message..."
-          />
-          <Pressable style={styles.sendButton} onPress={sendMessage}>
-            <Text style={styles.sendButtonText}>Send</Text>
-          </Pressable>
-        </View>
+        {editingMessage ? (
+          <View style={styles.editContainer}>
+            <TextInput
+              style={styles.editInput}
+              value={editText}
+              onChangeText={setEditText}
+              autoFocus
+            />
+            <Pressable style={styles.editButton} onPress={handleEditMessage}>
+              <Text style={styles.editButtonText}>Save</Text>
+            </Pressable>
+            <Pressable
+              style={styles.editButton}
+              onPress={() => setEditingMessage(null)}
+            >
+              <Text style={styles.editButtonText}>Cancel</Text>
+            </Pressable>
+          </View>
+        ) : (
+          <View style={styles.inputContainer}>
+            <TextInput
+              style={styles.input}
+              value={inputMessage}
+              onChangeText={setInputMessage}
+              placeholder="Type a message..."
+            />
+            <Pressable style={styles.sendButton} onPress={sendMessage}>
+              <Text style={styles.sendButtonText}>Send</Text>
+            </Pressable>
+          </View>
+        )}
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -367,5 +481,31 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 10,
+  },
+  editContainer: {
+    flexDirection: "row",
+    padding: 10,
+    borderTopWidth: 1,
+    borderTopColor: Colors.light.tertiary,
+  },
+  editInput: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: Colors.light.tertiary,
+    borderRadius: 20,
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    marginRight: 10,
+  },
+  editButton: {
+    backgroundColor: Colors.light.primary,
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    borderRadius: 20,
+    justifyContent: "center",
+  },
+  editButtonText: {
+    color: Colors.light.textInverted,
+    fontWeight: "bold",
   },
 });
