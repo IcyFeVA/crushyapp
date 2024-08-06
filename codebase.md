@@ -9,6 +9,8 @@
     // "skipLibCheck": true,
     // "forceConsistentCasingInFileNames": false,
     // "noEmit": true,
+    "jsx": "react-native",
+    "esModuleInterop": true,
     "strict": true,
     "paths": {
       "@/*": [
@@ -120,7 +122,7 @@ Join our community of developers creating universal apps.
   "main": "expo-router/entry",
   "version": "1.0.0",
   "scripts": {
-    "start": "expo start",
+    "start": "expo start --dev-client",
     "reset-project": "node ./scripts/reset-project.js",
     "add-fake-users": "node ./scripts/addFakeUsers.js",
     "android": "expo run:android",
@@ -140,8 +142,10 @@ Join our community of developers creating universal apps.
     "@gorhom/bottom-sheet": "4",
     "@react-native-async-storage/async-storage": "1.23.1",
     "@react-native-community/netinfo": "11.3.1",
+    "@react-native-firebase/app": "^20.3.0",
     "@react-native-picker/picker": "2.7.5",
     "@react-navigation/bottom-tabs": "^6.6.0",
+    "@react-navigation/material-top-tabs": "^6.6.14",
     "@react-navigation/native": "^6.1.18",
     "@react-navigation/native-stack": "^6.9.26",
     "@react-navigation/stack": "^6.4.0",
@@ -154,9 +158,11 @@ Join our community of developers creating universal apps.
     "base64-js": "^1.5.1",
     "expo": "~51.0.17",
     "expo-av": "^14.0.6",
+    "expo-clipboard": "~6.0.3",
     "expo-constants": "~16.0.2",
     "expo-dev-client": "~4.0.19",
-    "expo-device": "^6.0.2",
+    "expo-device": "~6.0.2",
+    "expo-document-picker": "~12.0.2",
     "expo-file-system": "~17.0.1",
     "expo-font": "~12.0.6",
     "expo-haptics": "^13.0.1",
@@ -166,13 +172,15 @@ Join our community of developers creating universal apps.
     "expo-linking": "~6.3.1",
     "expo-media-library": "~16.0.4",
     "expo-navigation-bar": "~3.0.7",
-    "expo-notifications": "^0.28.9",
+    "expo-notifications": "~0.28.14",
     "expo-router": "^3.5.18",
     "expo-secure-store": "~13.0.2",
+    "expo-sharing": "~12.0.1",
     "expo-splash-screen": "~0.27.5",
     "expo-status-bar": "~1.12.1",
     "expo-system-ui": "~3.0.7",
     "expo-web-browser": "~13.0.3",
+    "firebase": "^10.12.5",
     "nativewind": "^2.0.11",
     "react": "18.2.0",
     "react-dom": "18.2.0",
@@ -181,10 +189,12 @@ Join our community of developers creating universal apps.
     "react-native-big-list": "^1.6.1",
     "react-native-gesture-handler": "~2.16.1",
     "react-native-mmkv": "^2.12.2",
+    "react-native-pager-view": "^6.3.3",
     "react-native-reanimated": "~3.10.1",
     "react-native-safe-area-context": "4.10.1",
     "react-native-screens": "3.31.1",
     "react-native-svg": "15.2.0",
+    "react-native-tab-view": "^3.5.2",
     "react-native-toast-message": "^2.2.0",
     "react-native-ui-lib": "^7.23.3",
     "react-native-url-polyfill": "^2.0.0",
@@ -193,10 +203,7 @@ Join our community of developers creating universal apps.
     "stream-chat": "^8.37.0",
     "stream-chat-expo": "^5.33.1",
     "stream-chat-react-native": "^5.33.1",
-    "zustand": "^4.5.2",
-    "expo-clipboard": "~6.0.3",
-    "expo-sharing": "~12.0.1",
-    "expo-document-picker": "~12.0.2"
+    "zustand": "^4.5.2"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
@@ -219,6 +226,61 @@ Join our community of developers creating universal apps.
 
 ```ts
 /// <reference types="nativewind/types" />
+```
+
+# metro.config.js
+
+```js
+// Learn more https://docs.expo.io/guides/customizing-metro
+const { getDefaultConfig } = require('expo/metro-config');
+
+/** @type {import('expo/metro-config').MetroConfig} */
+const config = getDefaultConfig(__dirname);
+
+module.exports = config;
+
+```
+
+# index.js
+
+```js
+import { registerRootComponent } from 'expo';
+
+import App from './App';
+
+// registerRootComponent calls AppRegistry.registerComponent('main', () => App);
+// It also ensures that whether you load the app in Expo Go or in a native build,
+// the environment is set up appropriately
+registerRootComponent(App);
+
+```
+
+# firebase.js
+
+```js
+// firebase.js
+import { initializeApp } from 'firebase/app';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDlAxbCBQNee9tEf3-myE4D4ALyt5G1mbc",
+  authDomain: "crushy-2a133.firebaseapp.com",
+  projectId: "crushy-2a133",
+  storageBucket: "crushy-2a133.appspot.com",
+  messagingSenderId: "36536394826",
+  appId: "1:36536394826:android:a4a4da323d66a56f5a72b3"
+};
+
+let app;
+let messaging;
+
+try {
+  app = initializeApp(firebaseConfig);
+  messaging = getMessaging(app);
+} catch (error) {
+  console.error("Error initializing Firebase:", error);
+}
+
+export { app, messaging };
 ```
 
 # expo-env.d.ts
@@ -297,7 +359,8 @@ module.exports = function (api) {
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/favicon.png",
+      "googleServicesFile": "./android/app/google-services.json"
     },
     "plugins": [
       "expo-secure-store",
@@ -364,11 +427,46 @@ web-build/
 # macOS
 .DS_Store
 
-# @generated expo-cli sync-2b81b286409207a5da26e14c78851eb30d8ccbdb
+# @generated expo-cli sync-8d4afeec25ea8a192358fae2f8e2fc766bdce4ec
 # The following patterns were generated by expo-cli
 
+# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
+
+# dependencies
+node_modules/
+
+# Expo
+.expo/
+dist/
+web-build/
+
+# Native
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# Metro
+.metro-health-check*
+
+# debug
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# macOS
+.DS_Store
+*.pem
+
+# local env files
+.env*.local
+
+# typescript
+*.tsbuildinfo
+
 expo-env.d.ts
-config.ts
 # @end expo-cli
 ```
 
@@ -406,100 +504,6 @@ web-build/
 android/
 %ProgramData%/
 .vscode/
-```
-
-# utils\storage.js
-
-```js
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
-// usage:
-/*
-    import { getData, storeData } from '@/utils/storage';
-
-    storeData('user', session);
-
-    getData('user').then(user => {
-        console.log(user);
-    });
-*/
-
-const storeData = async (key, value) => {
-    try {
-        await AsyncStorage.setItem(key, JSON.stringify(value));
-    } catch (e) {
-        console.error('Error saving data', e);
-    }
-};
-const getData = async (key) => {
-    try {
-        const value = await AsyncStorage.getItem(key);
-        if (value !== null) {
-            return JSON.parse(value);
-        }
-    } catch (e) {
-        console.error('Error reading data', e);
-    }
-};
-
-const resetUserSearchFilters = async () => {
-    const genderPreferencesSet = ['genderPreference', JSON.stringify({ key: '', value: [] })]
-    const ageRangeSet = ['ageRange', JSON.stringify({ key: '', value: '18-30' })]
-    const distanceSet = ['distance', JSON.stringify({ key: '40', value: '40' })]
-    const starSignPreference = ['starSignPreference', JSON.stringify({ key: '', value: '-' })]
-    const bodyTypePreference = ['bodyTypePreference', JSON.stringify({ key: '', value: '-' })]
-    const exerciseFrequency = ['exerciseFrequency', JSON.stringify({ key: '', value: '-' })]
-    const smokingFrequency = ['smokingFrequency', JSON.stringify({ key: '', value: '-' })]
-    const drinkingFrequency = ['drinkingFrequency', JSON.stringify({ key: '', value: '-' })]
-    const cannabisFrequency = ['cannabisFrequency', JSON.stringify({ key: '', value: '-' })]
-    const dietPreference = ['dietPreference', JSON.stringify({ key: '', value: '-' })]
-
-    try {
-        await AsyncStorage.multiSet([genderPreferencesSet, ageRangeSet, distanceSet, starSignPreference, bodyTypePreference,
-            exerciseFrequency, smokingFrequency, drinkingFrequency, cannabisFrequency, dietPreference])
-    } catch (e) {
-        //save error
-    }
-
-    console.log("search filters reset")
-}
-
-
-const clearAllStorage = async () => {
-    try {
-        await AsyncStorage.clear()
-    } catch (e) {
-        // clear error
-    }
-
-    console.log('CLEARING STORAGE')
-}
-
-export { storeData, getData, resetUserSearchFilters, clearAllStorage };
-```
-
-# utils\pixelateImage.js
-
-```js
-import * as ImageManipulator from 'expo-image-manipulator';
-
-async function pixelateImage(uri, pixelSize = 20) {
-    // Resize the image to a smaller size
-    const smallImage = await ImageManipulator.manipulateAsync(
-        uri,
-        [{ resize: { width: 100 } }],
-        { format: 'png' }
-    );
-
-    // Resize it back to original size, creating pixelation effect
-    const pixelatedImage = await ImageManipulator.manipulateAsync(
-        smallImage.uri,
-        [{ resize: { width: 300 } }],
-        { format: 'png' }
-    );
-
-    return pixelatedImage.uri;
-}
 ```
 
 # supabase\seed.sql
@@ -718,6 +722,100 @@ s3_secret_key = "env(S3_SECRET_KEY)"
 
 ```
 
+# utils\storage.js
+
+```js
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+// usage:
+/*
+    import { getData, storeData } from '@/utils/storage';
+
+    storeData('user', session);
+
+    getData('user').then(user => {
+        console.log(user);
+    });
+*/
+
+const storeData = async (key, value) => {
+    try {
+        await AsyncStorage.setItem(key, JSON.stringify(value));
+    } catch (e) {
+        console.error('Error saving data', e);
+    }
+};
+const getData = async (key) => {
+    try {
+        const value = await AsyncStorage.getItem(key);
+        if (value !== null) {
+            return JSON.parse(value);
+        }
+    } catch (e) {
+        console.error('Error reading data', e);
+    }
+};
+
+const resetUserSearchFilters = async () => {
+    const genderPreferencesSet = ['genderPreference', JSON.stringify({ key: '', value: [] })]
+    const ageRangeSet = ['ageRange', JSON.stringify({ key: '', value: '18-30' })]
+    const distanceSet = ['distance', JSON.stringify({ key: '40', value: '40' })]
+    const starSignPreference = ['starSignPreference', JSON.stringify({ key: '', value: '-' })]
+    const bodyTypePreference = ['bodyTypePreference', JSON.stringify({ key: '', value: '-' })]
+    const exerciseFrequency = ['exerciseFrequency', JSON.stringify({ key: '', value: '-' })]
+    const smokingFrequency = ['smokingFrequency', JSON.stringify({ key: '', value: '-' })]
+    const drinkingFrequency = ['drinkingFrequency', JSON.stringify({ key: '', value: '-' })]
+    const cannabisFrequency = ['cannabisFrequency', JSON.stringify({ key: '', value: '-' })]
+    const dietPreference = ['dietPreference', JSON.stringify({ key: '', value: '-' })]
+
+    try {
+        await AsyncStorage.multiSet([genderPreferencesSet, ageRangeSet, distanceSet, starSignPreference, bodyTypePreference,
+            exerciseFrequency, smokingFrequency, drinkingFrequency, cannabisFrequency, dietPreference])
+    } catch (e) {
+        //save error
+    }
+
+    console.log("search filters reset")
+}
+
+
+const clearAllStorage = async () => {
+    try {
+        await AsyncStorage.clear()
+    } catch (e) {
+        // clear error
+    }
+
+    console.log('CLEARING STORAGE')
+}
+
+export { storeData, getData, resetUserSearchFilters, clearAllStorage };
+```
+
+# utils\pixelateImage.js
+
+```js
+import * as ImageManipulator from 'expo-image-manipulator';
+
+async function pixelateImage(uri, pixelSize = 20) {
+    // Resize the image to a smaller size
+    const smallImage = await ImageManipulator.manipulateAsync(
+        uri,
+        [{ resize: { width: 100 } }],
+        { format: 'png' }
+    );
+
+    // Resize it back to original size, creating pixelation effect
+    const pixelatedImage = await ImageManipulator.manipulateAsync(
+        smallImage.uri,
+        [{ resize: { width: 300 } }],
+        { format: 'png' }
+    );
+
+    return pixelatedImage.uri;
+}
+```
+
 # sql\profile_details.sql
 
 ```sql
@@ -779,6 +877,94 @@ CREATE TRIGGER set_timestamp
 BEFORE UPDATE ON profile_details
 FOR EACH ROW
 EXECUTE FUNCTION trigger_set_timestamp();
+```
+
+# sql\chat.sql
+
+```sql
+-- Conversations table
+CREATE TABLE conversations (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Conversation participants
+CREATE TABLE conversation_participants (
+  conversation_id UUID REFERENCES conversations(id),
+  user_id UUID REFERENCES profiles_test(id),
+  PRIMARY KEY (conversation_id, user_id)
+);
+
+-- Messages table
+CREATE TABLE messages (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  conversation_id UUID REFERENCES conversations(id),
+  sender_id UUID REFERENCES profiles_test(id),
+  content TEXT NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Function to get or create a conversation between two users
+CREATE OR REPLACE FUNCTION get_or_create_conversation(user1_id UUID, user2_id UUID)
+RETURNS UUID AS $$
+DECLARE
+  conversation_id UUID;
+BEGIN
+  -- Check if a conversation already exists
+  SELECT c.id INTO conversation_id
+  FROM conversations c
+  JOIN conversation_participants cp1 ON c.id = cp1.conversation_id
+  JOIN conversation_participants cp2 ON c.id = cp2.conversation_id
+  WHERE cp1.user_id = user1_id AND cp2.user_id = user2_id;
+  
+  -- If no conversation exists, create a new one
+  IF conversation_id IS NULL THEN
+    INSERT INTO conversations DEFAULT VALUES RETURNING id INTO conversation_id;
+    INSERT INTO conversation_participants (conversation_id, user_id) VALUES
+      (conversation_id, user1_id),
+      (conversation_id, user2_id);
+  END IF;
+  
+  RETURN conversation_id;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Function to get recent conversations for a user
+CREATE OR REPLACE FUNCTION get_recent_conversations(user_id UUID)
+RETURNS TABLE (
+  conversation_id UUID,
+  other_user_id UUID,
+  other_user_name TEXT,
+  last_message TEXT,
+  last_message_time TIMESTAMP WITH TIME ZONE
+) AS $$
+BEGIN
+  RETURN QUERY
+  SELECT 
+    c.id AS conversation_id,
+    p.id AS other_user_id,
+    p.name AS other_user_name,
+    m.content AS last_message,
+    m.created_at AS last_message_time
+  FROM conversations c
+  JOIN conversation_participants cp ON c.id = cp.conversation_id
+  JOIN profiles_test p ON cp.user_id = p.id
+  LEFT JOIN LATERAL (
+    SELECT content, created_at
+    FROM messages
+    WHERE conversation_id = c.id
+    ORDER BY created_at DESC
+    LIMIT 1
+  ) m ON TRUE
+  WHERE c.id IN (
+    SELECT conversation_id
+    FROM conversation_participants
+    WHERE user_id = get_recent_conversations.user_id
+  )
+  AND p.id != get_recent_conversations.user_id
+  ORDER BY m.created_at DESC NULLS LAST;
+END;
+$$ LANGUAGE plpgsql;
 ```
 
 # scripts\reset-project.js
@@ -1300,6 +1486,529 @@ export const getFieldOptions = (field, language = 'en') => {
         label: item[language]
     }));
 }; 
+```
+
+# hooks\useWarmUpBrowser.ts
+
+```ts
+import { useEffect } from 'react';
+import * as WebBrowser from 'expo-web-browser';
+
+export const useWarmUpBrowser = () => {
+    useEffect(() => {
+        void WebBrowser.warmUpAsync();
+        return () => {
+            void WebBrowser.coolDownAsync();
+        };
+    }, []);
+};
+```
+
+# hooks\useThemeColor.ts
+
+```ts
+/**
+ * Learn more about light and dark modes:
+ * https://docs.expo.dev/guides/color-schemes/
+ */
+
+import { useColorScheme } from 'react-native';
+
+import { Colors } from '@/constants/Colors';
+
+export function useThemeColor(
+  props: { light?: string; dark?: string },
+  colorName: keyof typeof Colors.light & keyof typeof Colors.dark
+) {
+  const theme = useColorScheme() ?? 'light';
+  const colorFromProps = props[theme];
+
+  if (colorFromProps) {
+    return colorFromProps;
+  } else {
+    return Colors[theme][colorName];
+  }
+}
+
+```
+
+# hooks\useTabFocus.ts
+
+```ts
+// hooks/useTabFocus.ts
+import { useCallback, useEffect, useState } from 'react';
+import { useIsFocused } from '@react-navigation/native';
+
+export const useTabFocus = () => {
+  const isFocused = useIsFocused();
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  useEffect(() => {
+    if (isFocused) {
+      setRefreshKey(prevKey => prevKey + 1);
+    }
+  }, [isFocused]);
+
+  const refresh = useCallback(() => {
+    setRefreshKey(prevKey => prevKey + 1);
+  }, []);
+
+  return { refreshKey, refresh };
+};
+```
+
+# hooks\useRealtimeSubscriptions.ts
+
+```ts
+// hooks/useRealtimeSubscriptions.ts
+import { useEffect, useState } from 'react';
+import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/hooks/useAuth';
+
+export const useRealtimeSubscriptions = () => {
+  const session = useAuth();
+  const [newMatches, setNewMatches] = useState(0);
+  const [unreadMessages, setUnreadMessages] = useState(0);
+
+  useEffect(() => {
+    if (!session?.user?.id) return;
+
+    const matchesSubscription = supabase
+      .channel('matches')
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'matches',
+        filter: `user2_id=eq.${session.user.id}`,
+      }, (payload) => {
+        setNewMatches((prev) => prev + 1);
+      })
+      .subscribe();
+
+    const messagesSubscription = supabase
+      .channel('messages')
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'messages',
+      }, async (payload) => {
+        const { data, error } = await supabase
+          .from('conversation_participants')
+          .select('user_id')
+          .eq('conversation_id', payload.new.conversation_id)
+          .eq('user_id', session.user.id)
+          .single();
+
+        if (data && payload.new.sender_id !== session.user.id) {
+          setUnreadMessages((prev) => prev + 1);
+        }
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(matchesSubscription);
+      supabase.removeChannel(messagesSubscription);
+    };
+  }, [session?.user?.id]);
+
+  return { newMatches, unreadMessages };
+};
+```
+
+# hooks\useProfile.ts
+
+```ts
+// src/hooks/useProfile.ts
+import { useEffect, useState } from 'react';
+import { supabase } from '../lib/supabase';
+import { Alert } from 'react-native';
+import { Session } from '@supabase/supabase-js';
+
+export const useProfile = (session: Session | null) => {
+    const [onboardingDone, setOnboardingDone] = useState<boolean>(false);
+
+    useEffect(() => {
+        if (session) {
+            const getProfile = async () => {
+                try {
+                    const { data } = await supabase
+                        .from('profiles_test')
+                        .select('name')
+                        .eq('id', session?.user.id)
+                        .single();
+
+                        if(data) {
+                            console.log('database data received', data)
+                            setOnboardingDone(data?.name != null);
+                        }
+                    
+                } catch (error: any) { 
+                    Alert.alert(error.message);
+                }
+            };
+
+            getProfile();
+        }
+    }, [session]);
+
+    return onboardingDone;
+};
+
+```
+
+# hooks\useNotifications.ts
+
+```ts
+import { useState, useEffect, useRef } from 'react';
+import { Platform } from 'react-native';
+import * as Device from 'expo-device';
+import * as Notifications from 'expo-notifications';
+import Constants from 'expo-constants';
+import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/hooks/useAuth';
+
+Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+        shouldShowAlert: true,
+        shouldPlaySound: false,
+        shouldSetBadge: false,
+    }),
+});
+
+export function useNotifications() {
+    const [expoPushToken, setExpoPushToken] = useState('');
+    const [notification, setNotification] = useState(false);
+    const [matchNotifications, setMatchNotifications] = useState([]);
+    const notificationListener = useRef();
+    const responseListener = useRef();
+    const session = useAuth();
+
+    useEffect(() => {
+        registerForPushNotificationsAsync().then(token => setExpoPushToken(token));
+
+        notificationListener.current = Notifications.addNotificationReceivedListener(notification => {
+            setNotification(notification);
+        });
+
+        responseListener.current = Notifications.addNotificationResponseReceivedListener(response => {
+            console.log(response);
+        });
+
+        return () => {
+            Notifications.removeNotificationSubscription(notificationListener.current);
+            Notifications.removeNotificationSubscription(responseListener.current);
+        };
+    }, []);
+
+    useEffect(() => {
+        let subscription;
+
+        const setupMatchNotifications = async () => {
+            if (session?.user.id) {
+                // Initial fetch of unread notifications
+                const { data, error } = await supabase
+                    .rpc('get_unread_match_notifications', { user_id: session.user.id });
+
+                if (data) {
+                    setMatchNotifications(data);
+                    console.log('Initial match notifications:', data);
+                }
+
+                // Set up realtime subscription
+                subscription = supabase
+                    .channel('match_notifications')
+                    .on(
+                        'postgres_changes',
+                        {
+                            event: 'INSERT',
+                            schema: 'public',
+                            table: 'match_notifications',
+                            filter: `user_id=eq.${session.user.id}`,
+                        },
+                        (payload) => {
+                            console.log('New match notification:', payload);
+                            setMatchNotifications(prevNotifications => [...prevNotifications, payload.new]);
+                        }
+                    )
+                    .subscribe();
+            }
+        };
+
+        setupMatchNotifications();
+
+        // Cleanup function
+        return () => {
+            if (subscription) {
+                supabase.removeChannel(subscription);
+            }
+        };
+    }, [session?.user.id]);
+
+    return { expoPushToken, notification, matchNotifications };
+}
+
+async function registerForPushNotificationsAsync() {
+    let token;
+
+    if (Platform.OS === 'android') {
+        await Notifications.setNotificationChannelAsync('default', {
+            name: 'default',
+            importance: Notifications.AndroidImportance.MAX,
+            vibrationPattern: [0, 250, 250, 250],
+            lightColor: '#FF231F7C',
+        });
+    }
+
+    if (Device.isDevice) {
+        const { status: existingStatus } = await Notifications.getPermissionsAsync();
+        let finalStatus = existingStatus;
+        if (existingStatus !== 'granted') {
+            const { status } = await Notifications.requestPermissionsAsync();
+            finalStatus = status;
+        }
+        if (finalStatus !== 'granted') {
+            alert('Failed to get push token for push notification!');
+            return;
+        }
+        token = (await Notifications.getExpoPushTokenAsync({ projectId: Constants.expoConfig.extra.eas.projectId })).data;
+    } else {
+        console.log('Must use physical device for Push Notifications');
+    }
+    console.log('token', token)
+    // Store the token in Supabase
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+        const { error } = await supabase
+            .from('profiles_test')
+            .update({ push_token: token })
+            .eq('id', user.id);
+
+        if (error) {
+            console.error('Error storing push token:', error);
+        }
+    }
+
+    return token;
+}
+```
+
+# hooks\useColorScheme.web.ts
+
+```ts
+// NOTE: The default React Native styling doesn't support server rendering.
+// Server rendered styles should not change between the first render of the HTML
+// and the first render on the client. Typically, web developers will use CSS media queries
+// to render different styles on the client and server, these aren't directly supported in React Native
+// but can be achieved using a styling library like Nativewind.
+export function useColorScheme() {
+  return 'light';
+}
+
+```
+
+# hooks\useColorScheme.ts
+
+```ts
+export { useColorScheme } from 'react-native';
+
+```
+
+# hooks\useAuth.ts
+
+```ts
+// hooks/useAuth.ts
+
+import { useState, useEffect } from 'react';
+import { supabase } from '@/lib/supabase';
+import { Session } from '@supabase/supabase-js';
+
+export const useAuth = () => {
+  const [session, setSession] = useState<Session | null>(null);
+
+  useEffect(() => {
+    const getSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+          setSession(session);
+      }
+    };
+
+    getSession();
+
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (session) {
+          setSession(session);
+      }
+    });
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, []);
+
+  return session;
+};
+```
+
+# hooks\useApi.ts
+
+```ts
+import { useState, useCallback } from 'react';
+import { api } from '@/api/supabaseApi';
+import { useAuth } from '@/hooks/useAuth';
+
+export const useProfile = () => {
+  const session = useAuth();
+  const [profileDetails, setProfileDetails] = useState(null);
+  const [currentUserProfile, setCurrentUserProfile] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const fetchCurrentUserProfile = useCallback(async () => {
+    if (!session?.user?.id) return;
+    setLoading(true);
+    try {
+        const data = await api.getCurrentUserProfile(session.user.id);
+        console.log('Fetched Current User Profile:', data);
+        setCurrentUserProfile(data);
+    } catch (err) {
+        console.error('Error fetching current user profile:', err);
+        setError(err);
+    } finally {
+        setLoading(false);
+    }
+}, [session]);
+
+const fetchProfileDetails = useCallback(async (userId: string) => {
+    if (!userId) return null;
+    try {
+        const data = await api.getProfileDetails(userId);
+        console.log('Fetched Profile Details:', data);
+        return data;
+    } catch (err) {
+        console.error('Error fetching profile details:', err);
+        setError(err);
+        return null;
+    }
+}, []);
+
+  return { profileDetails, loading, error, fetchProfileDetails, fetchCurrentUserProfile, currentUserProfile };
+};
+
+export const usePotentialMatches = () => {
+  const session = useAuth();
+  const [matches, setMatches] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const fetchMatches = useCallback(async (limit = 10) => {
+    if (!session?.user?.id) return;
+    setLoading(true);
+    try {
+      const data = await api.getPotentialMatches(session.user.id, limit);
+      setMatches(data);
+    } catch (err) {
+      setError(err);
+    } finally {
+      setLoading(false);
+    }
+  }, [session]);
+
+
+
+  const fetchDiveMatches = useCallback(async (limit = 10) => {
+    if (!session?.user?.id) return;
+    setLoading(true);
+    try {
+        const data = await api.getPotentialDiveMatches(session.user.id, limit);
+        console.log('Fetched Dive Matches:', data);
+        setMatches(data);
+    } catch (err) {
+        console.error('Error fetching dive matches:', err);
+        setError(err);
+    } finally {
+        setLoading(false);
+    }
+}, [session]);
+
+  const recordAction = useCallback(async (matchedUserId: string, action: 'like' | 'dislike') => {
+    if (!session?.user?.id) return;
+    try {
+      await api.recordMatchAction(session.user.id, matchedUserId, action);
+    } catch (err) {
+      setError(err);
+    }
+  }, [session]);
+
+  return { matches, loading, error, fetchMatches, fetchDiveMatches, recordAction };
+};
+
+
+```
+
+# contexts\NotificationContext.tsx
+
+```tsx
+// contexts/NotificationContext.ts
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
+import { useRealtimeSubscriptions } from "@/hooks/useRealtimeSubscriptions";
+
+interface NotificationContextType {
+  totalNotifications: number;
+  newMatches: number;
+  unreadMessages: number;
+  resetNotifications: () => void;
+}
+
+const NotificationContext = createContext<NotificationContextType | undefined>(
+  undefined
+);
+
+export const NotificationProvider: React.FC<{ children: ReactNode }> = ({
+  children,
+}) => {
+  const { newMatches, unreadMessages } = useRealtimeSubscriptions();
+  const [totalNotifications, setTotalNotifications] = useState(0);
+
+  useEffect(() => {
+    setTotalNotifications(newMatches + unreadMessages);
+  }, [newMatches, unreadMessages]);
+
+  const resetNotifications = () => {
+    setTotalNotifications(0);
+    // You might want to add logic here to reset newMatches and unreadMessages as well
+  };
+
+  const value = {
+    totalNotifications,
+    newMatches,
+    unreadMessages,
+    resetNotifications,
+  };
+
+  return (
+    <NotificationContext.Provider value={value}>
+      {children}
+    </NotificationContext.Provider>
+  );
+};
+
+export const useNotifications = (): NotificationContextType => {
+  const context = useContext(NotificationContext);
+  if (context === undefined) {
+    throw new Error(
+      "useNotifications must be used within a NotificationProvider"
+    );
+  }
+  return context;
+};
+
 ```
 
 # constants\ToastConfig.ts
@@ -1906,381 +2615,6 @@ export const Colors = {
 
 ```
 
-# hooks\useWarmUpBrowser.ts
-
-```ts
-import { useEffect } from 'react';
-import * as WebBrowser from 'expo-web-browser';
-
-export const useWarmUpBrowser = () => {
-    useEffect(() => {
-        void WebBrowser.warmUpAsync();
-        return () => {
-            void WebBrowser.coolDownAsync();
-        };
-    }, []);
-};
-```
-
-# hooks\useThemeColor.ts
-
-```ts
-/**
- * Learn more about light and dark modes:
- * https://docs.expo.dev/guides/color-schemes/
- */
-
-import { useColorScheme } from 'react-native';
-
-import { Colors } from '@/constants/Colors';
-
-export function useThemeColor(
-  props: { light?: string; dark?: string },
-  colorName: keyof typeof Colors.light & keyof typeof Colors.dark
-) {
-  const theme = useColorScheme() ?? 'light';
-  const colorFromProps = props[theme];
-
-  if (colorFromProps) {
-    return colorFromProps;
-  } else {
-    return Colors[theme][colorName];
-  }
-}
-
-```
-
-# hooks\useProfile.ts
-
-```ts
-// src/hooks/useProfile.ts
-import { useEffect, useState } from 'react';
-import { supabase } from '../lib/supabase';
-import { Alert } from 'react-native';
-import { Session } from '@supabase/supabase-js';
-
-export const useProfile = (session: Session | null) => {
-    const [onboardingDone, setOnboardingDone] = useState<boolean>(false);
-
-    useEffect(() => {
-        if (session) {
-            const getProfile = async () => {
-                try {
-                    const { data } = await supabase
-                        .from('profiles_test')
-                        .select('name')
-                        .eq('id', session?.user.id)
-                        .single();
-
-                        if(data) {
-                            console.log('database data received', data)
-                            setOnboardingDone(data?.name != null);
-                        }
-                    
-                } catch (error: any) { 
-                    Alert.alert(error.message);
-                }
-            };
-
-            getProfile();
-        }
-    }, [session]);
-
-    return onboardingDone;
-};
-
-```
-
-# hooks\useNotifications.ts
-
-```ts
-import { useState, useEffect, useRef } from 'react';
-import { Platform } from 'react-native';
-import * as Device from 'expo-device';
-import * as Notifications from 'expo-notifications';
-import Constants from 'expo-constants';
-import { supabase } from '@/lib/supabase';
-import { useAuth } from '@/hooks/useAuth';
-
-Notifications.setNotificationHandler({
-    handleNotification: async () => ({
-        shouldShowAlert: true,
-        shouldPlaySound: false,
-        shouldSetBadge: false,
-    }),
-});
-
-export function useNotifications() {
-    const [expoPushToken, setExpoPushToken] = useState('');
-    const [notification, setNotification] = useState(false);
-    const [matchNotifications, setMatchNotifications] = useState([]);
-    const notificationListener = useRef();
-    const responseListener = useRef();
-    const session = useAuth();
-
-    useEffect(() => {
-        registerForPushNotificationsAsync().then(token => setExpoPushToken(token));
-
-        notificationListener.current = Notifications.addNotificationReceivedListener(notification => {
-            setNotification(notification);
-        });
-
-        responseListener.current = Notifications.addNotificationResponseReceivedListener(response => {
-            console.log(response);
-        });
-
-        return () => {
-            Notifications.removeNotificationSubscription(notificationListener.current);
-            Notifications.removeNotificationSubscription(responseListener.current);
-        };
-    }, []);
-
-    useEffect(() => {
-        let subscription;
-
-        const setupMatchNotifications = async () => {
-            if (session?.user.id) {
-                // Initial fetch of unread notifications
-                const { data, error } = await supabase
-                    .rpc('get_unread_match_notifications', { user_id: session.user.id });
-
-                if (data) {
-                    setMatchNotifications(data);
-                    console.log('Initial match notifications:', data);
-                }
-
-                // Set up realtime subscription
-                subscription = supabase
-                    .channel('match_notifications')
-                    .on(
-                        'postgres_changes',
-                        {
-                            event: 'INSERT',
-                            schema: 'public',
-                            table: 'match_notifications',
-                            filter: `user_id=eq.${session.user.id}`,
-                        },
-                        (payload) => {
-                            console.log('New match notification:', payload);
-                            setMatchNotifications(prevNotifications => [...prevNotifications, payload.new]);
-                        }
-                    )
-                    .subscribe();
-            }
-        };
-
-        setupMatchNotifications();
-
-        // Cleanup function
-        return () => {
-            if (subscription) {
-                supabase.removeChannel(subscription);
-            }
-        };
-    }, [session?.user.id]);
-
-    return { expoPushToken, notification, matchNotifications };
-}
-
-async function registerForPushNotificationsAsync() {
-    let token;
-
-    if (Platform.OS === 'android') {
-        await Notifications.setNotificationChannelAsync('default', {
-            name: 'default',
-            importance: Notifications.AndroidImportance.MAX,
-            vibrationPattern: [0, 250, 250, 250],
-            lightColor: '#FF231F7C',
-        });
-    }
-
-    if (Device.isDevice) {
-        const { status: existingStatus } = await Notifications.getPermissionsAsync();
-        let finalStatus = existingStatus;
-        if (existingStatus !== 'granted') {
-            const { status } = await Notifications.requestPermissionsAsync();
-            finalStatus = status;
-        }
-        if (finalStatus !== 'granted') {
-            alert('Failed to get push token for push notification!');
-            return;
-        }
-        token = (await Notifications.getExpoPushTokenAsync({ projectId: Constants.expoConfig.extra.eas.projectId })).data;
-    } else {
-        console.log('Must use physical device for Push Notifications');
-    }
-    console.log('token', token)
-    // Store the token in Supabase
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-        const { error } = await supabase
-            .from('profiles_test')
-            .update({ push_token: token })
-            .eq('id', user.id);
-
-        if (error) {
-            console.error('Error storing push token:', error);
-        }
-    }
-
-    return token;
-}
-```
-
-# hooks\useColorScheme.web.ts
-
-```ts
-// NOTE: The default React Native styling doesn't support server rendering.
-// Server rendered styles should not change between the first render of the HTML
-// and the first render on the client. Typically, web developers will use CSS media queries
-// to render different styles on the client and server, these aren't directly supported in React Native
-// but can be achieved using a styling library like Nativewind.
-export function useColorScheme() {
-  return 'light';
-}
-
-```
-
-# hooks\useColorScheme.ts
-
-```ts
-export { useColorScheme } from 'react-native';
-
-```
-
-# hooks\useAuth.ts
-
-```ts
-// hooks/useAuth.ts
-
-import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
-import { Session } from '@supabase/supabase-js';
-
-export const useAuth = () => {
-  const [session, setSession] = useState<Session | null>(null);
-
-  useEffect(() => {
-    const getSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-          setSession(session);
-      }
-    };
-
-    getSession();
-
-    const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (session) {
-          setSession(session);
-      }
-    });
-
-    return () => {
-      authListener.subscription.unsubscribe();
-    };
-  }, []);
-
-  return session;
-};
-```
-
-# hooks\useApi.ts
-
-```ts
-import { useState, useCallback } from 'react';
-import { api } from '@/api/supabaseApi';
-import { useAuth } from '@/hooks/useAuth';
-
-export const useProfile = () => {
-  const session = useAuth();
-  const [profileDetails, setProfileDetails] = useState(null);
-  const [currentUserProfile, setCurrentUserProfile] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-
-  const fetchCurrentUserProfile = useCallback(async () => {
-    if (!session?.user?.id) return;
-    setLoading(true);
-    try {
-        const data = await api.getCurrentUserProfile(session.user.id);
-        console.log('Fetched Current User Profile:', data);
-        setCurrentUserProfile(data);
-    } catch (err) {
-        console.error('Error fetching current user profile:', err);
-        setError(err);
-    } finally {
-        setLoading(false);
-    }
-}, [session]);
-
-const fetchProfileDetails = useCallback(async (userId: string) => {
-    if (!userId) return null;
-    try {
-        const data = await api.getProfileDetails(userId);
-        console.log('Fetched Profile Details:', data);
-        return data;
-    } catch (err) {
-        console.error('Error fetching profile details:', err);
-        setError(err);
-        return null;
-    }
-}, []);
-
-  return { profileDetails, loading, error, fetchProfileDetails, fetchCurrentUserProfile, currentUserProfile };
-};
-
-export const usePotentialMatches = () => {
-  const session = useAuth();
-  const [matches, setMatches] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-
-  const fetchMatches = useCallback(async (limit = 10) => {
-    if (!session?.user?.id) return;
-    setLoading(true);
-    try {
-      const data = await api.getPotentialMatches(session.user.id, limit);
-      setMatches(data);
-    } catch (err) {
-      setError(err);
-    } finally {
-      setLoading(false);
-    }
-  }, [session]);
-
-
-
-  const fetchDiveMatches = useCallback(async (limit = 10) => {
-    if (!session?.user?.id) return;
-    setLoading(true);
-    try {
-        const data = await api.getPotentialDiveMatches(session.user.id, limit);
-        console.log('Fetched Dive Matches:', data);
-        setMatches(data);
-    } catch (err) {
-        console.error('Error fetching dive matches:', err);
-        setError(err);
-    } finally {
-        setLoading(false);
-    }
-}, [session]);
-
-  const recordAction = useCallback(async (matchedUserId: string, action: 'like' | 'dislike') => {
-    if (!session?.user?.id) return;
-    try {
-      await api.recordMatchAction(session.user.id, matchedUserId, action);
-    } catch (err) {
-      setError(err);
-    }
-  }, [session]);
-
-  return { matches, loading, error, fetchMatches, fetchDiveMatches, recordAction };
-};
-
-
-```
-
 # components\TypewriterEffect.tsx
 
 ```tsx
@@ -2701,28 +3035,26 @@ import { supabase } from '@/lib/supabase';
 import ChannelList from '@/components/ChannelList';
 import ChatChannel from '@/components/ChatChannel';
 import { useChatContext } from 'stream-chat-expo';
+import { useNotifications } from "@/contexts/NotificationContext";
 
 const tabIcons = {
-    homeActive: require('@/assets/images/icons/tab-home-active.png'),
-    homeInactive: require('@/assets/images/icons/tab-home.png'),
-    historyActive: require('@/assets/images/icons/tab-history-active.png'),
-    historyInactive: require('@/assets/images/icons/tab-history.png'),
-    inboxActive: require('@/assets/images/icons/tab-inbox-active.png'),
-    inboxInactive: require('@/assets/images/icons/tab-inbox.png'),
-    meActive: require('@/assets/images/icons/tab-me-active.png'),
-    meInactive: require('@/assets/images/icons/tab-me.png'),
-    exploreInactive: require('@/assets/images/icons/tab-explore.png'),
+  homeActive: require("@/assets/images/icons/tab-home-active.png"),
+  homeInactive: require("@/assets/images/icons/tab-home.png"),
+  historyActive: require("@/assets/images/icons/tab-history-active.png"),
+  historyInactive: require("@/assets/images/icons/tab-history.png"),
+  inboxActive: require("@/assets/images/icons/tab-inbox-active.png"),
+  inboxInactive: require("@/assets/images/icons/tab-inbox.png"),
+  meActive: require("@/assets/images/icons/tab-me-active.png"),
+  meInactive: require("@/assets/images/icons/tab-me.png"),
+  exploreInactive: require("@/assets/images/icons/tab-explore.png"),
 };
 
-
-
-
 function HomeScreen() {
-    return (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-            <Text>Home!</Text>
-        </View>
-    );
+  return (
+    <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+      <Text>Home!</Text>
+    </View>
+  );
 }
 
 function DummySurf() {
@@ -2757,6 +3089,7 @@ const Stack = createStackNavigator();
 
 function TabNavigator() {
   const navigation = useNavigation();
+  const { totalNotifications } = useNotifications();
 
   return (
     <Tab.Navigator
@@ -2817,7 +3150,9 @@ function TabNavigator() {
       <Tab.Screen
         name="Inbox"
         component={ChannelList}
-        options={{ tabBarBadge: 6 }}
+        options={{
+          tabBarBadge: totalNotifications > 0 ? totalNotifications : undefined,
+        }}
         initialParams={{ inChatFlow: false }}
       />
       <Tab.Screen name="Me" component={Me} />
@@ -3106,268 +3441,476 @@ const styles = StyleSheet.create({
 # components\ChatChannel.tsx
 
 ```tsx
-import React, { useEffect, useState, useLayoutEffect } from "react";
-import { SafeAreaView } from "react-native-safe-area-context";
+// components/ChatChannel.tsx
+import React, { useEffect, useState, useRef } from "react";
 import {
-  Channel,
-  MessageList,
-  MessageInput,
-  useChatContext,
-} from "stream-chat-expo";
+  View,
+  Text,
+  TextInput,
+  FlatList,
+  Pressable,
+  StyleSheet,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useRoute, useNavigation } from "@react-navigation/native";
-import { ActivityIndicator } from "react-native";
+import { useAuth } from "@/hooks/useAuth";
+import { api } from "@/api/supabaseApi";
 import { Colors } from "@/constants/Colors";
-import { supabase } from "@/lib/supabase";
+import { defaultStyles } from "@/constants/Styles";
 
+type Message = {
+  id: string;
+  sender_id: string;
+  content: string;
+  created_at: string;
+};
 
-export default function ChatChannelScreen() {
-  const navigation = useNavigation();
+export default function ChatChannel() {
   const route = useRoute();
-  const { channelId } = route.params;
-  const { client } = useChatContext();
-  const [channel, setChannel] = useState();
+  const navigation = useNavigation();
+  const { conversationId, otherUserId, otherUserName } = route.params;
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [inputMessage, setInputMessage] = useState("");
+  const session = useAuth();
+  const flatListRef = useRef(null);
 
   useEffect(() => {
-    const createAndWatchChannel = async () => {
-      const newChannel = client.channel("messaging", channelId);
-      await newChannel.watch();
-      setChannel(newChannel);
+    navigation.setOptions({ headerTitle: otherUserName });
+    fetchMessages();
+    const subscription = api.subscribeToMessages(conversationId, (payload) => {
+      setMessages((prevMessages) => [payload.new, ...prevMessages]);
+    });
 
-      // Get member IDs
-      const memberIds = Object.keys(newChannel.state.members);
-      console.log("Member IDs:", memberIds);
-
-      // Fetch user data from Supabase
-      const { data: users, error } = await supabase
-        .from("profiles_test")
-        .select("id, name")
-        .in("id", memberIds);
-
-      if (error) {
-        console.error("Error fetching user data:", error);
-        return;
-      }
-
-      console.log("Fetched user data:", users);
-
-      // Map user names
-      const memberNames = memberIds.map((id) => {
-        const user = users.find((u) => u.id === id);
-        return user ? user.name : "Unknown User";
-      });
-
-      console.log("Channel members:", memberNames);
-
-      // Find the other user (assuming 1-on-1 chat)
-      const otherUser = users.find((u) => u.id !== client.userID);
-      const otherUserName = otherUser ? otherUser.name : "Unknown User";
-      console.log("Other user name:", otherUserName);
-
-      // Set the channel name to the other user's name
-      if (otherUserName && otherUserName !== "Unknown User") {
-        navigation.setOptions({
-          headerTitle: otherUserName,
-        });
-      }
+    return () => {
+      subscription.unsubscribe();
     };
+  }, []);
 
-    createAndWatchChannel();
-  }, [channelId, client, navigation, supabase]);
+  const fetchMessages = async () => {
+    try {
+      const data = await api.getMessages(conversationId);
+      setMessages(data.reverse());
+    } catch (error) {
+      console.error("Error fetching messages:", error);
+    }
+  };
 
-  if (!channelId || !channel) {
-    return <ActivityIndicator size="large" color={Colors.light.accent} />;
-  }
+  const sendMessage = async () => {
+    if (inputMessage.trim() === "") return;
+    try {
+      await api.sendMessage(conversationId, session.user.id, inputMessage);
+      setInputMessage("");
+    } catch (error) {
+      console.error("Error sending message:", error);
+    }
+  };
+
+  const renderMessage = ({ item }: { item: Message }) => (
+    <View
+      style={[
+        styles.messageContainer,
+        item.sender_id === session.user.id
+          ? styles.sentMessage
+          : styles.receivedMessage,
+      ]}
+    >
+      <Text style={styles.messageText}>{item.content}</Text>
+    </View>
+  );
 
   return (
-    <SafeAreaView style={{ flex: 1 }}>
-      <Channel
-        channel={channel}
-        overrideOwnCapabilities={{
-          uploadFile: false,
-          sendLinks: false,
-        }}
-      >
-        <MessageList />
-        <MessageInput />
-      </Channel>
+    <SafeAreaView style={defaultStyles.SafeAreaView}>
+      <View style={styles.container}>
+        <FlatList
+          ref={flatListRef}
+          data={messages}
+          renderItem={renderMessage}
+          keyExtractor={(item) => item.id}
+          inverted
+        />
+        <View style={styles.inputContainer}>
+          <TextInput
+            style={styles.input}
+            value={inputMessage}
+            onChangeText={setInputMessage}
+            placeholder="Type a message..."
+          />
+          <Pressable style={styles.sendButton} onPress={sendMessage}>
+            <Text style={styles.sendButtonText}>Send</Text>
+          </Pressable>
+        </View>
+      </View>
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  messageContainer: {
+    padding: 10,
+    marginVertical: 5,
+    marginHorizontal: 10,
+    borderRadius: 10,
+    maxWidth: "70%",
+  },
+  sentMessage: {
+    alignSelf: "flex-end",
+    backgroundColor: Colors.light.primary,
+  },
+  receivedMessage: {
+    alignSelf: "flex-start",
+    backgroundColor: Colors.light.tertiary,
+  },
+  messageText: {
+    color: Colors.light.text,
+  },
+  inputContainer: {
+    flexDirection: "row",
+    padding: 10,
+    borderTopWidth: 1,
+    borderTopColor: Colors.light.tertiary,
+  },
+  input: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: Colors.light.tertiary,
+    borderRadius: 20,
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    marginRight: 10,
+  },
+  sendButton: {
+    backgroundColor: Colors.light.primary,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
+    justifyContent: "center",
+  },
+  sendButtonText: {
+    color: Colors.light.textInverted,
+    fontWeight: "bold",
+  },
+});
 
 ```
 
 # components\ChannelList.tsx
 
 ```tsx
-import React, { useCallback, useEffect, useRef, useState } from "react";
-import { useNavigation, useFocusEffect } from "@react-navigation/native";
+// components/tabs/inbox.tsx
+import React, { useEffect, useState } from "react";
+import { View, Text, FlatList, Pressable, StyleSheet } from "react-native";
+import { useNavigation } from "@react-navigation/native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/lib/supabase";
+import { api } from "@/api/supabaseApi";
 import { Colors } from "@/constants/Colors";
-import { connectUser, chatClient } from "@/lib/streamChat";
-import { useChatContext, ChannelList } from "stream-chat-expo";
-import { ActivityIndicator } from "react-native";
+import { defaultStyles } from "@/constants/Styles";
+import { supabase } from "@/lib/supabase";
+import { useTabFocus } from "@/hooks/useTabFocus";
+import { useNotifications } from "@/hooks/useNotifications";
 
-export default function Inbox() {
+const Tab = createMaterialTopTabNavigator();
+
+type Conversation = {
+  conversation_id: string;
+  user2_id: string;
+  other_user_name: string;
+  last_message: string;
+  last_message_time: string;
+};
+
+type Match = {
+  id: string;
+  user2_id: string;
+  other_user_name: string;
+  created_at: string;
+};
+
+const startConversationForMatch = async (matchId: string) => {
+  const { data, error } = await supabase.rpc("create_conversation_for_match", {
+    match_id: matchId,
+  });
+
+  if (error) throw error;
+
+  return data; // This will be the conversation_id
+};
+
+function MatchesTab({ refreshKey, refresh }) {
+  const [matches, setMatches] = useState<Match[]>([]);
+  const [loading, setLoading] = useState(true);
   const navigation = useNavigation();
   const session = useAuth();
-  const { client } = useChatContext();
-  const isConnectedRef = useRef(false);
-  const isInChatChannelRef = useRef(false);
-  const isMountedRef = useRef(true);
-  const [channelsLoaded, setChannelsLoaded] = useState(false);
+  const { newMatches } = useNotifications();
 
-  function generateShortChannelId(userId1: string, userId2: string): string {
-    const sortedIds = [userId1, userId2].sort();
-    const combined = sortedIds[0].slice(0, 8) + sortedIds[1].slice(0, 8);
-    let hash = 0;
-    for (let i = 0; i < combined.length; i++) {
-      const char = combined.charCodeAt(i);
-      hash = (hash << 5) - hash + char;
-      hash = hash & hash;
+  useEffect(() => {
+    if (newMatches > 0) {
+      fetchMatches();
     }
-    return Math.abs(hash).toString(36).slice(0, 16);
-  }
+  }, [newMatches]);
 
-  const setupClient = useCallback(async () => {
-    if (!session?.user?.id || isConnectedRef.current) return;
+  useEffect(() => {
+    if (session?.user) {
+      fetchMatches();
+    }
+  }, [session, refreshKey]);
 
+  const fetchMatches = async () => {
     try {
-      console.log("Connecting user...");
-      await connectUser({
-        id: session.user.id,
-        name: session.user.email || "Anonymous User",
-      });
-      if (isMountedRef.current) {
-        isConnectedRef.current = true;
-        console.log("User connected successfully");
-      }
-    } catch (error) {
-      console.error("Failed to connect user", error);
-    }
-  }, [session?.user?.id, session?.user?.email]);
-
-  const disconnectUser = useCallback(async () => {
-    if (isConnectedRef.current) {
-      try {
-        await chatClient.disconnectUser();
-        if (isMountedRef.current) {
-          isConnectedRef.current = false;
-          setChannelsLoaded(false);
-          console.log("User disconnected successfully");
-        }
-      } catch (error) {
-        console.error("Error disconnecting user:", error);
-      }
-    }
-  }, []);
-
-  const fetchAndCreateChannels = useCallback(async () => {
-    if (!isConnectedRef.current) return;
-
-    try {
-      console.log("Fetching matches...");
-      const { data: matches, error } = await supabase
+      setLoading(true);
+      const { data, error } = await supabase
         .from("matches")
         .select(
-          "*, user1:profiles_test!user1_id(*), user2:profiles_test!user2_id(*)"
+          `
+          id,
+          user2_id,
+          profiles_test!matches_user2_id_fkey(name),
+          created_at
+        `
         )
-        .or(`user1_id.eq.${session.user.id},user2_id.eq.${session.user.id}`)
-        .eq("matched", true);
+        .eq("user1_id", session.user.id)
+        .is("conversation_id", null);
 
       if (error) throw error;
 
-      console.log("Matches fetched:", matches.length);
-
-      if (matches.length === 0) {
-        console.log("No matches found");
-        setChannelsLoaded(true);
-        return;
-      }
-
-      const channelPromises = matches.map(async (match) => {
-        const otherUser =
-          match.user1_id === session.user.id ? match.user2 : match.user1;
-        const channelId = generateShortChannelId(session.user.id, otherUser.id);
-
-        try {
-          let channel = client.channel("messaging", channelId, {
-            members: [session.user.id, otherUser.id],
-            name: otherUser.name || "Anonymous User",
-          });
-          await channel.create();
-          console.log("Channel created/fetched:", channelId);
-          return channel;
-        } catch (error) {
-          console.error("Error creating/fetching channel:", error);
-          return null;
-        }
-      });
-
-      const createdChannels = (await Promise.all(channelPromises)).filter(Boolean);
-      console.log("Channels created/fetched:", createdChannels.length);
-      setChannelsLoaded(true);
+      setMatches(
+        data.map((match) => ({
+          ...match,
+          other_user_name: match.profiles_test.name,
+        }))
+      );
     } catch (error) {
-      console.error("Error fetching and creating channels:", error);
-      setChannelsLoaded(true);
+      console.error("Error fetching matches:", error);
+    } finally {
+      setLoading(false);
     }
-  }, [session?.user?.id, client]);
+  };
 
-  useFocusEffect(
-    useCallback(() => {
-      setupClient().then(() => {
-        if (isConnectedRef.current) {
-          fetchAndCreateChannels();
+  const handleStartConversation = async (
+    matchId: string,
+    otherUserId: string,
+    otherUserName: string
+  ) => {
+    try {
+      const { data, error } = await supabase.rpc(
+        "create_conversation_for_match",
+        {
+          match_id: matchId,
         }
-      });
-    }, [setupClient, fetchAndCreateChannels])
+      );
+
+      if (error) throw error;
+
+      if (data) {
+        navigation.navigate("ChatChannel", {
+          conversationId: data,
+          otherUserId,
+          otherUserName,
+        });
+        refresh(); // This will trigger a refresh of both tabs
+      } else {
+        console.error("No conversation ID returned");
+      }
+    } catch (error) {
+      console.error("Error starting conversation:", error);
+    }
+  };
+  const renderMatchItem = ({ item }: { item: Match }) => (
+    <View style={styles.matchItem}>
+      <Text style={styles.userName}>{item.other_user_name}</Text>
+      <Text style={styles.matchedAt}>
+        created on {new Date(item.created_at).toLocaleDateString()}
+      </Text>
+      <Pressable
+        style={styles.startChatButton}
+        onPress={() =>
+          handleStartConversation(item.id, item.user2_id, item.other_user_name)
+        }
+      >
+        <Text style={styles.startChatButtonText}>Start Chat</Text>
+      </Pressable>
+    </View>
   );
 
-  useEffect(() => {
-    const unsubscribe = navigation.addListener('state', (e) => {
-      const currentRoute = e.data.state.routes[e.data.state.index];
-      if (
-        currentRoute.name === "Home" ||
-        currentRoute.name === "History" ||
-        currentRoute.name === "Me"
-      ) {
-        disconnectUser();
-      }
-    });
-
-    return () => {
-      unsubscribe();
-      isMountedRef.current = false;
-    };
-  }, [navigation, disconnectUser]);
-
-  if (!session?.user) {
-    return null;
-  }
-
-  if (!isConnectedRef.current || !channelsLoaded) {
-    return <ActivityIndicator size="large" color={Colors.light.accent} />;
+  if (loading) {
+    return (
+      <View style={styles.centerContainer}>
+        <Text>Loading matches...</Text>
+      </View>
+    );
   }
 
   return (
-    <SafeAreaView style={{ flex: 1 }}>
-      <ChannelList
-        filters={{
-          type: "messaging",
-          members: { $in: [session.user.id] },
-        }}
-        sort={{ last_message_at: -1 }}
-        onSelect={(channel) => {
-          console.log("Selected channel:", channel.id);
-          navigation.navigate("ChatChannel", {
-            channelId: channel.id,
-          });
-        }}
-      />
-    </SafeAreaView>
+    <View style={defaultStyles.innerContainer}>
+      {matches.length > 0 ? (
+        <FlatList
+          data={matches}
+          renderItem={renderMatchItem}
+          keyExtractor={(item) => item.id}
+        />
+      ) : (
+        <Text style={styles.noMatchesText}>No new matches</Text>
+      )}
+    </View>
   );
 }
+
+function ChatsTab({ refreshKey, refresh }) {
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [loading, setLoading] = useState(true);
+  const navigation = useNavigation();
+  const session = useAuth();
+  const { unreadMessages } = useNotifications();
+
+  React.useEffect(() => {
+    if (unreadMessages > 0) {
+      fetchConversations();
+    }
+  }, [unreadMessages]);
+
+  useEffect(() => {
+    if (session?.user) {
+      fetchConversations();
+    }
+  }, [session, refreshKey]);
+
+  const fetchConversations = async () => {
+    try {
+      setLoading(true);
+      const data = await api.getRecentConversations(session.user.id);
+      setConversations(data);
+    } catch (error) {
+      console.error("Error fetching conversations:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const renderConversationItem = ({ item }: { item: Conversation }) => (
+    <Pressable
+      style={styles.conversationItem}
+      onPress={() =>
+        navigation.navigate("ChatChannel", {
+          conversationId: item.conversation_id,
+          otherUserId: item.user2_id,
+          otherUserName: item.other_user_name,
+        })
+      }
+    >
+      <Text style={styles.userName}>{item.other_user_name}</Text>
+      <Text style={styles.lastMessage}>{item.last_message}</Text>
+    </Pressable>
+  );
+
+  if (loading) {
+    return (
+      <View style={styles.centerContainer}>
+        <Text>Loading conversations...</Text>
+      </View>
+    );
+  }
+
+  return (
+    <View style={defaultStyles.innerContainer}>
+      {conversations.length > 0 ? (
+        <FlatList
+          data={conversations}
+          renderItem={renderConversationItem}
+          keyExtractor={(item) => item.conversation_id}
+        />
+      ) : (
+        <Text style={styles.noConversationsText}>No conversations yet</Text>
+      )}
+    </View>
+  );
+}
+
+export default function Inbox() {
+  const { newMatches, unreadMessages, resetNotifications } = useNotifications();
+
+  React.useEffect(() => {
+    // Reset notifications when entering the Inbox
+    if (resetNotifications) {
+      resetNotifications();
+    }
+  }, [resetNotifications]);
+
+  return (
+    <Tab.Navigator>
+      <Tab.Screen
+        name="Matches"
+        component={MatchesTab}
+        options={{
+          tabBarBadge: newMatches > 0 ? newMatches : undefined,
+        }}
+      />
+      <Tab.Screen
+        name="Chats"
+        component={ChatsTab}
+        options={{
+          tabBarBadge: unreadMessages > 0 ? unreadMessages : undefined,
+        }}
+      />
+    </Tab.Navigator>
+  );
+}
+
+const styles = StyleSheet.create({
+  centerContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  matchItem: {
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.light.tertiary,
+  },
+  conversationItem: {
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.light.tertiary,
+  },
+  userName: {
+    fontSize: 16,
+    fontWeight: "bold",
+    marginBottom: 5,
+  },
+  matchedAt: {
+    fontSize: 14,
+    color: Colors.light.textSecondary,
+    marginBottom: 10,
+  },
+  lastMessage: {
+    fontSize: 14,
+    color: Colors.light.textSecondary,
+  },
+  startChatButton: {
+    backgroundColor: Colors.light.primary,
+    padding: 10,
+    borderRadius: 5,
+    alignItems: "center",
+  },
+  startChatButtonText: {
+    color: Colors.light.textInverted,
+    fontWeight: "bold",
+  },
+  noMatchesText: {
+    textAlign: "center",
+    marginTop: 20,
+    fontSize: 16,
+  },
+  noConversationsText: {
+    textAlign: "center",
+    marginTop: 20,
+    fontSize: 16,
+  },
+});
+
 ```
 
 # components\Avatar.tsx
@@ -5850,99 +6393,197 @@ import ErrorBoundary from '@/components/ErrorBoundary';
 import { NavigationContainer } from '@react-navigation/native';
 import { StreamChat } from 'stream-chat';
 import { Chat, OverlayProvider } from 'stream-chat-expo';
+import { NotificationProvider } from "@/contexts/NotificationContext";
+import { messaging, app } from "../firebase";
+import * as Notifications from "expo-notifications";
+import * as Device from "expo-device";
+import { LogBox } from "react-native";
 
-const chatClient = StreamChat.getInstance('pcvjbntz7tfy');
+LogBox.ignoreLogs(["Possible Unhandled Promise Rejection"]);
 
-
-
-if (Platform.OS != 'ios') {
-    NavigationBar.setBackgroundColorAsync('white');
+// At the top level of your app
+if (__DEV__) {
+  const _console_error = console.error;
+  console.error = (...args) => {
+    if (
+      args[0] &&
+      args[0].match &&
+      args[0].match(/Possible Unhandled Promise Rejection/)
+    ) {
+      // Ignore these warnings in dev mode
+      return;
+    }
+    _console_error(...args);
+  };
 }
 
-
-
+if (Platform.OS != "ios") {
+  NavigationBar.setBackgroundColorAsync("white");
+}
 
 export default function RootLayout() {
-    const session = useAuth();
-    const [onboardingDone, setOnboardingDone] = useState(false);
-    // const { expoPushToken, notification, matchNotifications } = useNotifications();
-    const [loaded, error] = useFonts({
-        HeadingBold: require('@/assets/fonts/RobotoSlab-Bold.ttf'),
-        HeadingRegular: require('@/assets/fonts/RobotoSlab-Regular.ttf'),
-        HeadingMedium: require('@/assets/fonts/RobotoSlab-Medium.ttf'),
-        HeadingLight: require('@/assets/fonts/RobotoSlab-Light.ttf'),
-        BodyBold: require('@/assets/fonts/PlusJakartaSans-Bold.ttf'),
-        BodySemiBold: require('@/assets/fonts/PlusJakartaSans-SemiBold.ttf'),
-        BodyRegular: require('@/assets/fonts/PlusJakartaSans-Regular.ttf'),
-        BodyMedium: require('@/assets/fonts/PlusJakartaSans-Medium.ttf'),
-        BodyLight: require('@/assets/fonts/PlusJakartaSans-Light.ttf'),
-        CopperBook: require('@/assets/fonts/Copernicus-Book.ttf'),
-        CopperBold: require('@/assets/fonts/Copernicus-Bold.ttf'),
-        CopperExtraBold: require('@/assets/fonts/Copernicus-Extrabold.ttf'),
-    });
+  const session = useAuth();
+  const [onboardingDone, setOnboardingDone] = useState(false);
+  // const { expoPushToken, notification, matchNotifications } = useNotifications();
+  const [loaded, error] = useFonts({
+    HeadingBold: require("@/assets/fonts/RobotoSlab-Bold.ttf"),
+    HeadingRegular: require("@/assets/fonts/RobotoSlab-Regular.ttf"),
+    HeadingMedium: require("@/assets/fonts/RobotoSlab-Medium.ttf"),
+    HeadingLight: require("@/assets/fonts/RobotoSlab-Light.ttf"),
+    BodyBold: require("@/assets/fonts/PlusJakartaSans-Bold.ttf"),
+    BodySemiBold: require("@/assets/fonts/PlusJakartaSans-SemiBold.ttf"),
+    BodyRegular: require("@/assets/fonts/PlusJakartaSans-Regular.ttf"),
+    BodyMedium: require("@/assets/fonts/PlusJakartaSans-Medium.ttf"),
+    BodyLight: require("@/assets/fonts/PlusJakartaSans-Light.ttf"),
+    CopperBook: require("@/assets/fonts/Copernicus-Book.ttf"),
+    CopperBold: require("@/assets/fonts/Copernicus-Bold.ttf"),
+    CopperExtraBold: require("@/assets/fonts/Copernicus-Extrabold.ttf"),
+  });
 
-    useEffect(() => {
-        if (error) throw error;
-    }, [error]);
+  useEffect(() => {
+    if (error) throw error;
+  }, [error]);
 
-    
+  useEffect(() => {
+    if (loaded) {
+      SplashScreen.hideAsync();
 
+      // clearAllStorage()
+      // return;
 
-
-
-
-    useEffect(() => {
-        if (loaded) {
-            SplashScreen.hideAsync();
-
-            // clearAllStorage()
-            // return;
-
-            getData('genderPreference').then(genderPreference => {
-                if (genderPreference === undefined) {
-                    console.log('no search preferences found, resetting')
-                    resetUserSearchFilters()
-                } else {
-                    console.log('search preferences found', genderPreference)
-                }
-            })
-
+      getData("genderPreference").then((genderPreference) => {
+        if (genderPreference === undefined) {
+          console.log("no search preferences found, resetting");
+          resetUserSearchFilters();
+        } else {
+          console.log("search preferences found", genderPreference);
         }
-    }, [loaded]);
-
-
-    // useEffect(() => {
-    //     if (matchNotifications.length > 0) {
-    //         console.log('You have new matches!', matchNotifications);
-    //         // Here you can update UI, show a notification, etc.
-    //     }
-    // }, [matchNotifications]);
-
-
-    if (!loaded) {
-        return null;
+      });
     }
+  }, [loaded]);
 
+  //   useEffect(() => {
+  //     const initializeNotifications = async () => {
+  //       try {
+  //         await Notifications.setNotificationHandler({
+  //           handleNotification: async () => ({
+  //             shouldShowAlert: true,
+  //             shouldPlaySound: false,
+  //             shouldSetBadge: false,
+  //           }),
+  //         });
 
-    return (
-        <SafeAreaProvider>
-            <GestureHandlerRootView style={{ flex: 1 }}>
-                <AppProvider>
-                    <OverlayProvider>
-                        <Chat client={chatClient}>
-                            {/* <NavigationContainer> */}
-                                <RootNavigator
-                                    session={session}
-                                />
-                            {/* </NavigationContainer> */}
-                        </Chat>
-                    </OverlayProvider>
-                </AppProvider>
-            </GestureHandlerRootView>
-        </SafeAreaProvider>
-    );
+  //         const token = await registerForPushNotificationsAsync();
+  //         console.log("Expo push token:", token);
+
+  //         const subscription = Notifications.addNotificationReceivedListener(
+  //           (notification) => {
+  //             console.log("Notification received:", notification);
+  //           }
+  //         );
+
+  //         return () => subscription.remove();
+  //       } catch (error) {
+  //         console.error("Error initializing notifications:", error);
+  //         Alert.alert(
+  //           "Error",
+  //           "There was a problem setting up notifications. Please try again."
+  //         );
+  //       }
+  //     };
+
+  //     initializeNotifications();
+  //   }, []);
+
+  //   useEffect(() => {
+  //     const initializeApp = async () => {
+  //       try {
+  //         if (!app) {
+  //           throw new Error("Firebase app not initialized");
+  //         }
+
+  //         await Notifications.setNotificationHandler({
+  //           handleNotification: async () => ({
+  //             shouldShowAlert: true,
+  //             shouldPlaySound: false,
+  //             shouldSetBadge: false,
+  //           }),
+  //         });
+
+  //         const token = await registerForPushNotificationsAsync();
+  //         console.log("Expo push token:", token);
+
+  //         const subscription = Notifications.addNotificationReceivedListener(
+  //           (notification) => {
+  //             console.log("Notification received:", notification);
+  //           }
+  //         );
+
+  //         return () => subscription.remove();
+  //       } catch (error) {
+  //         console.error("Error in app initialization:", error);
+  //         Alert.alert(
+  //           "Error",
+  //           "There was a problem initializing the app. Please try again."
+  //         );
+  //       }
+  //     };
+
+  //     initializeApp();
+  //   }, []);
+
+  if (!loaded) {
+    return null;
+  }
+
+  return (
+    <SafeAreaProvider>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <AppProvider>
+          <NotificationProvider>
+            <RootNavigator session={session} />
+          </NotificationProvider>
+        </AppProvider>
+      </GestureHandlerRootView>
+    </SafeAreaProvider>
+  );
 }
 
+async function registerForPushNotificationsAsync() {
+  try {
+    let token;
+    if (Device.isDevice) {
+      const { status: existingStatus } =
+        await Notifications.getPermissionsAsync();
+      let finalStatus = existingStatus;
+      if (existingStatus !== "granted") {
+        const { status } = await Notifications.requestPermissionsAsync();
+        finalStatus = status;
+      }
+      if (finalStatus !== "granted") {
+        alert("Failed to get push token for push notification!");
+        return;
+      }
+      token = (await Notifications.getExpoPushTokenAsync()).data;
+    } else {
+      alert("Must use physical device for Push Notifications");
+    }
+
+    if (Platform.OS === "android") {
+      Notifications.setNotificationChannelAsync("default", {
+        name: "default",
+        importance: Notifications.AndroidImportance.MAX,
+        vibrationPattern: [0, 250, 250, 250],
+        lightColor: "#FF231F7C",
+      });
+    }
+
+    return token;
+  } catch (error) {
+    console.error("Error registering for push notifications:", error);
+    throw error; // Re-throw if you want calling code to handle it
+  }
+}
 ```
 
 # api\supabaseApi.ts
@@ -6033,7 +6674,60 @@ getPotentialDiveMatches: async (userId: string, limit: number) => {
     }
   },
 
+  getOrCreateConversation: async (user1Id: string, user2Id: string) => {
+    const { data, error } = await supabase.rpc('get_or_create_conversation', {
+      user1_id: user1Id,
+      user2_id: user2Id
+    });
+    if (error) throw error;
+    return data;
+  },
 
+  getRecentConversations: async (userId: string) => {
+    const { data, error } = await supabase.rpc('get_recent_conversations', {
+      user_id: userId
+    });
+    
+    if (error) throw error;
+    
+    return data || [];
+  },
+
+  sendMessage: async (conversationId: string, senderId: string, content: string) => {
+    const { data, error } = await supabase
+      .from('messages')
+      .insert({
+        conversation_id: conversationId,
+        sender_id: senderId,
+        content: content
+      })
+      .select();
+    if (error) throw error;
+    return data[0];
+  },
+
+  getMessages: async (conversationId: string) => {
+    const { data, error } = await supabase
+      .from('messages')
+      .select('*')
+      .eq('conversation_id', conversationId)
+      .order('created_at', { ascending: true });
+    if (error) throw error;
+    return data;
+  },
+
+  subscribeToMessages: (conversationId: string, callback: (payload: any) => void) => {
+    return supabase
+      .channel(`messages:${conversationId}`)
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'messages',
+        filter: `conversation_id=eq.${conversationId}`
+      }, callback)
+      .subscribe();
+  }, 
+  
 
 
 };
@@ -6096,6 +6790,12 @@ useEffect(() => {
 */
 ```
 
+# supabase\.temp\cli-latest
+
+```
+v1.187.3
+```
+
 # scripts\sql\current sql setup.txt
 
 ```txt
@@ -6130,12 +6830,6 @@ BEGIN
     LIMIT get_potential_matches.limit_count;
 END;
 $$ LANGUAGE plpgsql;
-```
-
-# supabase\.temp\cli-latest
-
-```
-v1.187.3
 ```
 
 # components\__tests__\ThemedText-test.tsx
@@ -7501,6 +8195,10 @@ const styles = StyleSheet.create({
 export default StepInterests;
 ```
 
+# assets\sounds\notification.wav
+
+This is a binary file of the type: Binary
+
 # components\navigation\TabBarIcon.tsx
 
 ```tsx
@@ -7515,10 +8213,6 @@ export function TabBarIcon({ style, ...rest }: IconProps<ComponentProps<typeof I
 }
 
 ```
-
-# assets\sounds\notification.wav
-
-This is a binary file of the type: Binary
 
 # assets\images\splash.png
 
@@ -7655,233 +8349,6 @@ This is a binary file of the type: Binary
 # assets\fonts\Copernicus-Bold.ttf
 
 This is a binary file of the type: Binary
-
-# app-example\(tabs)\_layout.tsx
-
-```tsx
-import { Tabs } from 'expo-router';
-import React from 'react';
-
-import { TabBarIcon } from '@/components/navigation/TabBarIcon';
-import { Colors } from '@/constants/Colors';
-import { useColorScheme } from '@/hooks/useColorScheme';
-
-export default function TabLayout() {
-  const colorScheme = useColorScheme();
-
-  return (
-    <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-        headerShown: false,
-      }}>
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Home',
-          tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon name={focused ? 'home' : 'home-outline'} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="explore"
-        options={{
-          title: 'Explore',
-          tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon name={focused ? 'code-slash' : 'code-slash-outline'} color={color} />
-          ),
-        }}
-      />
-    </Tabs>
-  );
-}
-
-```
-
-# app-example\(tabs)\index.tsx
-
-```tsx
-import { Image, StyleSheet, Platform } from 'react-native';
-
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
-
-export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({ ios: 'cmd + d', android: 'cmd + m' })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          Tap the Explore tab to learn more about what's included in this starter app.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          When you're ready, run{' '}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
-  );
-}
-
-const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-  },
-});
-
-```
-
-# app-example\(tabs)\explore.tsx
-
-```tsx
-import Ionicons from '@expo/vector-icons/Ionicons';
-import { StyleSheet, Image, Platform } from 'react-native';
-
-import { Collapsible } from '@/components/Collapsible';
-import { ExternalLink } from '@/components/ExternalLink';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
-
-export default function TabTwoScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
-      headerImage={<Ionicons size={310} name="code-slash" style={styles.headerImage} />}>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Explore</ThemedText>
-      </ThemedView>
-      <ThemedText>This app includes example code to help you get started.</ThemedText>
-      <Collapsible title="File-based routing">
-        <ThemedText>
-          This app has two screens:{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/explore.tsx</ThemedText>
-        </ThemedText>
-        <ThemedText>
-          The layout file in <ThemedText type="defaultSemiBold">app/(tabs)/_layout.tsx</ThemedText>{' '}
-          sets up the tab navigator.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/router/introduction">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Android, iOS, and web support">
-        <ThemedText>
-          You can open this project on Android, iOS, and the web. To open the web version, press{' '}
-          <ThemedText type="defaultSemiBold">w</ThemedText> in the terminal running this project.
-        </ThemedText>
-      </Collapsible>
-      <Collapsible title="Images">
-        <ThemedText>
-          For static images, you can use the <ThemedText type="defaultSemiBold">@2x</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">@3x</ThemedText> suffixes to provide files for
-          different screen densities
-        </ThemedText>
-        <Image source={require('@/assets/images/react-logo.png')} style={{ alignSelf: 'center' }} />
-        <ExternalLink href="https://reactnative.dev/docs/images">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Custom fonts">
-        <ThemedText>
-          Open <ThemedText type="defaultSemiBold">app/_layout.tsx</ThemedText> to see how to load{' '}
-          <ThemedText style={{ fontFamily: 'SpaceMono' }}>
-            custom fonts such as this one.
-          </ThemedText>
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/versions/latest/sdk/font">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Light and dark mode components">
-        <ThemedText>
-          This template has light and dark mode support. The{' '}
-          <ThemedText type="defaultSemiBold">useColorScheme()</ThemedText> hook lets you inspect
-          what the user's current color scheme is, and so you can adjust UI colors accordingly.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/develop/user-interface/color-themes/">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Animations">
-        <ThemedText>
-          This template includes an example of an animated component. The{' '}
-          <ThemedText type="defaultSemiBold">components/HelloWave.tsx</ThemedText> component uses
-          the powerful <ThemedText type="defaultSemiBold">react-native-reanimated</ThemedText> library
-          to create a waving hand animation.
-        </ThemedText>
-        {Platform.select({
-          ios: (
-            <ThemedText>
-              The <ThemedText type="defaultSemiBold">components/ParallaxScrollView.tsx</ThemedText>{' '}
-              component provides a parallax effect for the header image.
-            </ThemedText>
-          ),
-        })}
-      </Collapsible>
-    </ParallaxScrollView>
-  );
-}
-
-const styles = StyleSheet.create({
-  headerImage: {
-    color: '#808080',
-    bottom: -90,
-    left: -35,
-    position: 'absolute',
-  },
-  titleContainer: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-});
-
-```
 
 # app\searchFilters\index.tsx
 
@@ -8948,96 +9415,231 @@ const styles = StyleSheet.create({
 });
 ```
 
-# supabase\functions\process-match-notifications\index.ts
+# app-example\(tabs)\_layout.tsx
 
-```ts
-import "https://esm.sh/@supabase/functions-js/src/edge-runtime.d.ts"
+```tsx
+import { Tabs } from 'expo-router';
+import React from 'react';
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { TabBarIcon } from '@/components/navigation/TabBarIcon';
+import { Colors } from '@/constants/Colors';
+import { useColorScheme } from '@/hooks/useColorScheme';
 
-console.log("Hello from process-match function!")
+export default function TabLayout() {
+  const colorScheme = useColorScheme();
 
-const supabaseUrl = Deno.env.get('SUPABASE_URL')!
-const supabaseServiceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-
-const supabase = createClient(supabaseUrl, supabaseServiceRoleKey)
-
-async function sendPushNotification(pushToken: string, title: string, body: string) {
-  const message = {
-    to: pushToken,
-    sound: 'default',
-    title: title,
-    body: body,
-    data: { someData: 'goes here' },
-  }
-
-  const response = await fetch('https://exp.host/--/api/v2/push/send', {
-    method: 'POST',
-    headers: {
-      Accept: 'application/json',
-      'Accept-encoding': 'gzip, deflate',
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(message),
-  })
-
-  return await response.json()
+  return (
+    <Tabs
+      screenOptions={{
+        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
+        headerShown: false,
+      }}>
+      <Tabs.Screen
+        name="index"
+        options={{
+          title: 'Home',
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon name={focused ? 'home' : 'home-outline'} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="explore"
+        options={{
+          title: 'Explore',
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon name={focused ? 'code-slash' : 'code-slash-outline'} color={color} />
+          ),
+        }}
+      />
+    </Tabs>
+  );
 }
 
-Deno.serve(async (req) => {
-  const authHeader = req.headers.get('Authorization')
-  if (authHeader !== `Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}`) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 })
-  }
+```
 
-  const { data: pendingNotifications, error } = await supabase
-    .from('pending_match_notifications')
-    .select('*')
-    .eq('processed', false)
-    .limit(50)
-    
-  if (error) {
-    console.error('Error fetching pending notifications:', error)
-    return new Response(JSON.stringify({ error: 'Failed to fetch pending notifications' }), { status: 500 })
-  }
+# app-example\(tabs)\index.tsx
 
-  for (const notification of pendingNotifications) {
-    for (const userId of [notification.user1_id, notification.user2_id]) {
-      const { data: userData, error: userError } = await supabase
-        .from('profiles')
-        .select('push_token')
-        .eq('id', userId)
-        .single()
+```tsx
+import { Image, StyleSheet, Platform } from 'react-native';
 
-      if (userError || !userData?.push_token) {
-        console.error(`Failed to fetch user data or push token not found for user ${userId}`)
-        continue
-      }
+import { HelloWave } from '@/components/HelloWave';
+import ParallaxScrollView from '@/components/ParallaxScrollView';
+import { ThemedText } from '@/components/ThemedText';
+import { ThemedView } from '@/components/ThemedView';
 
-      const notificationTitle = "New Match!"
-      const notificationBody = `You have a new match! Open the app to find out who.`
+export default function HomeScreen() {
+  return (
+    <ParallaxScrollView
+      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
+      headerImage={
+        <Image
+          source={require('@/assets/images/partial-react-logo.png')}
+          style={styles.reactLogo}
+        />
+      }>
+      <ThemedView style={styles.titleContainer}>
+        <ThemedText type="title">Welcome!</ThemedText>
+        <HelloWave />
+      </ThemedView>
+      <ThemedView style={styles.stepContainer}>
+        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
+        <ThemedText>
+          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
+          Press{' '}
+          <ThemedText type="defaultSemiBold">
+            {Platform.select({ ios: 'cmd + d', android: 'cmd + m' })}
+          </ThemedText>{' '}
+          to open developer tools.
+        </ThemedText>
+      </ThemedView>
+      <ThemedView style={styles.stepContainer}>
+        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
+        <ThemedText>
+          Tap the Explore tab to learn more about what's included in this starter app.
+        </ThemedText>
+      </ThemedView>
+      <ThemedView style={styles.stepContainer}>
+        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
+        <ThemedText>
+          When you're ready, run{' '}
+          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
+          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
+          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
+          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
+        </ThemedText>
+      </ThemedView>
+    </ParallaxScrollView>
+  );
+}
 
-      try {
-        await sendPushNotification(userData.push_token, notificationTitle, notificationBody)
-        console.log(`Notification sent to user ${userId}`)
-      } catch (error) {
-        console.error(`Failed to send notification to user ${userId}:`, error)
-      }
-    }
+const styles = StyleSheet.create({
+  titleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  stepContainer: {
+    gap: 8,
+    marginBottom: 8,
+  },
+  reactLogo: {
+    height: 178,
+    width: 290,
+    bottom: 0,
+    left: 0,
+    position: 'absolute',
+  },
+});
 
-    // Mark the notification as processed
-    const { error: updateError } = await supabase
-      .from('pending_match_notifications')
-      .update({ processed: true })
-      .eq('id', notification.id)
+```
 
-    if (updateError) {
-      console.error(`Failed to mark notification ${notification.id} as processed:`, updateError)
-    }
-  }
+# app-example\(tabs)\explore.tsx
 
-  return new Response(JSON.stringify({ message: 'Notifications processed' }), { status: 200 })
-})
+```tsx
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { StyleSheet, Image, Platform } from 'react-native';
+
+import { Collapsible } from '@/components/Collapsible';
+import { ExternalLink } from '@/components/ExternalLink';
+import ParallaxScrollView from '@/components/ParallaxScrollView';
+import { ThemedText } from '@/components/ThemedText';
+import { ThemedView } from '@/components/ThemedView';
+
+export default function TabTwoScreen() {
+  return (
+    <ParallaxScrollView
+      headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
+      headerImage={<Ionicons size={310} name="code-slash" style={styles.headerImage} />}>
+      <ThemedView style={styles.titleContainer}>
+        <ThemedText type="title">Explore</ThemedText>
+      </ThemedView>
+      <ThemedText>This app includes example code to help you get started.</ThemedText>
+      <Collapsible title="File-based routing">
+        <ThemedText>
+          This app has two screens:{' '}
+          <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> and{' '}
+          <ThemedText type="defaultSemiBold">app/(tabs)/explore.tsx</ThemedText>
+        </ThemedText>
+        <ThemedText>
+          The layout file in <ThemedText type="defaultSemiBold">app/(tabs)/_layout.tsx</ThemedText>{' '}
+          sets up the tab navigator.
+        </ThemedText>
+        <ExternalLink href="https://docs.expo.dev/router/introduction">
+          <ThemedText type="link">Learn more</ThemedText>
+        </ExternalLink>
+      </Collapsible>
+      <Collapsible title="Android, iOS, and web support">
+        <ThemedText>
+          You can open this project on Android, iOS, and the web. To open the web version, press{' '}
+          <ThemedText type="defaultSemiBold">w</ThemedText> in the terminal running this project.
+        </ThemedText>
+      </Collapsible>
+      <Collapsible title="Images">
+        <ThemedText>
+          For static images, you can use the <ThemedText type="defaultSemiBold">@2x</ThemedText> and{' '}
+          <ThemedText type="defaultSemiBold">@3x</ThemedText> suffixes to provide files for
+          different screen densities
+        </ThemedText>
+        <Image source={require('@/assets/images/react-logo.png')} style={{ alignSelf: 'center' }} />
+        <ExternalLink href="https://reactnative.dev/docs/images">
+          <ThemedText type="link">Learn more</ThemedText>
+        </ExternalLink>
+      </Collapsible>
+      <Collapsible title="Custom fonts">
+        <ThemedText>
+          Open <ThemedText type="defaultSemiBold">app/_layout.tsx</ThemedText> to see how to load{' '}
+          <ThemedText style={{ fontFamily: 'SpaceMono' }}>
+            custom fonts such as this one.
+          </ThemedText>
+        </ThemedText>
+        <ExternalLink href="https://docs.expo.dev/versions/latest/sdk/font">
+          <ThemedText type="link">Learn more</ThemedText>
+        </ExternalLink>
+      </Collapsible>
+      <Collapsible title="Light and dark mode components">
+        <ThemedText>
+          This template has light and dark mode support. The{' '}
+          <ThemedText type="defaultSemiBold">useColorScheme()</ThemedText> hook lets you inspect
+          what the user's current color scheme is, and so you can adjust UI colors accordingly.
+        </ThemedText>
+        <ExternalLink href="https://docs.expo.dev/develop/user-interface/color-themes/">
+          <ThemedText type="link">Learn more</ThemedText>
+        </ExternalLink>
+      </Collapsible>
+      <Collapsible title="Animations">
+        <ThemedText>
+          This template includes an example of an animated component. The{' '}
+          <ThemedText type="defaultSemiBold">components/HelloWave.tsx</ThemedText> component uses
+          the powerful <ThemedText type="defaultSemiBold">react-native-reanimated</ThemedText> library
+          to create a waving hand animation.
+        </ThemedText>
+        {Platform.select({
+          ios: (
+            <ThemedText>
+              The <ThemedText type="defaultSemiBold">components/ParallaxScrollView.tsx</ThemedText>{' '}
+              component provides a parallax effect for the header image.
+            </ThemedText>
+          ),
+        })}
+      </Collapsible>
+    </ParallaxScrollView>
+  );
+}
+
+const styles = StyleSheet.create({
+  headerImage: {
+    color: '#808080',
+    bottom: -90,
+    left: -35,
+    position: 'absolute',
+  },
+  titleContainer: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+});
+
 ```
 
 # supabase\functions\send-match-notification\index.ts
@@ -9160,6 +9762,98 @@ Deno.serve(async (req) => {
 
 ```
 
+# supabase\functions\process-match-notifications\index.ts
+
+```ts
+import "https://esm.sh/@supabase/functions-js/src/edge-runtime.d.ts"
+
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+
+console.log("Hello from process-match function!")
+
+const supabaseUrl = Deno.env.get('SUPABASE_URL')!
+const supabaseServiceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+
+const supabase = createClient(supabaseUrl, supabaseServiceRoleKey)
+
+async function sendPushNotification(pushToken: string, title: string, body: string) {
+  const message = {
+    to: pushToken,
+    sound: 'default',
+    title: title,
+    body: body,
+    data: { someData: 'goes here' },
+  }
+
+  const response = await fetch('https://exp.host/--/api/v2/push/send', {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      'Accept-encoding': 'gzip, deflate',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(message),
+  })
+
+  return await response.json()
+}
+
+Deno.serve(async (req) => {
+  const authHeader = req.headers.get('Authorization')
+  if (authHeader !== `Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}`) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 })
+  }
+
+  const { data: pendingNotifications, error } = await supabase
+    .from('pending_match_notifications')
+    .select('*')
+    .eq('processed', false)
+    .limit(50)
+    
+  if (error) {
+    console.error('Error fetching pending notifications:', error)
+    return new Response(JSON.stringify({ error: 'Failed to fetch pending notifications' }), { status: 500 })
+  }
+
+  for (const notification of pendingNotifications) {
+    for (const userId of [notification.user1_id, notification.user2_id]) {
+      const { data: userData, error: userError } = await supabase
+        .from('profiles')
+        .select('push_token')
+        .eq('id', userId)
+        .single()
+
+      if (userError || !userData?.push_token) {
+        console.error(`Failed to fetch user data or push token not found for user ${userId}`)
+        continue
+      }
+
+      const notificationTitle = "New Match!"
+      const notificationBody = `You have a new match! Open the app to find out who.`
+
+      try {
+        await sendPushNotification(userData.push_token, notificationTitle, notificationBody)
+        console.log(`Notification sent to user ${userId}`)
+      } catch (error) {
+        console.error(`Failed to send notification to user ${userId}:`, error)
+      }
+    }
+
+    // Mark the notification as processed
+    const { error: updateError } = await supabase
+      .from('pending_match_notifications')
+      .update({ processed: true })
+      .eq('id', notification.id)
+
+    if (updateError) {
+      console.error(`Failed to mark notification ${notification.id} as processed:`, updateError)
+    }
+  }
+
+  return new Response(JSON.stringify({ message: 'Notifications processed' }), { status: 200 })
+})
+```
+
 # supabase\functions\generate-stream-token\index.ts
 
 ```ts
@@ -9248,6 +9942,36 @@ serve(async (req) => {
 
 ```
 
+# components\__tests__\__snapshots__\ThemedText-test.tsx.snap
+
+```snap
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`renders correctly 1`] = `
+<Text
+  style={
+    [
+      {
+        "color": "#11181C",
+      },
+      {
+        "fontSize": 16,
+        "lineHeight": 24,
+      },
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+    ]
+  }
+>
+  Snapshot test!
+</Text>
+`;
+
+```
+
 # assets\images\onboarding\onboarding5@3x.png
 
 This is a binary file of the type: Image
@@ -9307,36 +10031,6 @@ This is a binary file of the type: Image
 # assets\images\onboarding\onboarding1.png
 
 This is a binary file of the type: Image
-
-# components\__tests__\__snapshots__\ThemedText-test.tsx.snap
-
-```snap
-// Jest Snapshot v1, https://goo.gl/fbAQLP
-
-exports[`renders correctly 1`] = `
-<Text
-  style={
-    [
-      {
-        "color": "#11181C",
-      },
-      {
-        "fontSize": 16,
-        "lineHeight": 24,
-      },
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-    ]
-  }
->
-  Snapshot test!
-</Text>
-`;
-
-```
 
 # assets\images\logo\logo_crushy@3x.png
 

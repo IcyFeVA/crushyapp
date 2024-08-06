@@ -6,6 +6,8 @@
     // "skipLibCheck": true,
     // "forceConsistentCasingInFileNames": false,
     // "noEmit": true,
+    "jsx": "react-native",
+    "esModuleInterop": true,
     "strict": true,
     "paths": {
       "@/*": [
@@ -18,5 +20,5 @@
     "**/*.tsx",
     ".expo/types/**/*.ts",
     "expo-env.d.ts"
-  ]
+, "firebase.js"  ]
 }

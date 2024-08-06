@@ -10,6 +10,7 @@ import { Colors } from "@/constants/Colors";
 import { defaultStyles } from "@/constants/Styles";
 import { supabase } from "@/lib/supabase";
 import { useTabFocus } from "@/hooks/useTabFocus";
+import { useNotifications } from "@/hooks/useNotifications";
 
 const Tab = createMaterialTopTabNavigator();
 
@@ -43,6 +44,13 @@ function MatchesTab({ refreshKey, refresh }) {
   const [loading, setLoading] = useState(true);
   const navigation = useNavigation();
   const session = useAuth();
+  const { newMatches } = useNotifications();
+
+  useEffect(() => {
+    if (newMatches > 0) {
+      fetchMatches();
+    }
+  }, [newMatches]);
 
   useEffect(() => {
     if (session?.user) {
@@ -155,6 +163,13 @@ function ChatsTab({ refreshKey, refresh }) {
   const [loading, setLoading] = useState(true);
   const navigation = useNavigation();
   const session = useAuth();
+  const { unreadMessages } = useNotifications();
+
+  React.useEffect(() => {
+    if (unreadMessages > 0) {
+      fetchConversations();
+    }
+  }, [unreadMessages]);
 
   useEffect(() => {
     if (session?.user) {
@@ -214,23 +229,32 @@ function ChatsTab({ refreshKey, refresh }) {
 }
 
 export default function Inbox() {
-  const { refreshKey, refresh } = useTabFocus();
+  const { newMatches, unreadMessages, resetNotifications } = useNotifications();
+
+  React.useEffect(() => {
+    // Reset notifications when entering the Inbox
+    if (resetNotifications) {
+      resetNotifications();
+    }
+  }, [resetNotifications]);
 
   return (
-    <SafeAreaView style={defaultStyles.SafeAreaView}>
-      <Tab.Navigator>
-        <Tab.Screen name="Matches">
-          {(props) => (
-            <MatchesTab {...props} refreshKey={refreshKey} refresh={refresh} />
-          )}
-        </Tab.Screen>
-        <Tab.Screen name="Chats">
-          {(props) => (
-            <ChatsTab {...props} refreshKey={refreshKey} refresh={refresh} />
-          )}
-        </Tab.Screen>
-      </Tab.Navigator>
-    </SafeAreaView>
+    <Tab.Navigator>
+      <Tab.Screen
+        name="Matches"
+        component={MatchesTab}
+        options={{
+          tabBarBadge: newMatches > 0 ? newMatches : undefined,
+        }}
+      />
+      <Tab.Screen
+        name="Chats"
+        component={ChatsTab}
+        options={{
+          tabBarBadge: unreadMessages > 0 ? unreadMessages : undefined,
+        }}
+      />
+    </Tab.Navigator>
   );
 }
 

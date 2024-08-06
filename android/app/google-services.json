@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "36536394826",
+    "project_id": "crushy-2a133",
+    "storage_bucket": "crushy-2a133.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:36536394826:android:a4a4da323d66a56f5a72b3",
+        "android_client_info": {
+          "package_name": "ca.crushy.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDlAxbCBQNee9tEf3-myE4D4ALyt5G1mbc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

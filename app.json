@@ -25,7 +25,8 @@
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/favicon.png",
+      "googleServicesFile": "./android/app/google-services.json"
     },
     "plugins": [
       "expo-secure-store",

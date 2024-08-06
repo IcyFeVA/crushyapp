@@ -25,29 +25,26 @@ import { supabase } from '@/lib/supabase';
 import ChannelList from '@/components/ChannelList';
 import ChatChannel from '@/components/ChatChannel';
 import { useChatContext } from 'stream-chat-expo';
-
+import { useNotifications } from "@/contexts/NotificationContext";
 
 const tabIcons = {
-    homeActive: require('@/assets/images/icons/tab-home-active.png'),
-    homeInactive: require('@/assets/images/icons/tab-home.png'),
-    historyActive: require('@/assets/images/icons/tab-history-active.png'),
-    historyInactive: require('@/assets/images/icons/tab-history.png'),
-    inboxActive: require('@/assets/images/icons/tab-inbox-active.png'),
-    inboxInactive: require('@/assets/images/icons/tab-inbox.png'),
-    meActive: require('@/assets/images/icons/tab-me-active.png'),
-    meInactive: require('@/assets/images/icons/tab-me.png'),
-    exploreInactive: require('@/assets/images/icons/tab-explore.png'),
+  homeActive: require("@/assets/images/icons/tab-home-active.png"),
+  homeInactive: require("@/assets/images/icons/tab-home.png"),
+  historyActive: require("@/assets/images/icons/tab-history-active.png"),
+  historyInactive: require("@/assets/images/icons/tab-history.png"),
+  inboxActive: require("@/assets/images/icons/tab-inbox-active.png"),
+  inboxInactive: require("@/assets/images/icons/tab-inbox.png"),
+  meActive: require("@/assets/images/icons/tab-me-active.png"),
+  meInactive: require("@/assets/images/icons/tab-me.png"),
+  exploreInactive: require("@/assets/images/icons/tab-explore.png"),
 };
 
-
-
-
 function HomeScreen() {
-    return (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-            <Text>Home!</Text>
-        </View>
-    );
+  return (
+    <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+      <Text>Home!</Text>
+    </View>
+  );
 }
 
 function DummySurf() {
@@ -82,6 +79,7 @@ const Stack = createStackNavigator();
 
 function TabNavigator() {
   const navigation = useNavigation();
+  const { totalNotifications } = useNotifications();
 
   return (
     <Tab.Navigator
@@ -142,7 +140,9 @@ function TabNavigator() {
       <Tab.Screen
         name="Inbox"
         component={ChannelList}
-        options={{ tabBarBadge: 6 }}
+        options={{
+          tabBarBadge: totalNotifications > 0 ? totalNotifications : undefined,
+        }}
         initialParams={{ inChatFlow: false }}
       />
       <Tab.Screen name="Me" component={Me} />
