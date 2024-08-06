@@ -25,6 +25,7 @@ type Message = {
   sender_id: string;
   content: string;
   created_at: string;
+  edited?: boolean;
   pending?: boolean;
   local_id?: string;
 };
@@ -254,7 +255,7 @@ export default function ChatChannel() {
     try {
       const { data, error } = await supabase
         .from("messages")
-        .update({ content: editText.trim() })
+        .update({ content: editText.trim(), edited: true })
         .eq("id", editingMessage.id)
         .select();
 
@@ -263,7 +264,7 @@ export default function ChatChannel() {
       setMessages((prevMessages) =>
         prevMessages.map((msg) =>
           msg.id === editingMessage.id
-            ? { ...msg, content: editText.trim() }
+            ? { ...msg, content: editText.trim(), edited: true }
             : msg
         )
       );
@@ -320,7 +321,10 @@ export default function ChatChannel() {
               item.pending && styles.pendingMessage,
             ]}
           >
-            <Text style={styles.messageText}>{item.content}</Text>
+            <View style={styles.messageContent}>
+              <Text style={styles.messageText}>{item.content}</Text>
+              {item.edited && <Text style={styles.editedText}>(edited)</Text>}
+            </View>
             {isTimestampVisible && (
               <Text
                 style={[
@@ -507,5 +511,17 @@ const styles = StyleSheet.create({
   editButtonText: {
     color: Colors.light.textInverted,
     fontWeight: "bold",
+  },
+  messageContent: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "flex-end",
+  },
+  editedText: {
+    fontSize: 10,
+    fontStyle: "italic",
+    color: Colors.light.textSecondary,
+    marginLeft: 5,
+    alignSelf: "flex-end",
   },
 });
