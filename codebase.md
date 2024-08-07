@@ -506,6 +506,100 @@ android/
 .vscode/
 ```
 
+# utils\storage.js
+
+```js
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+// usage:
+/*
+    import { getData, storeData } from '@/utils/storage';
+
+    storeData('user', session);
+
+    getData('user').then(user => {
+        console.log(user);
+    });
+*/
+
+const storeData = async (key, value) => {
+    try {
+        await AsyncStorage.setItem(key, JSON.stringify(value));
+    } catch (e) {
+        console.error('Error saving data', e);
+    }
+};
+const getData = async (key) => {
+    try {
+        const value = await AsyncStorage.getItem(key);
+        if (value !== null) {
+            return JSON.parse(value);
+        }
+    } catch (e) {
+        console.error('Error reading data', e);
+    }
+};
+
+const resetUserSearchFilters = async () => {
+    const genderPreferencesSet = ['genderPreference', JSON.stringify({ key: '', value: [] })]
+    const ageRangeSet = ['ageRange', JSON.stringify({ key: '', value: '18-30' })]
+    const distanceSet = ['distance', JSON.stringify({ key: '40', value: '40' })]
+    const starSignPreference = ['starSignPreference', JSON.stringify({ key: '', value: '-' })]
+    const bodyTypePreference = ['bodyTypePreference', JSON.stringify({ key: '', value: '-' })]
+    const exerciseFrequency = ['exerciseFrequency', JSON.stringify({ key: '', value: '-' })]
+    const smokingFrequency = ['smokingFrequency', JSON.stringify({ key: '', value: '-' })]
+    const drinkingFrequency = ['drinkingFrequency', JSON.stringify({ key: '', value: '-' })]
+    const cannabisFrequency = ['cannabisFrequency', JSON.stringify({ key: '', value: '-' })]
+    const dietPreference = ['dietPreference', JSON.stringify({ key: '', value: '-' })]
+
+    try {
+        await AsyncStorage.multiSet([genderPreferencesSet, ageRangeSet, distanceSet, starSignPreference, bodyTypePreference,
+            exerciseFrequency, smokingFrequency, drinkingFrequency, cannabisFrequency, dietPreference])
+    } catch (e) {
+        //save error
+    }
+
+    console.log("search filters reset")
+}
+
+
+const clearAllStorage = async () => {
+    try {
+        await AsyncStorage.clear()
+    } catch (e) {
+        // clear error
+    }
+
+    console.log('CLEARING STORAGE')
+}
+
+export { storeData, getData, resetUserSearchFilters, clearAllStorage };
+```
+
+# utils\pixelateImage.js
+
+```js
+import * as ImageManipulator from 'expo-image-manipulator';
+
+async function pixelateImage(uri, pixelSize = 20) {
+    // Resize the image to a smaller size
+    const smallImage = await ImageManipulator.manipulateAsync(
+        uri,
+        [{ resize: { width: 100 } }],
+        { format: 'png' }
+    );
+
+    // Resize it back to original size, creating pixelation effect
+    const pixelatedImage = await ImageManipulator.manipulateAsync(
+        smallImage.uri,
+        [{ resize: { width: 300 } }],
+        { format: 'png' }
+    );
+
+    return pixelatedImage.uri;
+}
+```
+
 # supabase\seed.sql
 
 ```sql
@@ -722,98 +816,141 @@ s3_secret_key = "env(S3_SECRET_KEY)"
 
 ```
 
-# utils\storage.js
+# scripts\reset-project.js
 
 ```js
-import AsyncStorage from '@react-native-async-storage/async-storage';
+#!/usr/bin/env node
 
-// usage:
-/*
-    import { getData, storeData } from '@/utils/storage';
+/**
+ * This script is used to reset the project to a blank state.
+ * It moves the /app directory to /app-example and creates a new /app directory with an index.tsx and _layout.tsx file.
+ * You can remove the `reset-project` script from package.json and safely delete this file after running it.
+ */
 
-    storeData('user', session);
+const fs = require('fs');
+const path = require('path');
 
-    getData('user').then(user => {
-        console.log(user);
-    });
-*/
+const root = process.cwd();
+const oldDirPath = path.join(root, 'app');
+const newDirPath = path.join(root, 'app-example');
+const newAppDirPath = path.join(root, 'app');
 
-const storeData = async (key, value) => {
-    try {
-        await AsyncStorage.setItem(key, JSON.stringify(value));
-    } catch (e) {
-        console.error('Error saving data', e);
+const indexContent = `import { Text, View } from "react-native";
+
+export default function Index() {
+  return (
+    <View
+      style={{
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+      }}
+    >
+      <Text>Edit app/index.tsx to edit this screen.</Text>
+    </View>
+  );
+}
+`;
+
+const layoutContent = `import { Stack } from "expo-router";
+
+export default function RootLayout() {
+  return (
+    <Stack>
+      <Stack.Screen name="index" />
+    </Stack>
+  );
+}
+`;
+
+fs.rename(oldDirPath, newDirPath, (error) => {
+  if (error) {
+    return console.error(`Error renaming directory: ${error}`);
+  }
+  console.log('/app moved to /app-example.');
+
+  fs.mkdir(newAppDirPath, { recursive: true }, (error) => {
+    if (error) {
+      return console.error(`Error creating new app directory: ${error}`);
     }
-};
-const getData = async (key) => {
-    try {
-        const value = await AsyncStorage.getItem(key);
-        if (value !== null) {
-            return JSON.parse(value);
+    console.log('New /app directory created.');
+
+    const indexPath = path.join(newAppDirPath, 'index.tsx');
+    fs.writeFile(indexPath, indexContent, (error) => {
+      if (error) {
+        return console.error(`Error creating index.tsx: ${error}`);
+      }
+      console.log('app/index.tsx created.');
+
+      const layoutPath = path.join(newAppDirPath, '_layout.tsx');
+      fs.writeFile(layoutPath, layoutContent, (error) => {
+        if (error) {
+          return console.error(`Error creating _layout.tsx: ${error}`);
         }
-    } catch (e) {
-        console.error('Error reading data', e);
-    }
-};
+        console.log('app/_layout.tsx created.');
+      });
+    });
+  });
+});
 
-const resetUserSearchFilters = async () => {
-    const genderPreferencesSet = ['genderPreference', JSON.stringify({ key: '', value: [] })]
-    const ageRangeSet = ['ageRange', JSON.stringify({ key: '', value: '18-30' })]
-    const distanceSet = ['distance', JSON.stringify({ key: '40', value: '40' })]
-    const starSignPreference = ['starSignPreference', JSON.stringify({ key: '', value: '-' })]
-    const bodyTypePreference = ['bodyTypePreference', JSON.stringify({ key: '', value: '-' })]
-    const exerciseFrequency = ['exerciseFrequency', JSON.stringify({ key: '', value: '-' })]
-    const smokingFrequency = ['smokingFrequency', JSON.stringify({ key: '', value: '-' })]
-    const drinkingFrequency = ['drinkingFrequency', JSON.stringify({ key: '', value: '-' })]
-    const cannabisFrequency = ['cannabisFrequency', JSON.stringify({ key: '', value: '-' })]
-    const dietPreference = ['dietPreference', JSON.stringify({ key: '', value: '-' })]
-
-    try {
-        await AsyncStorage.multiSet([genderPreferencesSet, ageRangeSet, distanceSet, starSignPreference, bodyTypePreference,
-            exerciseFrequency, smokingFrequency, drinkingFrequency, cannabisFrequency, dietPreference])
-    } catch (e) {
-        //save error
-    }
-
-    console.log("search filters reset")
-}
-
-
-const clearAllStorage = async () => {
-    try {
-        await AsyncStorage.clear()
-    } catch (e) {
-        // clear error
-    }
-
-    console.log('CLEARING STORAGE')
-}
-
-export { storeData, getData, resetUserSearchFilters, clearAllStorage };
 ```
 
-# utils\pixelateImage.js
+# scripts\addFakeUsers.js
 
 ```js
-import * as ImageManipulator from 'expo-image-manipulator';
+const { createClient } = require('@supabase/supabase-js');
+const { faker } = require('@faker-js/faker');
 
-async function pixelateImage(uri, pixelSize = 20) {
-    // Resize the image to a smaller size
-    const smallImage = await ImageManipulator.manipulateAsync(
-        uri,
-        [{ resize: { width: 100 } }],
-        { format: 'png' }
-    );
+// Initialize Supabase client
 
-    // Resize it back to original size, creating pixelation effect
-    const pixelatedImage = await ImageManipulator.manipulateAsync(
-        smallImage.uri,
-        [{ resize: { width: 300 } }],
-        { format: 'png' }
-    );
+const supabaseUrl = "https://mmarjzhissgpyfwxudqd.supabase.co"
+const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1tYXJqemhpc3NncHlmd3h1ZHFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTc0Mzg2MTUsImV4cCI6MjAzMzAxNDYxNX0.9GLFl6ZosXtNoL61uFx3L1nUc5ENRSWRnhS-LTDb6SA"
 
-    return pixelatedImage.uri;
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+const genders = [1, 2, 3, 4, 5, 6];
+const pronouns = [1, 2, 3, 4, 5];
+const relationshipTypes = [1, 2, 3];
+const gender_preferences = [1, 2, 3];
+const interests = [
+    1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+];
+
+async function createFakeUser() {
+    const gender = faker.helpers.arrayElement(genders);
+    const user = {
+        id: faker.string.uuid(),
+        name: faker.internet.displayName(),
+        age: faker.number.int({ min: 18, max: 80 }),
+        gender: gender,
+        pronouns: faker.helpers.arrayElements(pronouns, { min: 1, max: 2 }),
+        looking_for: faker.helpers.arrayElement(relationshipTypes),
+        gender_preference: faker.helpers.arrayElement(gender_preferences),
+        interests: faker.helpers.arrayElements(interests, { min: 3, max: 8 }),
+        avatar_url: faker.image.url(),
+        last_active: faker.date.recent(),
+    };
+
+    const { data, error } = await supabase
+        .from('profiles_test')
+        .insert(user);
+
+    if (error) {
+        console.error('Error inserting user:', error);
+    } else {
+        console.log('User created:', user.name);
+    }
 }
+
+async function createFakeUsers(count) {
+    for (let i = 0; i < count; i++) {
+        await createFakeUser();
+    }
+    console.log(`${count} fake users created.`);
+}
+
+// Create 100 fake users
+createFakeUsers(400).then(() => process.exit());
 ```
 
 # sql\profile_details.sql
@@ -965,143 +1102,6 @@ BEGIN
   ORDER BY m.created_at DESC NULLS LAST;
 END;
 $$ LANGUAGE plpgsql;
-```
-
-# scripts\reset-project.js
-
-```js
-#!/usr/bin/env node
-
-/**
- * This script is used to reset the project to a blank state.
- * It moves the /app directory to /app-example and creates a new /app directory with an index.tsx and _layout.tsx file.
- * You can remove the `reset-project` script from package.json and safely delete this file after running it.
- */
-
-const fs = require('fs');
-const path = require('path');
-
-const root = process.cwd();
-const oldDirPath = path.join(root, 'app');
-const newDirPath = path.join(root, 'app-example');
-const newAppDirPath = path.join(root, 'app');
-
-const indexContent = `import { Text, View } from "react-native";
-
-export default function Index() {
-  return (
-    <View
-      style={{
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-      }}
-    >
-      <Text>Edit app/index.tsx to edit this screen.</Text>
-    </View>
-  );
-}
-`;
-
-const layoutContent = `import { Stack } from "expo-router";
-
-export default function RootLayout() {
-  return (
-    <Stack>
-      <Stack.Screen name="index" />
-    </Stack>
-  );
-}
-`;
-
-fs.rename(oldDirPath, newDirPath, (error) => {
-  if (error) {
-    return console.error(`Error renaming directory: ${error}`);
-  }
-  console.log('/app moved to /app-example.');
-
-  fs.mkdir(newAppDirPath, { recursive: true }, (error) => {
-    if (error) {
-      return console.error(`Error creating new app directory: ${error}`);
-    }
-    console.log('New /app directory created.');
-
-    const indexPath = path.join(newAppDirPath, 'index.tsx');
-    fs.writeFile(indexPath, indexContent, (error) => {
-      if (error) {
-        return console.error(`Error creating index.tsx: ${error}`);
-      }
-      console.log('app/index.tsx created.');
-
-      const layoutPath = path.join(newAppDirPath, '_layout.tsx');
-      fs.writeFile(layoutPath, layoutContent, (error) => {
-        if (error) {
-          return console.error(`Error creating _layout.tsx: ${error}`);
-        }
-        console.log('app/_layout.tsx created.');
-      });
-    });
-  });
-});
-
-```
-
-# scripts\addFakeUsers.js
-
-```js
-const { createClient } = require('@supabase/supabase-js');
-const { faker } = require('@faker-js/faker');
-
-// Initialize Supabase client
-
-const supabaseUrl = "https://mmarjzhissgpyfwxudqd.supabase.co"
-const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1tYXJqemhpc3NncHlmd3h1ZHFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTc0Mzg2MTUsImV4cCI6MjAzMzAxNDYxNX0.9GLFl6ZosXtNoL61uFx3L1nUc5ENRSWRnhS-LTDb6SA"
-
-const supabase = createClient(supabaseUrl, supabaseKey);
-
-const genders = [1, 2, 3, 4, 5, 6];
-const pronouns = [1, 2, 3, 4, 5];
-const relationshipTypes = [1, 2, 3];
-const gender_preferences = [1, 2, 3];
-const interests = [
-    1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
-];
-
-async function createFakeUser() {
-    const gender = faker.helpers.arrayElement(genders);
-    const user = {
-        id: faker.string.uuid(),
-        name: faker.internet.displayName(),
-        age: faker.number.int({ min: 18, max: 80 }),
-        gender: gender,
-        pronouns: faker.helpers.arrayElements(pronouns, { min: 1, max: 2 }),
-        looking_for: faker.helpers.arrayElement(relationshipTypes),
-        gender_preference: faker.helpers.arrayElement(gender_preferences),
-        interests: faker.helpers.arrayElements(interests, { min: 3, max: 8 }),
-        avatar_url: faker.image.url(),
-        last_active: faker.date.recent(),
-    };
-
-    const { data, error } = await supabase
-        .from('profiles_test')
-        .insert(user);
-
-    if (error) {
-        console.error('Error inserting user:', error);
-    } else {
-        console.log('User created:', user.name);
-    }
-}
-
-async function createFakeUsers(count) {
-    for (let i = 0; i < count; i++) {
-        await createFakeUser();
-    }
-    console.log(`${count} fake users created.`);
-}
-
-// Create 100 fake users
-createFakeUsers(400).then(() => process.exit());
 ```
 
 # providers\AppProvider.tsx
@@ -3441,7 +3441,13 @@ const styles = StyleSheet.create({
 # components\ChatChannel.tsx
 
 ```tsx
-import React, { useEffect, useState, useRef, useCallback } from "react";
+import React, {
+  useEffect,
+  useState,
+  useRef,
+  useCallback,
+  useMemo,
+} from "react";
 import {
   View,
   Text,
@@ -3453,6 +3459,8 @@ import {
   Platform,
   Alert,
   ActivityIndicator,
+  TouchableOpacity,
+  ActionSheetIOS,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRoute, useNavigation } from "@react-navigation/native";
@@ -3460,14 +3468,35 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase";
 import { Colors } from "@/constants/Colors";
 import { defaultStyles } from "@/constants/Styles";
+import { Ionicons } from "@expo/vector-icons";
 
 type Message = {
   id: string;
   sender_id: string;
   content: string;
   created_at: string;
+  edited?: boolean;
   pending?: boolean;
   local_id?: string;
+  read_by?: string[];
+};
+
+const formatDate = (date: Date) => {
+  const today = new Date();
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+
+  if (date.toDateString() === today.toDateString()) {
+    return "Today";
+  } else if (date.toDateString() === yesterday.toDateString()) {
+    return "Yesterday";
+  } else {
+    return date.toLocaleDateString();
+  }
+};
+
+const formatTime = (date: Date) => {
+  return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 };
 
 export default function ChatChannel() {
@@ -3479,6 +3508,11 @@ export default function ChatChannel() {
   const [isLoading, setIsLoading] = useState(true);
   const session = useAuth();
   const flatListRef = useRef(null);
+  const [visibleTimestamps, setVisibleTimestamps] = useState<
+    Record<string, boolean>
+  >({});
+  const [editingMessage, setEditingMessage] = useState<Message | null>(null);
+  const [editText, setEditText] = useState("");
 
   useEffect(() => {
     navigation.setOptions({ headerTitle: otherUserName });
@@ -3502,6 +3536,95 @@ export default function ChatChannel() {
       subscription.unsubscribe();
     };
   }, []);
+
+  useEffect(() => {
+    const subscription = supabase
+      .channel("messages")
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "messages",
+          filter: `conversation_id=eq.${conversationId}`,
+        },
+        (payload) => {
+          setMessages((prevMessages) =>
+            prevMessages.map((msg) =>
+              msg.id === payload.new.id ? { ...msg, ...payload.new } : msg
+            )
+          );
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(subscription);
+    };
+  }, [conversationId]);
+
+  const markMessagesAsRead = useCallback(async () => {
+    if (!session?.user?.id || !conversationId) return;
+
+    try {
+      await supabase.rpc("mark_messages_as_read", {
+        conversation_id: conversationId,
+        user_id: session.user.id,
+      });
+
+      // Update local state to reflect read status
+      setMessages((prevMessages) =>
+        prevMessages.map((msg) =>
+          msg.sender_id !== session.user.id
+            ? { ...msg, read_by: [...(msg.read_by || []), session.user.id] }
+            : msg
+        )
+      );
+    } catch (error) {
+      console.error("Error marking messages as read:", error);
+    }
+  }, [conversationId, session?.user?.id]);
+
+  useEffect(() => {
+    markMessagesAsRead();
+    const interval = setInterval(markMessagesAsRead, 5000); // Check every 5 seconds
+    return () => clearInterval(interval);
+  }, [markMessagesAsRead]);
+
+  const lastSentMessage = useMemo(() => {
+    const userMessages = messages.filter(
+      (msg) => msg.sender_id === session?.user?.id
+    );
+    return userMessages[0]; // Since messages are in reverse chronological order
+  }, [messages, session?.user?.id]);
+
+  const renderReadReceipt = useCallback(() => {
+    if (!lastSentMessage) return null;
+
+    if (!lastSentMessage.read_by || lastSentMessage.read_by.length === 0) {
+      return (
+        <View style={styles.readReceiptContainer}>
+          <Ionicons
+            name="checkmark"
+            size={16}
+            color={Colors.light.textSecondary}
+          />
+          <Text style={styles.readReceiptText}>Sent</Text>
+        </View>
+      );
+    } else {
+      return (
+        <View style={styles.readReceiptContainer}>
+          <Ionicons
+            name="checkmark-done"
+            size={16}
+            color={Colors.light.accent}
+          />
+          <Text style={styles.readReceiptText}>Read</Text>
+        </View>
+      );
+    }
+  }, [lastSentMessage]);
 
   const handleNewMessage = useCallback((payload: { new: Message }) => {
     const newMessage = payload.new;
@@ -3590,22 +3713,174 @@ export default function ChatChannel() {
     }
   };
 
-  const renderMessage = useCallback(
-    ({ item }: { item: Message }) => (
-      <View
-        style={[
-          styles.messageContainer,
-          item.sender_id === session?.user?.id
-            ? styles.sentMessage
-            : styles.receivedMessage,
-          item.pending && styles.pendingMessage,
-        ]}
-      >
-        <Text style={styles.messageText}>{item.content}</Text>
-        {item.pending && <Text style={styles.pendingText}>Sending...</Text>}
-      </View>
-    ),
+  const getMessagesWithDateLabels = useCallback((messages: Message[]) => {
+    let currentDate = "";
+    const messagesWithLabels = [];
+
+    // Reverse the messages array to process them in chronological order
+    const reversedMessages = [...messages].reverse();
+
+    reversedMessages.forEach((message, index) => {
+      const messageDate = new Date(message.created_at);
+      const formattedDate = formatDate(messageDate);
+
+      if (formattedDate !== currentDate) {
+        currentDate = formattedDate;
+        messagesWithLabels.push({
+          id: `date-${index}`,
+          type: "date",
+          date: formattedDate,
+        });
+      }
+
+      messagesWithLabels.push(message);
+    });
+
+    // Reverse the array again to maintain the inverted order for FlatList
+    return messagesWithLabels.reverse();
+  }, []);
+
+  const toggleTimestamp = useCallback((messageId: string) => {
+    setVisibleTimestamps((prev) => ({
+      ...prev,
+      [messageId]: !prev[messageId],
+    }));
+  }, []);
+
+  const handleLongPress = useCallback(
+    (message: Message) => {
+      if (message.sender_id !== session?.user?.id) return;
+
+      if (Platform.OS === "ios") {
+        ActionSheetIOS.showActionSheetWithOptions(
+          {
+            options: ["Cancel", "Edit", "Delete"],
+            destructiveButtonIndex: 2,
+            cancelButtonIndex: 0,
+          },
+          (buttonIndex) => {
+            if (buttonIndex === 1) {
+              setEditingMessage(message);
+              setEditText(message.content);
+            } else if (buttonIndex === 2) {
+              handleDeleteMessage(message);
+            }
+          }
+        );
+      } else {
+        // For Android, you might want to use a custom modal or a third-party library like react-native-action-sheet
+        Alert.alert("Message Options", "What would you like to do?", [
+          { text: "Cancel", style: "cancel" },
+          {
+            text: "Edit",
+            onPress: () => {
+              setEditingMessage(message);
+              setEditText(message.content);
+            },
+          },
+          {
+            text: "Delete",
+            onPress: () => handleDeleteMessage(message),
+            style: "destructive",
+          },
+        ]);
+      }
+    },
     [session?.user?.id]
+  );
+
+  const handleEditMessage = async () => {
+    if (!editingMessage || !editText.trim()) return;
+
+    try {
+      const { data, error } = await supabase
+        .from("messages")
+        .update({ content: editText.trim(), edited: true })
+        .eq("id", editingMessage.id)
+        .select();
+
+      if (error) throw error;
+
+      setMessages((prevMessages) =>
+        prevMessages.map((msg) =>
+          msg.id === editingMessage.id
+            ? { ...msg, content: editText.trim(), edited: true }
+            : msg
+        )
+      );
+
+      setEditingMessage(null);
+      setEditText("");
+    } catch (error) {
+      console.error("Error editing message:", error);
+      Alert.alert("Error", "Failed to edit message. Please try again.");
+    }
+  };
+
+  const handleDeleteMessage = async (message: Message) => {
+    try {
+      const { error } = await supabase
+        .from("messages")
+        .delete()
+        .eq("id", message.id);
+
+      if (error) throw error;
+
+      setMessages((prevMessages) =>
+        prevMessages.filter((msg) => msg.id !== message.id)
+      );
+    } catch (error) {
+      console.error("Error deleting message:", error);
+      Alert.alert("Error", "Failed to delete message. Please try again.");
+    }
+  };
+
+  const renderItem = useCallback(
+    ({ item, index }) => {
+      if (item.type === "date") {
+        return (
+          <View style={styles.dateContainer}>
+            <Text style={styles.dateText}>{item.date}</Text>
+          </View>
+        );
+      }
+
+      const messageTime = new Date(item.created_at);
+      const isCurrentUser = item.sender_id === session?.user?.id;
+      const isTimestampVisible = visibleTimestamps[item.id];
+
+      return (
+        <TouchableOpacity
+          onPress={() => toggleTimestamp(item.id)}
+          onLongPress={() => handleLongPress(item)}
+        >
+          <View
+            style={[
+              styles.messageContainer,
+              isCurrentUser ? styles.sentMessage : styles.receivedMessage,
+              item.pending && styles.pendingMessage,
+            ]}
+          >
+            <View style={styles.messageContent}>
+              <Text style={styles.messageText}>{item.content}</Text>
+              {item.edited && <Text style={styles.editedText}>(edited)</Text>}
+            </View>
+            {isTimestampVisible && (
+              <Text
+                style={[
+                  styles.timeText,
+                  isCurrentUser ? styles.sentTimeText : styles.receivedTimeText,
+                ]}
+              >
+                {formatTime(messageTime)}
+              </Text>
+            )}
+            {item.pending && <Text style={styles.pendingText}>Sending...</Text>}
+          </View>
+        </TouchableOpacity>
+      );
+    },
+    [session?.user?.id, visibleTimestamps, toggleTimestamp, handleLongPress]
   );
 
   if (isLoading) {
@@ -3624,6 +3899,8 @@ export default function ChatChannel() {
     );
   }
 
+  const messagesWithDateLabels = getMessagesWithDateLabels(messages);
+
   return (
     <SafeAreaView style={defaultStyles.SafeAreaView}>
       <KeyboardAvoidingView
@@ -3633,22 +3910,47 @@ export default function ChatChannel() {
       >
         <FlatList
           ref={flatListRef}
-          data={messages}
-          renderItem={renderMessage}
+          data={getMessagesWithDateLabels(messages)}
+          renderItem={renderItem}
           keyExtractor={(item) => item.id}
           inverted
         />
-        <View style={styles.inputContainer}>
-          <TextInput
-            style={styles.input}
-            value={inputMessage}
-            onChangeText={setInputMessage}
-            placeholder="Type a message..."
-          />
-          <Pressable style={styles.sendButton} onPress={sendMessage}>
-            <Text style={styles.sendButtonText}>Send</Text>
-          </Pressable>
-        </View>
+        {renderReadReceipt()}
+        {editingMessage ? (
+          <View style={styles.editContainer}>
+            <TextInput
+              style={styles.editInput}
+              value={editText}
+              onChangeText={setEditText}
+              autoFocus
+            />
+            <Pressable style={styles.editButton} onPress={handleEditMessage}>
+              <Text style={styles.editButtonText}>Save</Text>
+            </Pressable>
+            <Pressable
+              style={styles.editButton}
+              onPress={() => setEditingMessage(null)}
+            >
+              <Text style={styles.editButtonText}>Cancel</Text>
+            </Pressable>
+          </View>
+        ) : (
+          <View style={styles.inputContainer}>
+            <TextInput
+              style={styles.input}
+              value={inputMessage}
+              onChangeText={setInputMessage}
+              placeholder="Type a message..."
+            />
+            <Pressable style={styles.sendButton} onPress={sendMessage}>
+              <Ionicons
+                name="chevron-forward-outline"
+                size={24}
+                color={Colors.light.white}
+              />
+            </Pressable>
+          </View>
+        )}
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -3664,6 +3966,9 @@ const styles = StyleSheet.create({
     marginHorizontal: 10,
     borderRadius: 10,
     maxWidth: "70%",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-end",
   },
   sentMessage: {
     alignSelf: "flex-end",
@@ -3687,16 +3992,16 @@ const styles = StyleSheet.create({
     flex: 1,
     borderWidth: 1,
     borderColor: Colors.light.tertiary,
-    borderRadius: 20,
-    paddingHorizontal: 15,
-    paddingVertical: 10,
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
     marginRight: 10,
   },
   sendButton: {
     backgroundColor: Colors.light.primary,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 16,
     justifyContent: "center",
   },
   sendButtonText: {
@@ -3716,6 +4021,68 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+  },
+  dateContainer: {
+    alignItems: "center",
+    marginVertical: 10,
+  },
+  dateText: {
+    backgroundColor: Colors.light.tertiary,
+    color: Colors.light.text,
+    fontSize: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 10,
+  },
+  editContainer: {
+    flexDirection: "row",
+    padding: 10,
+    borderTopWidth: 1,
+    borderTopColor: Colors.light.tertiary,
+  },
+  editInput: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: Colors.light.tertiary,
+    borderRadius: 16,
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    marginRight: 10,
+  },
+  editButton: {
+    backgroundColor: Colors.light.primary,
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    borderRadius: 16,
+    justifyContent: "center",
+  },
+  editButtonText: {
+    color: Colors.light.textInverted,
+    fontWeight: "bold",
+  },
+  messageContent: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "flex-end",
+  },
+  editedText: {
+    fontSize: 10,
+    fontStyle: "italic",
+    color: Colors.light.textSecondary,
+    marginLeft: 5,
+    alignSelf: "flex-end",
+  },
+  readReceiptContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "flex-end",
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+  },
+  readReceiptText: {
+    fontSize: 12,
+    color: Colors.light.textSecondary,
+    marginLeft: 5,
   },
 });
 
@@ -6921,22 +7288,6 @@ useEffect(() => {
 v1.187.3
 ```
 
-# components\__tests__\ThemedText-test.tsx
-
-```tsx
-import * as React from 'react';
-import renderer from 'react-test-renderer';
-
-import { ThemedText } from '../ThemedText';
-
-it(`renders correctly`, () => {
-  const tree = renderer.create(<ThemedText>Snapshot test!</ThemedText>).toJSON();
-
-  expect(tree).toMatchSnapshot();
-});
-
-```
-
 # scripts\sql\current sql setup.txt
 
 ```txt
@@ -6971,6 +7322,22 @@ BEGIN
     LIMIT get_potential_matches.limit_count;
 END;
 $$ LANGUAGE plpgsql;
+```
+
+# components\__tests__\ThemedText-test.tsx
+
+```tsx
+import * as React from 'react';
+import renderer from 'react-test-renderer';
+
+import { ThemedText } from '../ThemedText';
+
+it(`renders correctly`, () => {
+  const tree = renderer.create(<ThemedText>Snapshot test!</ThemedText>).toJSON();
+
+  expect(tree).toMatchSnapshot();
+});
+
 ```
 
 # components\ui\Textfields.tsx
@@ -7016,6 +7383,81 @@ const SecondaryButtonText = styled(Text, 'uppercase text-center text-primary-700
 
 
 export { PrimaryButton, PrimaryButtonText, SecondaryButton, SecondaryButtonText }
+```
+
+# components\onboarding\StepInterests.tsx
+
+```tsx
+import React, { useCallback, useState, useEffect } from 'react';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
+import { Checkbox } from 'react-native-ui-lib';
+import { Colors } from '@/constants/Colors';
+import { defaultStyles } from '@/constants/Styles';
+import hobbiesInterests from '@/constants/Interests';
+import Spacer from '@/components/Spacer';
+
+const StepInterests = ({ onInterestsSelected }) => {
+    const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
+    const flattenedInterests = React.useMemo(() => hobbiesInterests.flat(), []);
+
+    const handleInterestToggle = useCallback((interest: string) => {
+        setSelectedInterests(prevInterests => {
+            if (prevInterests.includes(interest)) {
+                return prevInterests.filter(i => i !== interest);
+            } else {
+                return [...prevInterests, interest];
+            }
+        });
+    }, []);
+
+    useEffect(() => {
+        onInterestsSelected(selectedInterests);
+    }, [selectedInterests, onInterestsSelected]);
+
+    const renderItem = useCallback(({ item }) => (
+        <Pressable onPress={() => handleInterestToggle(item.value)}>
+            <Checkbox
+                color={selectedInterests.includes(item.value) ? Colors.light.text : Colors.light.tertiary}
+                label={item.label}
+                value={selectedInterests.includes(item.value)}
+                containerStyle={[defaultStyles.checkboxButton, { borderColor: selectedInterests.includes(item.value) ? Colors.light.text : Colors.light.tertiary }]}
+                labelStyle={defaultStyles.checkboxButtonLabel}
+                onValueChange={() => handleInterestToggle(item.value)}
+            />
+        </Pressable>
+    ), [selectedInterests, handleInterestToggle]);
+
+    return (
+        <View style={styles.container}>
+            <Text style={defaultStyles.h2}>Interests ({selectedInterests.length})</Text>
+            <Spacer height={8} />
+            <Text style={defaultStyles.body}>
+                This helps us find people with the same hobbies and interests.
+            </Text>
+            <Spacer height={24} />
+            <FlashList
+                data={flattenedInterests}
+                renderItem={renderItem}
+                estimatedItemSize={75}
+                keyExtractor={(item) => item.value}
+                contentContainerStyle={styles.listContainer}
+            />
+        </View>
+    );
+};
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        padding: 16,
+    },
+    listContainer: {
+        paddingBottom: 16,
+    },
+});
+
+export default StepInterests;
 ```
 
 # components\tabs\surf.tsx
@@ -8245,85 +8687,6 @@ const styles = StyleSheet.create({
 
 ```
 
-# assets\sounds\notification.wav
-
-This is a binary file of the type: Binary
-
-# components\onboarding\StepInterests.tsx
-
-```tsx
-import React, { useCallback, useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
-import { FlashList } from '@shopify/flash-list';
-import { Checkbox } from 'react-native-ui-lib';
-import { Colors } from '@/constants/Colors';
-import { defaultStyles } from '@/constants/Styles';
-import hobbiesInterests from '@/constants/Interests';
-import Spacer from '@/components/Spacer';
-
-const StepInterests = ({ onInterestsSelected }) => {
-    const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
-    const flattenedInterests = React.useMemo(() => hobbiesInterests.flat(), []);
-
-    const handleInterestToggle = useCallback((interest: string) => {
-        setSelectedInterests(prevInterests => {
-            if (prevInterests.includes(interest)) {
-                return prevInterests.filter(i => i !== interest);
-            } else {
-                return [...prevInterests, interest];
-            }
-        });
-    }, []);
-
-    useEffect(() => {
-        onInterestsSelected(selectedInterests);
-    }, [selectedInterests, onInterestsSelected]);
-
-    const renderItem = useCallback(({ item }) => (
-        <Pressable onPress={() => handleInterestToggle(item.value)}>
-            <Checkbox
-                color={selectedInterests.includes(item.value) ? Colors.light.text : Colors.light.tertiary}
-                label={item.label}
-                value={selectedInterests.includes(item.value)}
-                containerStyle={[defaultStyles.checkboxButton, { borderColor: selectedInterests.includes(item.value) ? Colors.light.text : Colors.light.tertiary }]}
-                labelStyle={defaultStyles.checkboxButtonLabel}
-                onValueChange={() => handleInterestToggle(item.value)}
-            />
-        </Pressable>
-    ), [selectedInterests, handleInterestToggle]);
-
-    return (
-        <View style={styles.container}>
-            <Text style={defaultStyles.h2}>Interests ({selectedInterests.length})</Text>
-            <Spacer height={8} />
-            <Text style={defaultStyles.body}>
-                This helps us find people with the same hobbies and interests.
-            </Text>
-            <Spacer height={24} />
-            <FlashList
-                data={flattenedInterests}
-                renderItem={renderItem}
-                estimatedItemSize={75}
-                keyExtractor={(item) => item.value}
-                contentContainerStyle={styles.listContainer}
-            />
-        </View>
-    );
-};
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        padding: 16,
-    },
-    listContainer: {
-        paddingBottom: 16,
-    },
-});
-
-export default StepInterests;
-```
-
 # components\navigation\TabBarIcon.tsx
 
 ```tsx
@@ -8370,6 +8733,114 @@ This is a binary file of the type: Image
 # assets\images\adaptive-icon.png
 
 This is a binary file of the type: Image
+
+# assets\sounds\notification.wav
+
+This is a binary file of the type: Binary
+
+# assets\fonts\RobotoSlab-Thin.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\RobotoSlab-SemiBold.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\RobotoSlab-Regular.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\RobotoSlab-Medium.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\RobotoSlab-Light.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\RobotoSlab-ExtraLight.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\RobotoSlab-ExtraBold.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\RobotoSlab-Bold.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\RobotoSlab-Black.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-SemiBoldItalic.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-SemiBold.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-Regular.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-MediumItalic.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-Medium.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-LightItalic.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-Light.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-Italic.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-ExtraLightItalic.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-ExtraLight.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-ExtraBoldItalic.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-ExtraBold.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-BoldItalic.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-Bold.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\Copernicus-Extrabold.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\Copernicus-Book.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\Copernicus-Bold.ttf
+
+This is a binary file of the type: Binary
 
 # app-example\(tabs)\_layout.tsx
 
@@ -8597,110 +9068,6 @@ const styles = StyleSheet.create({
 });
 
 ```
-
-# assets\fonts\RobotoSlab-Thin.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\RobotoSlab-SemiBold.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\RobotoSlab-Regular.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\RobotoSlab-Medium.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\RobotoSlab-Light.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\RobotoSlab-ExtraLight.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\RobotoSlab-ExtraBold.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\RobotoSlab-Bold.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\RobotoSlab-Black.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-SemiBoldItalic.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-SemiBold.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-Regular.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-MediumItalic.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-Medium.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-LightItalic.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-Light.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-Italic.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-ExtraLightItalic.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-ExtraLight.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-ExtraBoldItalic.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-ExtraBold.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-BoldItalic.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-Bold.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\Copernicus-Extrabold.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\Copernicus-Book.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\Copernicus-Bold.ttf
-
-This is a binary file of the type: Binary
 
 # app\searchFilters\index.tsx
 
@@ -9767,84 +10134,6 @@ const styles = StyleSheet.create({
 });
 ```
 
-# supabase\functions\send-match-notification\index.ts
-
-```ts
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-
-const supabaseUrl = Deno.env.get('SUPABASE_URL') as string
-const supabaseServiceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') as string
-
-const supabase = createClient(supabaseUrl, supabaseServiceRoleKey)
-
-async function sendPushNotification(pushToken: string, title: string, body: string) {
-  const message = {
-    to: pushToken,
-    sound: 'default',
-    title: title,
-    body: body,
-    data: { someData: 'goes here' },
-  }
-
-  const response = await fetch('https://exp.host/--/api/v2/push/send', {
-    method: 'POST',
-    headers: {
-      Accept: 'application/json',
-      'Accept-encoding': 'gzip, deflate',
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(message),
-  })
-
-  const data = await response.json()
-  console.log(data)
-  return data
-}
-
-serve(async (req) => {
-  const { user_id, matched_user_id } = await req.json()
-
-  // Fetch the push token for the user to be notified
-  const { data: userData, error: userError } = await supabase
-    .from('profiles_test')
-    .select('push_token, name')
-    .eq('id', user_id)
-    .single()
-
-  if (userError || !userData?.push_token) {
-    return new Response(
-      JSON.stringify({ error: 'Failed to fetch user data or push token not found' }),
-      { status: 400 }
-    )
-  }
-
-  // Fetch the name of the user who created the match
-  const { data: matchedUserData, error: matchedUserError } = await supabase
-    .from('profiles_test')
-    .select('name')
-    .eq('id', matched_user_id)
-    .single()
-
-  if (matchedUserError) {
-    return new Response(
-      JSON.stringify({ error: 'Failed to fetch matched user data' }),
-      { status: 400 }
-    )
-  }
-
-  const notificationTitle = "New Match!"
-  const notificationBody = `You have a new match! Open the app to find out who.`
-
-  const result = await sendPushNotification(userData.push_token, notificationTitle, notificationBody)
-
-  return new Response(
-    JSON.stringify({ result }),
-    { headers: { "Content-Type": "application/json" } },
-  )
-})
-```
-
 # supabase\functions\process-match-notifications\index.ts
 
 ```ts
@@ -9937,6 +10226,84 @@ Deno.serve(async (req) => {
 })
 ```
 
+# supabase\functions\send-match-notification\index.ts
+
+```ts
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+
+const supabaseUrl = Deno.env.get('SUPABASE_URL') as string
+const supabaseServiceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') as string
+
+const supabase = createClient(supabaseUrl, supabaseServiceRoleKey)
+
+async function sendPushNotification(pushToken: string, title: string, body: string) {
+  const message = {
+    to: pushToken,
+    sound: 'default',
+    title: title,
+    body: body,
+    data: { someData: 'goes here' },
+  }
+
+  const response = await fetch('https://exp.host/--/api/v2/push/send', {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      'Accept-encoding': 'gzip, deflate',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(message),
+  })
+
+  const data = await response.json()
+  console.log(data)
+  return data
+}
+
+serve(async (req) => {
+  const { user_id, matched_user_id } = await req.json()
+
+  // Fetch the push token for the user to be notified
+  const { data: userData, error: userError } = await supabase
+    .from('profiles_test')
+    .select('push_token, name')
+    .eq('id', user_id)
+    .single()
+
+  if (userError || !userData?.push_token) {
+    return new Response(
+      JSON.stringify({ error: 'Failed to fetch user data or push token not found' }),
+      { status: 400 }
+    )
+  }
+
+  // Fetch the name of the user who created the match
+  const { data: matchedUserData, error: matchedUserError } = await supabase
+    .from('profiles_test')
+    .select('name')
+    .eq('id', matched_user_id)
+    .single()
+
+  if (matchedUserError) {
+    return new Response(
+      JSON.stringify({ error: 'Failed to fetch matched user data' }),
+      { status: 400 }
+    )
+  }
+
+  const notificationTitle = "New Match!"
+  const notificationBody = `You have a new match! Open the app to find out who.`
+
+  const result = await sendPushNotification(userData.push_token, notificationTitle, notificationBody)
+
+  return new Response(
+    JSON.stringify({ result }),
+    { headers: { "Content-Type": "application/json" } },
+  )
+})
+```
+
 # supabase\functions\invoke-process-match-notifications\index.ts
 
 ```ts
@@ -9976,6 +10343,36 @@ Deno.serve(async (req) => {
     --data '{"name":"Functions"}'
 
 */
+
+```
+
+# components\__tests__\__snapshots__\ThemedText-test.tsx.snap
+
+```snap
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`renders correctly 1`] = `
+<Text
+  style={
+    [
+      {
+        "color": "#11181C",
+      },
+      {
+        "fontSize": 16,
+        "lineHeight": 24,
+      },
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+    ]
+  }
+>
+  Snapshot test!
+</Text>
+`;
 
 ```
 
@@ -10067,35 +10464,17 @@ serve(async (req) => {
 
 ```
 
-# components\__tests__\__snapshots__\ThemedText-test.tsx.snap
+# assets\images\logo\logo_crushy@3x.png
 
-```snap
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+This is a binary file of the type: Image
 
-exports[`renders correctly 1`] = `
-<Text
-  style={
-    [
-      {
-        "color": "#11181C",
-      },
-      {
-        "fontSize": 16,
-        "lineHeight": 24,
-      },
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-    ]
-  }
->
-  Snapshot test!
-</Text>
-`;
+# assets\images\logo\logo_crushy@2x.png
 
-```
+This is a binary file of the type: Image
+
+# assets\images\logo\logo_crushy.png
+
+This is a binary file of the type: Image
 
 # assets\images\onboarding\onboarding5@3x.png
 
@@ -10154,18 +10533,6 @@ This is a binary file of the type: Image
 This is a binary file of the type: Image
 
 # assets\images\onboarding\onboarding1.png
-
-This is a binary file of the type: Image
-
-# assets\images\logo\logo_crushy@3x.png
-
-This is a binary file of the type: Image
-
-# assets\images\logo\logo_crushy@2x.png
-
-This is a binary file of the type: Image
-
-# assets\images\logo\logo_crushy.png
 
 This is a binary file of the type: Image
 

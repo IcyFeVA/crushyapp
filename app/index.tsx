@@ -28,7 +28,8 @@ import * as Notifications from "expo-notifications";
 import * as Device from "expo-device";
 import { LogBox } from "react-native";
 
-LogBox.ignoreLogs(["Possible Unhandled Promise Rejection"]);
+// LogBox.ignoreLogs(["Possible Unhandled Promise Rejection"]);
+LogBox.ignoreAllLogs();
 
 // At the top level of your app
 if (__DEV__) {

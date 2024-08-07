@@ -500,7 +500,11 @@ export default function ChatChannel() {
               placeholder="Type a message..."
             />
             <Pressable style={styles.sendButton} onPress={sendMessage}>
-              <Text style={styles.sendButtonText}>Send</Text>
+              <Ionicons
+                name="chevron-forward-outline"
+                size={24}
+                color={Colors.light.white}
+              />
             </Pressable>
           </View>
         )}
@@ -545,16 +549,16 @@ const styles = StyleSheet.create({
     flex: 1,
     borderWidth: 1,
     borderColor: Colors.light.tertiary,
-    borderRadius: 20,
-    paddingHorizontal: 15,
-    paddingVertical: 10,
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
     marginRight: 10,
   },
   sendButton: {
     backgroundColor: Colors.light.primary,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 16,
     justifyContent: "center",
   },
   sendButtonText: {
@@ -597,16 +601,16 @@ const styles = StyleSheet.create({
     flex: 1,
     borderWidth: 1,
     borderColor: Colors.light.tertiary,
-    borderRadius: 20,
+    borderRadius: 16,
     paddingHorizontal: 15,
-    paddingVertical: 10,
+    paddingVertical: 8,
     marginRight: 10,
   },
   editButton: {
     backgroundColor: Colors.light.primary,
     paddingHorizontal: 15,
-    paddingVertical: 10,
-    borderRadius: 20,
+    paddingVertical: 8,
+    borderRadius: 16,
     justifyContent: "center",
   },
   editButtonText: {
