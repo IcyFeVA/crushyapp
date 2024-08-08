@@ -506,100 +506,6 @@ android/
 .vscode/
 ```
 
-# utils\storage.js
-
-```js
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
-// usage:
-/*
-    import { getData, storeData } from '@/utils/storage';
-
-    storeData('user', session);
-
-    getData('user').then(user => {
-        console.log(user);
-    });
-*/
-
-const storeData = async (key, value) => {
-    try {
-        await AsyncStorage.setItem(key, JSON.stringify(value));
-    } catch (e) {
-        console.error('Error saving data', e);
-    }
-};
-const getData = async (key) => {
-    try {
-        const value = await AsyncStorage.getItem(key);
-        if (value !== null) {
-            return JSON.parse(value);
-        }
-    } catch (e) {
-        console.error('Error reading data', e);
-    }
-};
-
-const resetUserSearchFilters = async () => {
-    const genderPreferencesSet = ['genderPreference', JSON.stringify({ key: '', value: [] })]
-    const ageRangeSet = ['ageRange', JSON.stringify({ key: '', value: '18-30' })]
-    const distanceSet = ['distance', JSON.stringify({ key: '40', value: '40' })]
-    const starSignPreference = ['starSignPreference', JSON.stringify({ key: '', value: '-' })]
-    const bodyTypePreference = ['bodyTypePreference', JSON.stringify({ key: '', value: '-' })]
-    const exerciseFrequency = ['exerciseFrequency', JSON.stringify({ key: '', value: '-' })]
-    const smokingFrequency = ['smokingFrequency', JSON.stringify({ key: '', value: '-' })]
-    const drinkingFrequency = ['drinkingFrequency', JSON.stringify({ key: '', value: '-' })]
-    const cannabisFrequency = ['cannabisFrequency', JSON.stringify({ key: '', value: '-' })]
-    const dietPreference = ['dietPreference', JSON.stringify({ key: '', value: '-' })]
-
-    try {
-        await AsyncStorage.multiSet([genderPreferencesSet, ageRangeSet, distanceSet, starSignPreference, bodyTypePreference,
-            exerciseFrequency, smokingFrequency, drinkingFrequency, cannabisFrequency, dietPreference])
-    } catch (e) {
-        //save error
-    }
-
-    console.log("search filters reset")
-}
-
-
-const clearAllStorage = async () => {
-    try {
-        await AsyncStorage.clear()
-    } catch (e) {
-        // clear error
-    }
-
-    console.log('CLEARING STORAGE')
-}
-
-export { storeData, getData, resetUserSearchFilters, clearAllStorage };
-```
-
-# utils\pixelateImage.js
-
-```js
-import * as ImageManipulator from 'expo-image-manipulator';
-
-async function pixelateImage(uri, pixelSize = 20) {
-    // Resize the image to a smaller size
-    const smallImage = await ImageManipulator.manipulateAsync(
-        uri,
-        [{ resize: { width: 100 } }],
-        { format: 'png' }
-    );
-
-    // Resize it back to original size, creating pixelation effect
-    const pixelatedImage = await ImageManipulator.manipulateAsync(
-        smallImage.uri,
-        [{ resize: { width: 300 } }],
-        { format: 'png' }
-    );
-
-    return pixelatedImage.uri;
-}
-```
-
 # supabase\seed.sql
 
 ```sql
@@ -816,141 +722,98 @@ s3_secret_key = "env(S3_SECRET_KEY)"
 
 ```
 
-# scripts\reset-project.js
+# utils\storage.js
 
 ```js
-#!/usr/bin/env node
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-/**
- * This script is used to reset the project to a blank state.
- * It moves the /app directory to /app-example and creates a new /app directory with an index.tsx and _layout.tsx file.
- * You can remove the `reset-project` script from package.json and safely delete this file after running it.
- */
+// usage:
+/*
+    import { getData, storeData } from '@/utils/storage';
 
-const fs = require('fs');
-const path = require('path');
+    storeData('user', session);
 
-const root = process.cwd();
-const oldDirPath = path.join(root, 'app');
-const newDirPath = path.join(root, 'app-example');
-const newAppDirPath = path.join(root, 'app');
-
-const indexContent = `import { Text, View } from "react-native";
-
-export default function Index() {
-  return (
-    <View
-      style={{
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-      }}
-    >
-      <Text>Edit app/index.tsx to edit this screen.</Text>
-    </View>
-  );
-}
-`;
-
-const layoutContent = `import { Stack } from "expo-router";
-
-export default function RootLayout() {
-  return (
-    <Stack>
-      <Stack.Screen name="index" />
-    </Stack>
-  );
-}
-`;
-
-fs.rename(oldDirPath, newDirPath, (error) => {
-  if (error) {
-    return console.error(`Error renaming directory: ${error}`);
-  }
-  console.log('/app moved to /app-example.');
-
-  fs.mkdir(newAppDirPath, { recursive: true }, (error) => {
-    if (error) {
-      return console.error(`Error creating new app directory: ${error}`);
-    }
-    console.log('New /app directory created.');
-
-    const indexPath = path.join(newAppDirPath, 'index.tsx');
-    fs.writeFile(indexPath, indexContent, (error) => {
-      if (error) {
-        return console.error(`Error creating index.tsx: ${error}`);
-      }
-      console.log('app/index.tsx created.');
-
-      const layoutPath = path.join(newAppDirPath, '_layout.tsx');
-      fs.writeFile(layoutPath, layoutContent, (error) => {
-        if (error) {
-          return console.error(`Error creating _layout.tsx: ${error}`);
-        }
-        console.log('app/_layout.tsx created.');
-      });
+    getData('user').then(user => {
+        console.log(user);
     });
-  });
-});
+*/
 
+const storeData = async (key, value) => {
+    try {
+        await AsyncStorage.setItem(key, JSON.stringify(value));
+    } catch (e) {
+        console.error('Error saving data', e);
+    }
+};
+const getData = async (key) => {
+    try {
+        const value = await AsyncStorage.getItem(key);
+        if (value !== null) {
+            return JSON.parse(value);
+        }
+    } catch (e) {
+        console.error('Error reading data', e);
+    }
+};
+
+const resetUserSearchFilters = async () => {
+    const genderPreferencesSet = ['genderPreference', JSON.stringify({ key: '', value: [] })]
+    const ageRangeSet = ['ageRange', JSON.stringify({ key: '', value: '18-30' })]
+    const distanceSet = ['distance', JSON.stringify({ key: '40', value: '40' })]
+    const starSignPreference = ['starSignPreference', JSON.stringify({ key: '', value: '-' })]
+    const bodyTypePreference = ['bodyTypePreference', JSON.stringify({ key: '', value: '-' })]
+    const exerciseFrequency = ['exerciseFrequency', JSON.stringify({ key: '', value: '-' })]
+    const smokingFrequency = ['smokingFrequency', JSON.stringify({ key: '', value: '-' })]
+    const drinkingFrequency = ['drinkingFrequency', JSON.stringify({ key: '', value: '-' })]
+    const cannabisFrequency = ['cannabisFrequency', JSON.stringify({ key: '', value: '-' })]
+    const dietPreference = ['dietPreference', JSON.stringify({ key: '', value: '-' })]
+
+    try {
+        await AsyncStorage.multiSet([genderPreferencesSet, ageRangeSet, distanceSet, starSignPreference, bodyTypePreference,
+            exerciseFrequency, smokingFrequency, drinkingFrequency, cannabisFrequency, dietPreference])
+    } catch (e) {
+        //save error
+    }
+
+    console.log("search filters reset")
+}
+
+
+const clearAllStorage = async () => {
+    try {
+        await AsyncStorage.clear()
+    } catch (e) {
+        // clear error
+    }
+
+    console.log('CLEARING STORAGE')
+}
+
+export { storeData, getData, resetUserSearchFilters, clearAllStorage };
 ```
 
-# scripts\addFakeUsers.js
+# utils\pixelateImage.js
 
 ```js
-const { createClient } = require('@supabase/supabase-js');
-const { faker } = require('@faker-js/faker');
+import * as ImageManipulator from 'expo-image-manipulator';
 
-// Initialize Supabase client
+async function pixelateImage(uri, pixelSize = 20) {
+    // Resize the image to a smaller size
+    const smallImage = await ImageManipulator.manipulateAsync(
+        uri,
+        [{ resize: { width: 100 } }],
+        { format: 'png' }
+    );
 
-const supabaseUrl = "https://mmarjzhissgpyfwxudqd.supabase.co"
-const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1tYXJqemhpc3NncHlmd3h1ZHFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTc0Mzg2MTUsImV4cCI6MjAzMzAxNDYxNX0.9GLFl6ZosXtNoL61uFx3L1nUc5ENRSWRnhS-LTDb6SA"
+    // Resize it back to original size, creating pixelation effect
+    const pixelatedImage = await ImageManipulator.manipulateAsync(
+        smallImage.uri,
+        [{ resize: { width: 300 } }],
+        { format: 'png' }
+    );
 
-const supabase = createClient(supabaseUrl, supabaseKey);
-
-const genders = [1, 2, 3, 4, 5, 6];
-const pronouns = [1, 2, 3, 4, 5];
-const relationshipTypes = [1, 2, 3];
-const gender_preferences = [1, 2, 3];
-const interests = [
-    1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
-];
-
-async function createFakeUser() {
-    const gender = faker.helpers.arrayElement(genders);
-    const user = {
-        id: faker.string.uuid(),
-        name: faker.internet.displayName(),
-        age: faker.number.int({ min: 18, max: 80 }),
-        gender: gender,
-        pronouns: faker.helpers.arrayElements(pronouns, { min: 1, max: 2 }),
-        looking_for: faker.helpers.arrayElement(relationshipTypes),
-        gender_preference: faker.helpers.arrayElement(gender_preferences),
-        interests: faker.helpers.arrayElements(interests, { min: 3, max: 8 }),
-        avatar_url: faker.image.url(),
-        last_active: faker.date.recent(),
-    };
-
-    const { data, error } = await supabase
-        .from('profiles_test')
-        .insert(user);
-
-    if (error) {
-        console.error('Error inserting user:', error);
-    } else {
-        console.log('User created:', user.name);
-    }
+    return pixelatedImage.uri;
 }
-
-async function createFakeUsers(count) {
-    for (let i = 0; i < count; i++) {
-        await createFakeUser();
-    }
-    console.log(`${count} fake users created.`);
-}
-
-// Create 100 fake users
-createFakeUsers(400).then(() => process.exit());
 ```
 
 # sql\profile_details.sql
@@ -1102,6 +965,143 @@ BEGIN
   ORDER BY m.created_at DESC NULLS LAST;
 END;
 $$ LANGUAGE plpgsql;
+```
+
+# scripts\reset-project.js
+
+```js
+#!/usr/bin/env node
+
+/**
+ * This script is used to reset the project to a blank state.
+ * It moves the /app directory to /app-example and creates a new /app directory with an index.tsx and _layout.tsx file.
+ * You can remove the `reset-project` script from package.json and safely delete this file after running it.
+ */
+
+const fs = require('fs');
+const path = require('path');
+
+const root = process.cwd();
+const oldDirPath = path.join(root, 'app');
+const newDirPath = path.join(root, 'app-example');
+const newAppDirPath = path.join(root, 'app');
+
+const indexContent = `import { Text, View } from "react-native";
+
+export default function Index() {
+  return (
+    <View
+      style={{
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+      }}
+    >
+      <Text>Edit app/index.tsx to edit this screen.</Text>
+    </View>
+  );
+}
+`;
+
+const layoutContent = `import { Stack } from "expo-router";
+
+export default function RootLayout() {
+  return (
+    <Stack>
+      <Stack.Screen name="index" />
+    </Stack>
+  );
+}
+`;
+
+fs.rename(oldDirPath, newDirPath, (error) => {
+  if (error) {
+    return console.error(`Error renaming directory: ${error}`);
+  }
+  console.log('/app moved to /app-example.');
+
+  fs.mkdir(newAppDirPath, { recursive: true }, (error) => {
+    if (error) {
+      return console.error(`Error creating new app directory: ${error}`);
+    }
+    console.log('New /app directory created.');
+
+    const indexPath = path.join(newAppDirPath, 'index.tsx');
+    fs.writeFile(indexPath, indexContent, (error) => {
+      if (error) {
+        return console.error(`Error creating index.tsx: ${error}`);
+      }
+      console.log('app/index.tsx created.');
+
+      const layoutPath = path.join(newAppDirPath, '_layout.tsx');
+      fs.writeFile(layoutPath, layoutContent, (error) => {
+        if (error) {
+          return console.error(`Error creating _layout.tsx: ${error}`);
+        }
+        console.log('app/_layout.tsx created.');
+      });
+    });
+  });
+});
+
+```
+
+# scripts\addFakeUsers.js
+
+```js
+const { createClient } = require('@supabase/supabase-js');
+const { faker } = require('@faker-js/faker');
+
+// Initialize Supabase client
+
+const supabaseUrl = "https://mmarjzhissgpyfwxudqd.supabase.co"
+const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1tYXJqemhpc3NncHlmd3h1ZHFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTc0Mzg2MTUsImV4cCI6MjAzMzAxNDYxNX0.9GLFl6ZosXtNoL61uFx3L1nUc5ENRSWRnhS-LTDb6SA"
+
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+const genders = [1, 2, 3, 4, 5, 6];
+const pronouns = [1, 2, 3, 4, 5];
+const relationshipTypes = [1, 2, 3];
+const gender_preferences = [1, 2, 3];
+const interests = [
+    1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+];
+
+async function createFakeUser() {
+    const gender = faker.helpers.arrayElement(genders);
+    const user = {
+        id: faker.string.uuid(),
+        name: faker.internet.displayName(),
+        age: faker.number.int({ min: 18, max: 80 }),
+        gender: gender,
+        pronouns: faker.helpers.arrayElements(pronouns, { min: 1, max: 2 }),
+        looking_for: faker.helpers.arrayElement(relationshipTypes),
+        gender_preference: faker.helpers.arrayElement(gender_preferences),
+        interests: faker.helpers.arrayElements(interests, { min: 3, max: 8 }),
+        avatar_url: faker.image.url(),
+        last_active: faker.date.recent(),
+    };
+
+    const { data, error } = await supabase
+        .from('profiles_test')
+        .insert(user);
+
+    if (error) {
+        console.error('Error inserting user:', error);
+    } else {
+        console.log('User created:', user.name);
+    }
+}
+
+async function createFakeUsers(count) {
+    for (let i = 0; i < count; i++) {
+        await createFakeUser();
+    }
+    console.log(`${count} fake users created.`);
+}
+
+// Create 100 fake users
+createFakeUsers(400).then(() => process.exit());
 ```
 
 # providers\AppProvider.tsx
@@ -5394,6 +5394,210 @@ body {
 
 ```
 
+# api\supabaseApi.ts
+
+```ts
+import { supabase } from '@/lib/supabase';
+
+export const api = {
+  
+  getCurrentUserProfile: async (userId: string) => {
+    const { data, error } = await supabase
+        .from('profiles_test')
+        .select('*')
+        .eq('id', userId)
+        .single();
+    
+    if (error) {
+        console.error('Error fetching current user profile:', error);
+        throw error;
+    }
+    console.log('Current User Profile Data:', data);
+    return data;
+},
+
+
+  updateProfile: async (userId: string, updates: any) => {
+    const { data, error } = await supabase
+      .from('profiles_test')
+      .upsert({ id: userId, ...updates })
+      .select();
+    
+    if (error) throw error;
+    return data;
+  },
+
+  getPotentialMatches: async (userId: string, limit: number) => {
+    const { data, error } = await supabase.rpc('get_potential_matches', {
+      user_id: userId,
+      limit_count: limit,
+    });
+    
+    if (error) throw error;
+    return data;
+  },
+
+
+  getProfileDetails: async (userId: string) => {
+    const { data, error } = await supabase
+        .from('profile_details')
+        .select('*')
+        .eq('id', userId)
+        .single();
+    
+    if (error) {
+        console.error('Error fetching profile details:', error);
+        throw error;
+    }
+    console.log('Profile Details Data:', data);
+    return data;
+},
+
+getPotentialDiveMatches: async (userId: string, limit: number) => {
+  const { data, error } = await supabase.rpc('get_potential_dive_matches', {
+      user_id: userId,
+      limit_count: limit,
+  });
+  
+  if (error) {
+      console.error('Error fetching potential dive matches:', error);
+      throw error;
+  }
+  console.log('Potential Dive Matches Data:', data);
+  return data;
+},
+
+  recordMatchAction: async (userId: string, matchedUserId: string, action: 'like' | 'dislike') => {
+    const { data, error } = await supabase
+      .rpc('handle_match_action', { 
+        acting_user_id: userId, 
+        target_user_id: matchedUserId,
+        match_action: action === 'like' ? 1 : 0,
+      });
+    
+    if (error) {
+      console.error('Error in handle_match_action:', error);
+    } else {
+      console.log('Match action handled, is new match:', data);
+    }
+  },
+
+  getOrCreateConversation: async (user1Id: string, user2Id: string) => {
+    const { data, error } = await supabase.rpc('get_or_create_conversation', {
+      user1_id: user1Id,
+      user2_id: user2Id
+    });
+    if (error) throw error;
+    return data;
+  },
+
+  getRecentConversations: async (userId: string) => {
+    const { data, error } = await supabase.rpc('get_recent_conversations', {
+      user_id: userId
+    });
+    
+    if (error) throw error;
+    
+    return data || [];
+  },
+
+  sendMessage: async (conversationId: string, senderId: string, content: string) => {
+    const { data, error } = await supabase
+      .from('messages')
+      .insert({
+        conversation_id: conversationId,
+        sender_id: senderId,
+        content: content
+      })
+      .select();
+    if (error) throw error;
+    return data[0];
+  },
+
+  getMessages: async (conversationId: string) => {
+    const { data, error } = await supabase
+      .from('messages')
+      .select('*')
+      .eq('conversation_id', conversationId)
+      .order('created_at', { ascending: true });
+    if (error) throw error;
+    return data;
+  },
+
+  subscribeToMessages: (conversationId: string, callback: (payload: any) => void) => {
+    return supabase
+      .channel(`messages:${conversationId}`)
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'messages',
+        filter: `conversation_id=eq.${conversationId}`
+      }, callback)
+      .subscribe();
+  }, 
+  
+
+
+};
+```
+
+# api\auth.ts
+
+```ts
+import { supabase } from '@/lib/supabase';
+
+export async function fetchStreamToken(userId: string): Promise<string> {
+  try {
+    console.log("Fetching Stream token for user:", userId);
+    const { data, error } = await supabase.functions.invoke('generate-stream-token', {
+      body: { user: { id: userId } },
+    });
+
+    if (error) {
+      console.error("Supabase function error:", error);
+      throw error;
+    }
+    if (!data || !data.token) {
+      console.error("No token received. Data:", data);
+      throw new Error('No token received');
+    }
+
+    console.log("Stream token fetched successfully");
+    return data.token;
+  } catch (error) {
+    console.error('Error fetching Stream token:', error);
+    if (error.response) {
+      console.error('Response status:', error.response.status);
+      console.error('Response data:', await error.response.text());
+    }
+    throw error;
+  }
+}
+
+
+/*
+usage in component:
+
+
+import { fetchStreamToken } from '@/api/auth';
+
+// In your component or hook
+useEffect(() => {
+  const getStreamToken = async () => {
+    try {
+      const token = await fetchStreamToken(userId);
+      console.log("Received token:", token);
+      // Use the token here
+    } catch (error) {
+      console.error("Error getting stream token:", error);
+    }
+  };
+
+  getStreamToken();
+}, [userId]);
+*/
+```
+
 # app\profile.tsx
 
 ```tsx
@@ -6891,7 +7095,8 @@ import * as Notifications from "expo-notifications";
 import * as Device from "expo-device";
 import { LogBox } from "react-native";
 
-LogBox.ignoreLogs(["Possible Unhandled Promise Rejection"]);
+// LogBox.ignoreLogs(["Possible Unhandled Promise Rejection"]);
+LogBox.ignoreAllLogs();
 
 // At the top level of your app
 if (__DEV__) {
@@ -7078,210 +7283,6 @@ async function registerForPushNotificationsAsync() {
 }
 ```
 
-# api\supabaseApi.ts
-
-```ts
-import { supabase } from '@/lib/supabase';
-
-export const api = {
-  
-  getCurrentUserProfile: async (userId: string) => {
-    const { data, error } = await supabase
-        .from('profiles_test')
-        .select('*')
-        .eq('id', userId)
-        .single();
-    
-    if (error) {
-        console.error('Error fetching current user profile:', error);
-        throw error;
-    }
-    console.log('Current User Profile Data:', data);
-    return data;
-},
-
-
-  updateProfile: async (userId: string, updates: any) => {
-    const { data, error } = await supabase
-      .from('profiles_test')
-      .upsert({ id: userId, ...updates })
-      .select();
-    
-    if (error) throw error;
-    return data;
-  },
-
-  getPotentialMatches: async (userId: string, limit: number) => {
-    const { data, error } = await supabase.rpc('get_potential_matches', {
-      user_id: userId,
-      limit_count: limit,
-    });
-    
-    if (error) throw error;
-    return data;
-  },
-
-
-  getProfileDetails: async (userId: string) => {
-    const { data, error } = await supabase
-        .from('profile_details')
-        .select('*')
-        .eq('id', userId)
-        .single();
-    
-    if (error) {
-        console.error('Error fetching profile details:', error);
-        throw error;
-    }
-    console.log('Profile Details Data:', data);
-    return data;
-},
-
-getPotentialDiveMatches: async (userId: string, limit: number) => {
-  const { data, error } = await supabase.rpc('get_potential_dive_matches', {
-      user_id: userId,
-      limit_count: limit,
-  });
-  
-  if (error) {
-      console.error('Error fetching potential dive matches:', error);
-      throw error;
-  }
-  console.log('Potential Dive Matches Data:', data);
-  return data;
-},
-
-  recordMatchAction: async (userId: string, matchedUserId: string, action: 'like' | 'dislike') => {
-    const { data, error } = await supabase
-      .rpc('handle_match_action', { 
-        acting_user_id: userId, 
-        target_user_id: matchedUserId,
-        match_action: action === 'like' ? 1 : 0,
-      });
-    
-    if (error) {
-      console.error('Error in handle_match_action:', error);
-    } else {
-      console.log('Match action handled, is new match:', data);
-    }
-  },
-
-  getOrCreateConversation: async (user1Id: string, user2Id: string) => {
-    const { data, error } = await supabase.rpc('get_or_create_conversation', {
-      user1_id: user1Id,
-      user2_id: user2Id
-    });
-    if (error) throw error;
-    return data;
-  },
-
-  getRecentConversations: async (userId: string) => {
-    const { data, error } = await supabase.rpc('get_recent_conversations', {
-      user_id: userId
-    });
-    
-    if (error) throw error;
-    
-    return data || [];
-  },
-
-  sendMessage: async (conversationId: string, senderId: string, content: string) => {
-    const { data, error } = await supabase
-      .from('messages')
-      .insert({
-        conversation_id: conversationId,
-        sender_id: senderId,
-        content: content
-      })
-      .select();
-    if (error) throw error;
-    return data[0];
-  },
-
-  getMessages: async (conversationId: string) => {
-    const { data, error } = await supabase
-      .from('messages')
-      .select('*')
-      .eq('conversation_id', conversationId)
-      .order('created_at', { ascending: true });
-    if (error) throw error;
-    return data;
-  },
-
-  subscribeToMessages: (conversationId: string, callback: (payload: any) => void) => {
-    return supabase
-      .channel(`messages:${conversationId}`)
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'messages',
-        filter: `conversation_id=eq.${conversationId}`
-      }, callback)
-      .subscribe();
-  }, 
-  
-
-
-};
-```
-
-# api\auth.ts
-
-```ts
-import { supabase } from '@/lib/supabase';
-
-export async function fetchStreamToken(userId: string): Promise<string> {
-  try {
-    console.log("Fetching Stream token for user:", userId);
-    const { data, error } = await supabase.functions.invoke('generate-stream-token', {
-      body: { user: { id: userId } },
-    });
-
-    if (error) {
-      console.error("Supabase function error:", error);
-      throw error;
-    }
-    if (!data || !data.token) {
-      console.error("No token received. Data:", data);
-      throw new Error('No token received');
-    }
-
-    console.log("Stream token fetched successfully");
-    return data.token;
-  } catch (error) {
-    console.error('Error fetching Stream token:', error);
-    if (error.response) {
-      console.error('Response status:', error.response.status);
-      console.error('Response data:', await error.response.text());
-    }
-    throw error;
-  }
-}
-
-
-/*
-usage in component:
-
-
-import { fetchStreamToken } from '@/api/auth';
-
-// In your component or hook
-useEffect(() => {
-  const getStreamToken = async () => {
-    try {
-      const token = await fetchStreamToken(userId);
-      console.log("Received token:", token);
-      // Use the token here
-    } catch (error) {
-      console.error("Error getting stream token:", error);
-    }
-  };
-
-  getStreamToken();
-}, [userId]);
-*/
-```
-
 # supabase\.temp\cli-latest
 
 ```
@@ -7323,6 +7324,146 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 ```
+
+# assets\sounds\notification.wav
+
+This is a binary file of the type: Binary
+
+# assets\images\splash.png
+
+This is a binary file of the type: Image
+
+# assets\images\react-logo@3x.png
+
+This is a binary file of the type: Image
+
+# assets\images\react-logo@2x.png
+
+This is a binary file of the type: Image
+
+# assets\images\react-logo.png
+
+This is a binary file of the type: Image
+
+# assets\images\partial-react-logo.png
+
+This is a binary file of the type: Image
+
+# assets\images\icon.png
+
+This is a binary file of the type: Image
+
+# assets\images\favicon.png
+
+This is a binary file of the type: Image
+
+# assets\images\adaptive-icon.png
+
+This is a binary file of the type: Image
+
+# assets\fonts\RobotoSlab-Thin.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\RobotoSlab-SemiBold.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\RobotoSlab-Regular.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\RobotoSlab-Medium.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\RobotoSlab-Light.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\RobotoSlab-ExtraLight.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\RobotoSlab-ExtraBold.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\RobotoSlab-Bold.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\RobotoSlab-Black.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-SemiBoldItalic.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-SemiBold.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-Regular.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-MediumItalic.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-Medium.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-LightItalic.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-Light.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-Italic.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-ExtraLightItalic.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-ExtraLight.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-ExtraBoldItalic.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-ExtraBold.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-BoldItalic.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-Bold.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\Copernicus-Extrabold.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\Copernicus-Book.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\Copernicus-Bold.ttf
+
+This is a binary file of the type: Binary
 
 # components\__tests__\ThemedText-test.tsx
 
@@ -7383,81 +7524,6 @@ const SecondaryButtonText = styled(Text, 'uppercase text-center text-primary-700
 
 
 export { PrimaryButton, PrimaryButtonText, SecondaryButton, SecondaryButtonText }
-```
-
-# components\onboarding\StepInterests.tsx
-
-```tsx
-import React, { useCallback, useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
-import { FlashList } from '@shopify/flash-list';
-import { Checkbox } from 'react-native-ui-lib';
-import { Colors } from '@/constants/Colors';
-import { defaultStyles } from '@/constants/Styles';
-import hobbiesInterests from '@/constants/Interests';
-import Spacer from '@/components/Spacer';
-
-const StepInterests = ({ onInterestsSelected }) => {
-    const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
-    const flattenedInterests = React.useMemo(() => hobbiesInterests.flat(), []);
-
-    const handleInterestToggle = useCallback((interest: string) => {
-        setSelectedInterests(prevInterests => {
-            if (prevInterests.includes(interest)) {
-                return prevInterests.filter(i => i !== interest);
-            } else {
-                return [...prevInterests, interest];
-            }
-        });
-    }, []);
-
-    useEffect(() => {
-        onInterestsSelected(selectedInterests);
-    }, [selectedInterests, onInterestsSelected]);
-
-    const renderItem = useCallback(({ item }) => (
-        <Pressable onPress={() => handleInterestToggle(item.value)}>
-            <Checkbox
-                color={selectedInterests.includes(item.value) ? Colors.light.text : Colors.light.tertiary}
-                label={item.label}
-                value={selectedInterests.includes(item.value)}
-                containerStyle={[defaultStyles.checkboxButton, { borderColor: selectedInterests.includes(item.value) ? Colors.light.text : Colors.light.tertiary }]}
-                labelStyle={defaultStyles.checkboxButtonLabel}
-                onValueChange={() => handleInterestToggle(item.value)}
-            />
-        </Pressable>
-    ), [selectedInterests, handleInterestToggle]);
-
-    return (
-        <View style={styles.container}>
-            <Text style={defaultStyles.h2}>Interests ({selectedInterests.length})</Text>
-            <Spacer height={8} />
-            <Text style={defaultStyles.body}>
-                This helps us find people with the same hobbies and interests.
-            </Text>
-            <Spacer height={24} />
-            <FlashList
-                data={flattenedInterests}
-                renderItem={renderItem}
-                estimatedItemSize={75}
-                keyExtractor={(item) => item.value}
-                contentContainerStyle={styles.listContainer}
-            />
-        </View>
-    );
-};
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        padding: 16,
-    },
-    listContainer: {
-        paddingBottom: 16,
-    },
-});
-
-export default StepInterests;
 ```
 
 # components\tabs\surf.tsx
@@ -8702,145 +8768,80 @@ export function TabBarIcon({ style, ...rest }: IconProps<ComponentProps<typeof I
 
 ```
 
-# assets\images\splash.png
-
-This is a binary file of the type: Image
-
-# assets\images\react-logo@3x.png
-
-This is a binary file of the type: Image
-
-# assets\images\react-logo@2x.png
-
-This is a binary file of the type: Image
-
-# assets\images\react-logo.png
-
-This is a binary file of the type: Image
-
-# assets\images\partial-react-logo.png
-
-This is a binary file of the type: Image
-
-# assets\images\icon.png
-
-This is a binary file of the type: Image
-
-# assets\images\favicon.png
-
-This is a binary file of the type: Image
-
-# assets\images\adaptive-icon.png
-
-This is a binary file of the type: Image
-
-# assets\sounds\notification.wav
-
-This is a binary file of the type: Binary
-
-# assets\fonts\RobotoSlab-Thin.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\RobotoSlab-SemiBold.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\RobotoSlab-Regular.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\RobotoSlab-Medium.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\RobotoSlab-Light.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\RobotoSlab-ExtraLight.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\RobotoSlab-ExtraBold.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\RobotoSlab-Bold.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\RobotoSlab-Black.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-SemiBoldItalic.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-SemiBold.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-Regular.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-MediumItalic.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-Medium.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-LightItalic.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-Light.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-Italic.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-ExtraLightItalic.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-ExtraLight.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-ExtraBoldItalic.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-ExtraBold.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-BoldItalic.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-Bold.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\Copernicus-Extrabold.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\Copernicus-Book.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\Copernicus-Bold.ttf
-
-This is a binary file of the type: Binary
+# components\onboarding\StepInterests.tsx
+
+```tsx
+import React, { useCallback, useState, useEffect } from 'react';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
+import { Checkbox } from 'react-native-ui-lib';
+import { Colors } from '@/constants/Colors';
+import { defaultStyles } from '@/constants/Styles';
+import hobbiesInterests from '@/constants/Interests';
+import Spacer from '@/components/Spacer';
+
+const StepInterests = ({ onInterestsSelected }) => {
+    const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
+    const flattenedInterests = React.useMemo(() => hobbiesInterests.flat(), []);
+
+    const handleInterestToggle = useCallback((interest: string) => {
+        setSelectedInterests(prevInterests => {
+            if (prevInterests.includes(interest)) {
+                return prevInterests.filter(i => i !== interest);
+            } else {
+                return [...prevInterests, interest];
+            }
+        });
+    }, []);
+
+    useEffect(() => {
+        onInterestsSelected(selectedInterests);
+    }, [selectedInterests, onInterestsSelected]);
+
+    const renderItem = useCallback(({ item }) => (
+        <Pressable onPress={() => handleInterestToggle(item.value)}>
+            <Checkbox
+                color={selectedInterests.includes(item.value) ? Colors.light.text : Colors.light.tertiary}
+                label={item.label}
+                value={selectedInterests.includes(item.value)}
+                containerStyle={[defaultStyles.checkboxButton, { borderColor: selectedInterests.includes(item.value) ? Colors.light.text : Colors.light.tertiary }]}
+                labelStyle={defaultStyles.checkboxButtonLabel}
+                onValueChange={() => handleInterestToggle(item.value)}
+            />
+        </Pressable>
+    ), [selectedInterests, handleInterestToggle]);
+
+    return (
+        <View style={styles.container}>
+            <Text style={defaultStyles.h2}>Interests ({selectedInterests.length})</Text>
+            <Spacer height={8} />
+            <Text style={defaultStyles.body}>
+                This helps us find people with the same hobbies and interests.
+            </Text>
+            <Spacer height={24} />
+            <FlashList
+                data={flattenedInterests}
+                renderItem={renderItem}
+                estimatedItemSize={75}
+                keyExtractor={(item) => item.value}
+                contentContainerStyle={styles.listContainer}
+            />
+        </View>
+    );
+};
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        padding: 16,
+    },
+    listContainer: {
+        paddingBottom: 16,
+    },
+});
+
+export default StepInterests;
+```
 
 # app-example\(tabs)\_layout.tsx
 
@@ -10346,36 +10347,6 @@ Deno.serve(async (req) => {
 
 ```
 
-# components\__tests__\__snapshots__\ThemedText-test.tsx.snap
-
-```snap
-// Jest Snapshot v1, https://goo.gl/fbAQLP
-
-exports[`renders correctly 1`] = `
-<Text
-  style={
-    [
-      {
-        "color": "#11181C",
-      },
-      {
-        "fontSize": 16,
-        "lineHeight": 24,
-      },
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-    ]
-  }
->
-  Snapshot test!
-</Text>
-`;
-
-```
-
 # supabase\functions\generate-stream-token\index.ts
 
 ```ts
@@ -10464,18 +10435,6 @@ serve(async (req) => {
 
 ```
 
-# assets\images\logo\logo_crushy@3x.png
-
-This is a binary file of the type: Image
-
-# assets\images\logo\logo_crushy@2x.png
-
-This is a binary file of the type: Image
-
-# assets\images\logo\logo_crushy.png
-
-This is a binary file of the type: Image
-
 # assets\images\onboarding\onboarding5@3x.png
 
 This is a binary file of the type: Image
@@ -10533,6 +10492,30 @@ This is a binary file of the type: Image
 This is a binary file of the type: Image
 
 # assets\images\onboarding\onboarding1.png
+
+This is a binary file of the type: Image
+
+# assets\images\logo\logo_crushy@3x.png
+
+This is a binary file of the type: Image
+
+# assets\images\logo\logo_crushy@2x.png
+
+This is a binary file of the type: Image
+
+# assets\images\logo\logo_crushy.png
+
+This is a binary file of the type: Image
+
+# assets\images\dummies\dummy3.png
+
+This is a binary file of the type: Image
+
+# assets\images\dummies\dummy2.png
+
+This is a binary file of the type: Image
+
+# assets\images\dummies\dummy1.png
 
 This is a binary file of the type: Image
 
@@ -10656,17 +10639,35 @@ This is a binary file of the type: Image
 
 This is a binary file of the type: Image
 
-# assets\images\dummies\dummy3.png
+# components\__tests__\__snapshots__\ThemedText-test.tsx.snap
 
-This is a binary file of the type: Image
+```snap
+// Jest Snapshot v1, https://goo.gl/fbAQLP
 
-# assets\images\dummies\dummy2.png
+exports[`renders correctly 1`] = `
+<Text
+  style={
+    [
+      {
+        "color": "#11181C",
+      },
+      {
+        "fontSize": 16,
+        "lineHeight": 24,
+      },
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+    ]
+  }
+>
+  Snapshot test!
+</Text>
+`;
 
-This is a binary file of the type: Image
-
-# assets\images\dummies\dummy1.png
-
-This is a binary file of the type: Image
+```
 
 # assets\images\buttons\buttonMatchingLike@3x.png
 

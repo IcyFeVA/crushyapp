@@ -1,5 +1,4 @@
-// components/tabs/inbox.tsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { View, Text, FlatList, Pressable, StyleSheet } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -39,26 +38,16 @@ const startConversationForMatch = async (matchId: string) => {
   return data; // This will be the conversation_id
 };
 
-function MatchesTab({ refreshKey, refresh }) {
+function MatchesTab() {
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
   const navigation = useNavigation();
   const session = useAuth();
   const { newMatches } = useNotifications();
 
-  useEffect(() => {
-    if (newMatches > 0) {
-      fetchMatches();
-    }
-  }, [newMatches]);
+  const fetchMatches = useCallback(async () => {
+    if (!session?.user) return;
 
-  useEffect(() => {
-    if (session?.user) {
-      fetchMatches();
-    }
-  }, [session, refreshKey]);
-
-  const fetchMatches = async () => {
     try {
       setLoading(true);
       const { data, error } = await supabase
@@ -68,11 +57,13 @@ function MatchesTab({ refreshKey, refresh }) {
           id,
           user2_id,
           profiles_test!matches_user2_id_fkey(name),
-          created_at
+          created_at,
+          conversation_id
         `
         )
         .eq("user1_id", session.user.id)
-        .is("conversation_id", null);
+        .not("matched_at", "is", null)
+        .order("matched_at", { ascending: false });
 
       if (error) throw error;
 
@@ -87,30 +78,40 @@ function MatchesTab({ refreshKey, refresh }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [session]);
+
+  useEffect(() => {
+    fetchMatches();
+  }, [fetchMatches, newMatches]);
 
   const handleStartConversation = async (
     matchId: string,
     otherUserId: string,
-    otherUserName: string
+    otherUserName: string,
+    existingConversationId: string | null
   ) => {
     try {
-      const { data, error } = await supabase.rpc(
-        "create_conversation_for_match",
-        {
-          match_id: matchId,
-        }
-      );
+      let conversationId = existingConversationId;
 
-      if (error) throw error;
+      if (!conversationId) {
+        const { data, error } = await supabase.rpc(
+          "create_conversation_for_match",
+          {
+            match_id: matchId,
+          }
+        );
 
-      if (data) {
+        if (error) throw error;
+        conversationId = data;
+      }
+
+      if (conversationId) {
         navigation.navigate("ChatChannel", {
-          conversationId: data,
+          conversationId,
           otherUserId,
           otherUserName,
         });
-        refresh(); // This will trigger a refresh of both tabs
+        fetchMatches(); // Refresh the matches list
       } else {
         console.error("No conversation ID returned");
       }
@@ -118,19 +119,27 @@ function MatchesTab({ refreshKey, refresh }) {
       console.error("Error starting conversation:", error);
     }
   };
+
   const renderMatchItem = ({ item }: { item: Match }) => (
     <View style={styles.matchItem}>
       <Text style={styles.userName}>{item.other_user_name}</Text>
       <Text style={styles.matchedAt}>
-        created on {new Date(item.created_at).toLocaleDateString()}
+        Matched on {new Date(item.created_at).toLocaleDateString()}
       </Text>
       <Pressable
         style={styles.startChatButton}
         onPress={() =>
-          handleStartConversation(item.id, item.user2_id, item.other_user_name)
+          handleStartConversation(
+            item.id,
+            item.user2_id,
+            item.other_user_name,
+            item.conversation_id
+          )
         }
       >
-        <Text style={styles.startChatButtonText}>Start Chat</Text>
+        <Text style={styles.startChatButtonText}>
+          {item.conversation_id ? "Continue Chat" : "Start Chat"}
+        </Text>
       </Pressable>
     </View>
   );
@@ -230,6 +239,7 @@ function ChatsTab({ refreshKey, refresh }) {
 
 export default function Inbox() {
   const { newMatches, unreadMessages, resetNotifications } = useNotifications();
+  const { refreshKey, refresh } = useTabFocus();
 
   React.useEffect(() => {
     // Reset notifications when entering the Inbox
