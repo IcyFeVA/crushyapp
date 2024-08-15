@@ -137,6 +137,36 @@ getPotentialDiveMatches: async (userId: string, limit: number) => {
       .subscribe();
   }, 
   
+  getTableInfo: async() => {
+  // Fetch all tables in the public schema
+  const { data: tables, error: tablesError } = await supabase
+    .rpc('get_tables')
 
+  if (tablesError) {
+    console.error('Error fetching tables:', tablesError)
+    return
+  }
+
+  for (const tableObj of tables) {
+    const tableName = tableObj.table_name
+    console.log(`Table: ${tableName}`)
+
+    // Fetch columns for each table
+    const { data: columns, error: columnsError } = await supabase
+      .rpc('get_columns', { table_name: tableName })
+
+    if (columnsError) {
+      console.error(`Error fetching columns for ${tableName}:`, columnsError)
+      continue
+    }
+
+    columns.forEach(column => {
+      console.log(`  - ${column.column_name}: ${column.data_type} (${column.is_nullable ? 'nullable' : 'not nullable'})`)
+    })
+    console.log('\n')
+  }
+},
+  
+  
 
 };

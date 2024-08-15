@@ -27,6 +27,7 @@ import { messaging, app } from "../firebase";
 import * as Notifications from "expo-notifications";
 import * as Device from "expo-device";
 import { LogBox } from "react-native";
+import { api } from "@/api/supabaseApi";
 
 // LogBox.ignoreLogs(["Possible Unhandled Promise Rejection"]);
 LogBox.ignoreAllLogs();
@@ -80,6 +81,15 @@ export default function RootLayout() {
 
       // clearAllStorage()
       // return;
+
+      const getTables = async () => {
+        const data = await api.getTableInfo();
+
+        if (data) {
+          console.log("table data", data);
+        }
+      };
+      //getTables();
 
       getData("genderPreference").then((genderPreference) => {
         if (genderPreference === undefined) {

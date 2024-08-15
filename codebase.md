@@ -506,6 +506,100 @@ android/
 .vscode/
 ```
 
+# utils\storage.js
+
+```js
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+// usage:
+/*
+    import { getData, storeData } from '@/utils/storage';
+
+    storeData('user', session);
+
+    getData('user').then(user => {
+        console.log(user);
+    });
+*/
+
+const storeData = async (key, value) => {
+    try {
+        await AsyncStorage.setItem(key, JSON.stringify(value));
+    } catch (e) {
+        console.error('Error saving data', e);
+    }
+};
+const getData = async (key) => {
+    try {
+        const value = await AsyncStorage.getItem(key);
+        if (value !== null) {
+            return JSON.parse(value);
+        }
+    } catch (e) {
+        console.error('Error reading data', e);
+    }
+};
+
+const resetUserSearchFilters = async () => {
+    const genderPreferencesSet = ['genderPreference', JSON.stringify({ key: '', value: [] })]
+    const ageRangeSet = ['ageRange', JSON.stringify({ key: '', value: '18-30' })]
+    const distanceSet = ['distance', JSON.stringify({ key: '40', value: '40' })]
+    const starSignPreference = ['starSignPreference', JSON.stringify({ key: '', value: '-' })]
+    const bodyTypePreference = ['bodyTypePreference', JSON.stringify({ key: '', value: '-' })]
+    const exerciseFrequency = ['exerciseFrequency', JSON.stringify({ key: '', value: '-' })]
+    const smokingFrequency = ['smokingFrequency', JSON.stringify({ key: '', value: '-' })]
+    const drinkingFrequency = ['drinkingFrequency', JSON.stringify({ key: '', value: '-' })]
+    const cannabisFrequency = ['cannabisFrequency', JSON.stringify({ key: '', value: '-' })]
+    const dietPreference = ['dietPreference', JSON.stringify({ key: '', value: '-' })]
+
+    try {
+        await AsyncStorage.multiSet([genderPreferencesSet, ageRangeSet, distanceSet, starSignPreference, bodyTypePreference,
+            exerciseFrequency, smokingFrequency, drinkingFrequency, cannabisFrequency, dietPreference])
+    } catch (e) {
+        //save error
+    }
+
+    console.log("search filters reset")
+}
+
+
+const clearAllStorage = async () => {
+    try {
+        await AsyncStorage.clear()
+    } catch (e) {
+        // clear error
+    }
+
+    console.log('CLEARING STORAGE')
+}
+
+export { storeData, getData, resetUserSearchFilters, clearAllStorage };
+```
+
+# utils\pixelateImage.js
+
+```js
+import * as ImageManipulator from 'expo-image-manipulator';
+
+async function pixelateImage(uri, pixelSize = 20) {
+    // Resize the image to a smaller size
+    const smallImage = await ImageManipulator.manipulateAsync(
+        uri,
+        [{ resize: { width: 100 } }],
+        { format: 'png' }
+    );
+
+    // Resize it back to original size, creating pixelation effect
+    const pixelatedImage = await ImageManipulator.manipulateAsync(
+        smallImage.uri,
+        [{ resize: { width: 300 } }],
+        { format: 'png' }
+    );
+
+    return pixelatedImage.uri;
+}
+```
+
 # supabase\seed.sql
 
 ```sql
@@ -722,98 +816,138 @@ s3_secret_key = "env(S3_SECRET_KEY)"
 
 ```
 
-# utils\storage.js
+# sql\schema.md
 
-```js
-import AsyncStorage from '@react-native-async-storage/async-storage';
+```md
+## Database Schema
 
-// usage:
-/*
-    import { getData, storeData } from '@/utils/storage';
+The Supabase database for this project contains the following tables:
 
-    storeData('user', session);
+### Table: countries
 
-    getData('user').then(user => {
-        console.log(user);
-    });
-*/
+- id: bigint (not nullable)
+- name: text (nullable)
+- iso2: text (not nullable)
+- iso3: text (nullable)
+- local_name: text (nullable)
+- continent: USER-DEFINED (nullable)
 
-const storeData = async (key, value) => {
-    try {
-        await AsyncStorage.setItem(key, JSON.stringify(value));
-    } catch (e) {
-        console.error('Error saving data', e);
-    }
-};
-const getData = async (key) => {
-    try {
-        const value = await AsyncStorage.getItem(key);
-        if (value !== null) {
-            return JSON.parse(value);
-        }
-    } catch (e) {
-        console.error('Error reading data', e);
-    }
-};
+### Table: hobbies_interests
 
-const resetUserSearchFilters = async () => {
-    const genderPreferencesSet = ['genderPreference', JSON.stringify({ key: '', value: [] })]
-    const ageRangeSet = ['ageRange', JSON.stringify({ key: '', value: '18-30' })]
-    const distanceSet = ['distance', JSON.stringify({ key: '40', value: '40' })]
-    const starSignPreference = ['starSignPreference', JSON.stringify({ key: '', value: '-' })]
-    const bodyTypePreference = ['bodyTypePreference', JSON.stringify({ key: '', value: '-' })]
-    const exerciseFrequency = ['exerciseFrequency', JSON.stringify({ key: '', value: '-' })]
-    const smokingFrequency = ['smokingFrequency', JSON.stringify({ key: '', value: '-' })]
-    const drinkingFrequency = ['drinkingFrequency', JSON.stringify({ key: '', value: '-' })]
-    const cannabisFrequency = ['cannabisFrequency', JSON.stringify({ key: '', value: '-' })]
-    const dietPreference = ['dietPreference', JSON.stringify({ key: '', value: '-' })]
+- id: bigint (not nullable)
+- created_at: timestamp with time zone (not nullable)
+- category: text (nullable)
+- value: text (nullable)
+- label: text (nullable)
 
-    try {
-        await AsyncStorage.multiSet([genderPreferencesSet, ageRangeSet, distanceSet, starSignPreference, bodyTypePreference,
-            exerciseFrequency, smokingFrequency, drinkingFrequency, cannabisFrequency, dietPreference])
-    } catch (e) {
-        //save error
-    }
+### Table: matches
+- id: uuid (not nullable)
+- user1_id: uuid (nullable)
+- user2_id: uuid (nullable)
+- user1_action: smallint (nullable)
+- user2_action: smallint (nullable)
+- created_at: timestamp with time zone (nullable)
+- matched_at: timestamp with time zone (nullable)
+- matched: boolean (nullable)
+- conversation_id: uuid (nullable)
 
-    console.log("search filters reset")
-}
+### Table: hobbies_interests_user
+- id: bigint (not nullable)
+- created_at: timestamp with time zone (not nullable)
+- value: text (nullable)
+- user_id: uuid (nullable)
 
+### Table: match_notifications
+- id: uuid (not nullable)
+- user_id: uuid (not nullable)
+- matched_user_id: uuid (not nullable)
+- created_at: timestamp with time zone (nullable)
+- is_read: boolean (nullable)
 
-const clearAllStorage = async () => {
-    try {
-        await AsyncStorage.clear()
-    } catch (e) {
-        // clear error
-    }
+### Table: profiles_test
+- id: uuid (not nullable)
+- updated_at: timestamp with time zone (nullable)
+- username: text (nullable)
+- avatar_url: text (nullable)
+- name: text (nullable)
+- age: smallint (nullable)
+- pronouns: ARRAY (nullable)
+- looking_for: smallint (nullable)
+- interests: ARRAY (nullable)
+- full_name: text (nullable)
+- gender_preference: smallint (nullable)
+- gender: smallint (nullable)
+- last_active: date (nullable)
+- push_token: jsonb (nullable)
+- avatar_pixelated_url: text (nullable)
 
-    console.log('CLEARING STORAGE')
-}
+### Table: pending_match_notifications
+- id: uuid (not nullable)
+- user1_id: uuid (not nullable)
+- user2_id: uuid (not nullable)
+- created_at: timestamp with time zone (nullable)
+- processed: boolean (nullable)
 
-export { storeData, getData, resetUserSearchFilters, clearAllStorage };
-```
+### Table: profile_details
+- id: uuid (not nullable)
+- bio: text (nullable)
+- height_cm: integer (nullable)
+- body_type: smallint (nullable)
+- exercise_frequency: smallint (nullable)
+- smoking_status: smallint (nullable)
+- drinking_status: smallint (nullable)
+- cannabis_use: smallint (nullable)
+- diet_preference: smallint (nullable)
+- education_level: smallint (nullable)
+- occupation: text (nullable)
+- relationship_status: smallint (nullable)
+- relationship_type: smallint (nullable)
+- children: smallint (nullable)
+- pets: ARRAY (nullable)
+- languages: ARRAY (nullable)
+- religion: smallint (nullable)
+- political_views: smallint (nullable)
+- zodiac_sign: smallint (nullable)
+- personality_type: smallint (nullable)
+- love_language: ARRAY (nullable)
+- communication_style: smallint (nullable)
+- conflict_resolution_style: smallint (nullable)
+- living_situation: smallint (nullable)
+- hometown: text (nullable)
+- willing_to_relocate: boolean (nullable)
+- travel_frequency: smallint (nullable)
+- hobbies: ARRAY (nullable)
+- favorite_music_genres: ARRAY (nullable)
+- favorite_movies_tv: ARRAY (nullable)
+- favorite_books: ARRAY (nullable)
+- social_media_activity: smallint (nullable)
+- ideal_first_date: text (nullable)
+- deal_breakers: ARRAY (nullable)
+- love_story: text (nullable)
+- values: ARRAY (nullable)
+- kink_friendly: boolean (nullable)
+- openness_to_experimentation: text (nullable)
+- intimacy_preferences: ARRAY (nullable)
+- created_at: timestamp with time zone (nullable)
+- updated_at: timestamp with time zone (nullable)
 
-# utils\pixelateImage.js
+### Table: conversations
+- id: uuid (not nullable)
+- created_at: timestamp with time zone (nullable)
 
-```js
-import * as ImageManipulator from 'expo-image-manipulator';
+### Table: conversation_participants
+- conversation_id: uuid (not nullable)
+- user_id: uuid (not nullable)
 
-async function pixelateImage(uri, pixelSize = 20) {
-    // Resize the image to a smaller size
-    const smallImage = await ImageManipulator.manipulateAsync(
-        uri,
-        [{ resize: { width: 100 } }],
-        { format: 'png' }
-    );
+### Table: messages
+- id: uuid (not nullable)
+- conversation_id: uuid (nullable)
+- sender_id: uuid (nullable)
+- content: text (not nullable)
+- created_at: timestamp with time zone (nullable)
+- edited: boolean (nullable)
+- read_by: ARRAY (nullable)
 
-    // Resize it back to original size, creating pixelation effect
-    const pixelatedImage = await ImageManipulator.manipulateAsync(
-        smallImage.uri,
-        [{ resize: { width: 300 } }],
-        { format: 'png' }
-    );
-
-    return pixelatedImage.uri;
-}
 ```
 
 # sql\profile_details.sql
@@ -4091,8 +4225,7 @@ const styles = StyleSheet.create({
 # components\ChannelList.tsx
 
 ```tsx
-// components/tabs/inbox.tsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { View, Text, FlatList, Pressable, StyleSheet } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -4132,26 +4265,16 @@ const startConversationForMatch = async (matchId: string) => {
   return data; // This will be the conversation_id
 };
 
-function MatchesTab({ refreshKey, refresh }) {
+function MatchesTab() {
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
   const navigation = useNavigation();
   const session = useAuth();
   const { newMatches } = useNotifications();
 
-  useEffect(() => {
-    if (newMatches > 0) {
-      fetchMatches();
-    }
-  }, [newMatches]);
+  const fetchMatches = useCallback(async () => {
+    if (!session?.user) return;
 
-  useEffect(() => {
-    if (session?.user) {
-      fetchMatches();
-    }
-  }, [session, refreshKey]);
-
-  const fetchMatches = async () => {
     try {
       setLoading(true);
       const { data, error } = await supabase
@@ -4161,11 +4284,13 @@ function MatchesTab({ refreshKey, refresh }) {
           id,
           user2_id,
           profiles_test!matches_user2_id_fkey(name),
-          created_at
+          created_at,
+          conversation_id
         `
         )
         .eq("user1_id", session.user.id)
-        .is("conversation_id", null);
+        .not("matched_at", "is", null)
+        .order("matched_at", { ascending: false });
 
       if (error) throw error;
 
@@ -4180,30 +4305,40 @@ function MatchesTab({ refreshKey, refresh }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [session]);
+
+  useEffect(() => {
+    fetchMatches();
+  }, [fetchMatches, newMatches]);
 
   const handleStartConversation = async (
     matchId: string,
     otherUserId: string,
-    otherUserName: string
+    otherUserName: string,
+    existingConversationId: string | null
   ) => {
     try {
-      const { data, error } = await supabase.rpc(
-        "create_conversation_for_match",
-        {
-          match_id: matchId,
-        }
-      );
+      let conversationId = existingConversationId;
 
-      if (error) throw error;
+      if (!conversationId) {
+        const { data, error } = await supabase.rpc(
+          "create_conversation_for_match",
+          {
+            match_id: matchId,
+          }
+        );
 
-      if (data) {
+        if (error) throw error;
+        conversationId = data;
+      }
+
+      if (conversationId) {
         navigation.navigate("ChatChannel", {
-          conversationId: data,
+          conversationId,
           otherUserId,
           otherUserName,
         });
-        refresh(); // This will trigger a refresh of both tabs
+        fetchMatches(); // Refresh the matches list
       } else {
         console.error("No conversation ID returned");
       }
@@ -4211,19 +4346,27 @@ function MatchesTab({ refreshKey, refresh }) {
       console.error("Error starting conversation:", error);
     }
   };
+
   const renderMatchItem = ({ item }: { item: Match }) => (
     <View style={styles.matchItem}>
       <Text style={styles.userName}>{item.other_user_name}</Text>
       <Text style={styles.matchedAt}>
-        created on {new Date(item.created_at).toLocaleDateString()}
+        Matched on {new Date(item.created_at).toLocaleDateString()}
       </Text>
       <Pressable
         style={styles.startChatButton}
         onPress={() =>
-          handleStartConversation(item.id, item.user2_id, item.other_user_name)
+          handleStartConversation(
+            item.id,
+            item.user2_id,
+            item.other_user_name,
+            item.conversation_id
+          )
         }
       >
-        <Text style={styles.startChatButtonText}>Start Chat</Text>
+        <Text style={styles.startChatButtonText}>
+          {item.conversation_id ? "Continue Chat" : "Start Chat"}
+        </Text>
       </Pressable>
     </View>
   );
@@ -4323,6 +4466,7 @@ function ChatsTab({ refreshKey, refresh }) {
 
 export default function Inbox() {
   const { newMatches, unreadMessages, resetNotifications } = useNotifications();
+  const { refreshKey, refresh } = useTabFocus();
 
   React.useEffect(() => {
     // Reset notifications when entering the Inbox
@@ -5536,7 +5680,37 @@ getPotentialDiveMatches: async (userId: string, limit: number) => {
       .subscribe();
   }, 
   
+  getTableInfo: async() => {
+  // Fetch all tables in the public schema
+  const { data: tables, error: tablesError } = await supabase
+    .rpc('get_tables')
 
+  if (tablesError) {
+    console.error('Error fetching tables:', tablesError)
+    return
+  }
+
+  for (const tableObj of tables) {
+    const tableName = tableObj.table_name
+    console.log(`Table: ${tableName}`)
+
+    // Fetch columns for each table
+    const { data: columns, error: columnsError } = await supabase
+      .rpc('get_columns', { table_name: tableName })
+
+    if (columnsError) {
+      console.error(`Error fetching columns for ${tableName}:`, columnsError)
+      continue
+    }
+
+    columns.forEach(column => {
+      console.log(`  - ${column.column_name}: ${column.data_type} (${column.is_nullable ? 'nullable' : 'not nullable'})`)
+    })
+    console.log('\n')
+  }
+},
+  
+  
 
 };
 ```
@@ -7094,6 +7268,7 @@ import { messaging, app } from "../firebase";
 import * as Notifications from "expo-notifications";
 import * as Device from "expo-device";
 import { LogBox } from "react-native";
+import { api } from "@/api/supabaseApi";
 
 // LogBox.ignoreLogs(["Possible Unhandled Promise Rejection"]);
 LogBox.ignoreAllLogs();
@@ -7147,6 +7322,15 @@ export default function RootLayout() {
 
       // clearAllStorage()
       // return;
+
+      const getTables = async () => {
+        const data = await api.getTableInfo();
+
+        if (data) {
+          console.log("table data", data);
+        }
+      };
+      //getTables();
 
       getData("genderPreference").then((genderPreference) => {
         if (genderPreference === undefined) {
@@ -7325,146 +7509,6 @@ END;
 $$ LANGUAGE plpgsql;
 ```
 
-# assets\sounds\notification.wav
-
-This is a binary file of the type: Binary
-
-# assets\images\splash.png
-
-This is a binary file of the type: Image
-
-# assets\images\react-logo@3x.png
-
-This is a binary file of the type: Image
-
-# assets\images\react-logo@2x.png
-
-This is a binary file of the type: Image
-
-# assets\images\react-logo.png
-
-This is a binary file of the type: Image
-
-# assets\images\partial-react-logo.png
-
-This is a binary file of the type: Image
-
-# assets\images\icon.png
-
-This is a binary file of the type: Image
-
-# assets\images\favicon.png
-
-This is a binary file of the type: Image
-
-# assets\images\adaptive-icon.png
-
-This is a binary file of the type: Image
-
-# assets\fonts\RobotoSlab-Thin.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\RobotoSlab-SemiBold.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\RobotoSlab-Regular.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\RobotoSlab-Medium.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\RobotoSlab-Light.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\RobotoSlab-ExtraLight.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\RobotoSlab-ExtraBold.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\RobotoSlab-Bold.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\RobotoSlab-Black.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-SemiBoldItalic.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-SemiBold.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-Regular.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-MediumItalic.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-Medium.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-LightItalic.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-Light.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-Italic.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-ExtraLightItalic.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-ExtraLight.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-ExtraBoldItalic.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-ExtraBold.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-BoldItalic.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-Bold.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\Copernicus-Extrabold.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\Copernicus-Book.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\Copernicus-Bold.ttf
-
-This is a binary file of the type: Binary
-
 # components\__tests__\ThemedText-test.tsx
 
 ```tsx
@@ -7524,6 +7568,81 @@ const SecondaryButtonText = styled(Text, 'uppercase text-center text-primary-700
 
 
 export { PrimaryButton, PrimaryButtonText, SecondaryButton, SecondaryButtonText }
+```
+
+# components\onboarding\StepInterests.tsx
+
+```tsx
+import React, { useCallback, useState, useEffect } from 'react';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
+import { Checkbox } from 'react-native-ui-lib';
+import { Colors } from '@/constants/Colors';
+import { defaultStyles } from '@/constants/Styles';
+import hobbiesInterests from '@/constants/Interests';
+import Spacer from '@/components/Spacer';
+
+const StepInterests = ({ onInterestsSelected }) => {
+    const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
+    const flattenedInterests = React.useMemo(() => hobbiesInterests.flat(), []);
+
+    const handleInterestToggle = useCallback((interest: string) => {
+        setSelectedInterests(prevInterests => {
+            if (prevInterests.includes(interest)) {
+                return prevInterests.filter(i => i !== interest);
+            } else {
+                return [...prevInterests, interest];
+            }
+        });
+    }, []);
+
+    useEffect(() => {
+        onInterestsSelected(selectedInterests);
+    }, [selectedInterests, onInterestsSelected]);
+
+    const renderItem = useCallback(({ item }) => (
+        <Pressable onPress={() => handleInterestToggle(item.value)}>
+            <Checkbox
+                color={selectedInterests.includes(item.value) ? Colors.light.text : Colors.light.tertiary}
+                label={item.label}
+                value={selectedInterests.includes(item.value)}
+                containerStyle={[defaultStyles.checkboxButton, { borderColor: selectedInterests.includes(item.value) ? Colors.light.text : Colors.light.tertiary }]}
+                labelStyle={defaultStyles.checkboxButtonLabel}
+                onValueChange={() => handleInterestToggle(item.value)}
+            />
+        </Pressable>
+    ), [selectedInterests, handleInterestToggle]);
+
+    return (
+        <View style={styles.container}>
+            <Text style={defaultStyles.h2}>Interests ({selectedInterests.length})</Text>
+            <Spacer height={8} />
+            <Text style={defaultStyles.body}>
+                This helps us find people with the same hobbies and interests.
+            </Text>
+            <Spacer height={24} />
+            <FlashList
+                data={flattenedInterests}
+                renderItem={renderItem}
+                estimatedItemSize={75}
+                keyExtractor={(item) => item.value}
+                contentContainerStyle={styles.listContainer}
+            />
+        </View>
+    );
+};
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        padding: 16,
+    },
+    listContainer: {
+        paddingBottom: 16,
+    },
+});
+
+export default StepInterests;
 ```
 
 # components\tabs\surf.tsx
@@ -8768,80 +8887,145 @@ export function TabBarIcon({ style, ...rest }: IconProps<ComponentProps<typeof I
 
 ```
 
-# components\onboarding\StepInterests.tsx
+# assets\sounds\notification.wav
 
-```tsx
-import React, { useCallback, useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
-import { FlashList } from '@shopify/flash-list';
-import { Checkbox } from 'react-native-ui-lib';
-import { Colors } from '@/constants/Colors';
-import { defaultStyles } from '@/constants/Styles';
-import hobbiesInterests from '@/constants/Interests';
-import Spacer from '@/components/Spacer';
+This is a binary file of the type: Binary
 
-const StepInterests = ({ onInterestsSelected }) => {
-    const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
-    const flattenedInterests = React.useMemo(() => hobbiesInterests.flat(), []);
+# assets\images\splash.png
 
-    const handleInterestToggle = useCallback((interest: string) => {
-        setSelectedInterests(prevInterests => {
-            if (prevInterests.includes(interest)) {
-                return prevInterests.filter(i => i !== interest);
-            } else {
-                return [...prevInterests, interest];
-            }
-        });
-    }, []);
+This is a binary file of the type: Image
 
-    useEffect(() => {
-        onInterestsSelected(selectedInterests);
-    }, [selectedInterests, onInterestsSelected]);
+# assets\images\react-logo@3x.png
 
-    const renderItem = useCallback(({ item }) => (
-        <Pressable onPress={() => handleInterestToggle(item.value)}>
-            <Checkbox
-                color={selectedInterests.includes(item.value) ? Colors.light.text : Colors.light.tertiary}
-                label={item.label}
-                value={selectedInterests.includes(item.value)}
-                containerStyle={[defaultStyles.checkboxButton, { borderColor: selectedInterests.includes(item.value) ? Colors.light.text : Colors.light.tertiary }]}
-                labelStyle={defaultStyles.checkboxButtonLabel}
-                onValueChange={() => handleInterestToggle(item.value)}
-            />
-        </Pressable>
-    ), [selectedInterests, handleInterestToggle]);
+This is a binary file of the type: Image
 
-    return (
-        <View style={styles.container}>
-            <Text style={defaultStyles.h2}>Interests ({selectedInterests.length})</Text>
-            <Spacer height={8} />
-            <Text style={defaultStyles.body}>
-                This helps us find people with the same hobbies and interests.
-            </Text>
-            <Spacer height={24} />
-            <FlashList
-                data={flattenedInterests}
-                renderItem={renderItem}
-                estimatedItemSize={75}
-                keyExtractor={(item) => item.value}
-                contentContainerStyle={styles.listContainer}
-            />
-        </View>
-    );
-};
+# assets\images\react-logo@2x.png
 
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        padding: 16,
-    },
-    listContainer: {
-        paddingBottom: 16,
-    },
-});
+This is a binary file of the type: Image
 
-export default StepInterests;
-```
+# assets\images\react-logo.png
+
+This is a binary file of the type: Image
+
+# assets\images\partial-react-logo.png
+
+This is a binary file of the type: Image
+
+# assets\images\icon.png
+
+This is a binary file of the type: Image
+
+# assets\images\favicon.png
+
+This is a binary file of the type: Image
+
+# assets\images\adaptive-icon.png
+
+This is a binary file of the type: Image
+
+# assets\fonts\RobotoSlab-Thin.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\RobotoSlab-SemiBold.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\RobotoSlab-Regular.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\RobotoSlab-Medium.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\RobotoSlab-Light.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\RobotoSlab-ExtraLight.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\RobotoSlab-ExtraBold.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\RobotoSlab-Bold.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\RobotoSlab-Black.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-SemiBoldItalic.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-SemiBold.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-Regular.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-MediumItalic.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-Medium.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-LightItalic.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-Light.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-Italic.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-ExtraLightItalic.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-ExtraLight.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-ExtraBoldItalic.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-ExtraBold.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-BoldItalic.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-Bold.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\Copernicus-Extrabold.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\Copernicus-Book.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\Copernicus-Bold.ttf
+
+This is a binary file of the type: Binary
 
 # app-example\(tabs)\_layout.tsx
 
@@ -10135,6 +10319,84 @@ const styles = StyleSheet.create({
 });
 ```
 
+# supabase\functions\send-match-notification\index.ts
+
+```ts
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+
+const supabaseUrl = Deno.env.get('SUPABASE_URL') as string
+const supabaseServiceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') as string
+
+const supabase = createClient(supabaseUrl, supabaseServiceRoleKey)
+
+async function sendPushNotification(pushToken: string, title: string, body: string) {
+  const message = {
+    to: pushToken,
+    sound: 'default',
+    title: title,
+    body: body,
+    data: { someData: 'goes here' },
+  }
+
+  const response = await fetch('https://exp.host/--/api/v2/push/send', {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      'Accept-encoding': 'gzip, deflate',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(message),
+  })
+
+  const data = await response.json()
+  console.log(data)
+  return data
+}
+
+serve(async (req) => {
+  const { user_id, matched_user_id } = await req.json()
+
+  // Fetch the push token for the user to be notified
+  const { data: userData, error: userError } = await supabase
+    .from('profiles_test')
+    .select('push_token, name')
+    .eq('id', user_id)
+    .single()
+
+  if (userError || !userData?.push_token) {
+    return new Response(
+      JSON.stringify({ error: 'Failed to fetch user data or push token not found' }),
+      { status: 400 }
+    )
+  }
+
+  // Fetch the name of the user who created the match
+  const { data: matchedUserData, error: matchedUserError } = await supabase
+    .from('profiles_test')
+    .select('name')
+    .eq('id', matched_user_id)
+    .single()
+
+  if (matchedUserError) {
+    return new Response(
+      JSON.stringify({ error: 'Failed to fetch matched user data' }),
+      { status: 400 }
+    )
+  }
+
+  const notificationTitle = "New Match!"
+  const notificationBody = `You have a new match! Open the app to find out who.`
+
+  const result = await sendPushNotification(userData.push_token, notificationTitle, notificationBody)
+
+  return new Response(
+    JSON.stringify({ result }),
+    { headers: { "Content-Type": "application/json" } },
+  )
+})
+```
+
 # supabase\functions\process-match-notifications\index.ts
 
 ```ts
@@ -10224,84 +10486,6 @@ Deno.serve(async (req) => {
   }
 
   return new Response(JSON.stringify({ message: 'Notifications processed' }), { status: 200 })
-})
-```
-
-# supabase\functions\send-match-notification\index.ts
-
-```ts
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-
-const supabaseUrl = Deno.env.get('SUPABASE_URL') as string
-const supabaseServiceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') as string
-
-const supabase = createClient(supabaseUrl, supabaseServiceRoleKey)
-
-async function sendPushNotification(pushToken: string, title: string, body: string) {
-  const message = {
-    to: pushToken,
-    sound: 'default',
-    title: title,
-    body: body,
-    data: { someData: 'goes here' },
-  }
-
-  const response = await fetch('https://exp.host/--/api/v2/push/send', {
-    method: 'POST',
-    headers: {
-      Accept: 'application/json',
-      'Accept-encoding': 'gzip, deflate',
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(message),
-  })
-
-  const data = await response.json()
-  console.log(data)
-  return data
-}
-
-serve(async (req) => {
-  const { user_id, matched_user_id } = await req.json()
-
-  // Fetch the push token for the user to be notified
-  const { data: userData, error: userError } = await supabase
-    .from('profiles_test')
-    .select('push_token, name')
-    .eq('id', user_id)
-    .single()
-
-  if (userError || !userData?.push_token) {
-    return new Response(
-      JSON.stringify({ error: 'Failed to fetch user data or push token not found' }),
-      { status: 400 }
-    )
-  }
-
-  // Fetch the name of the user who created the match
-  const { data: matchedUserData, error: matchedUserError } = await supabase
-    .from('profiles_test')
-    .select('name')
-    .eq('id', matched_user_id)
-    .single()
-
-  if (matchedUserError) {
-    return new Response(
-      JSON.stringify({ error: 'Failed to fetch matched user data' }),
-      { status: 400 }
-    )
-  }
-
-  const notificationTitle = "New Match!"
-  const notificationBody = `You have a new match! Open the app to find out who.`
-
-  const result = await sendPushNotification(userData.push_token, notificationTitle, notificationBody)
-
-  return new Response(
-    JSON.stringify({ result }),
-    { headers: { "Content-Type": "application/json" } },
-  )
 })
 ```
 
@@ -10435,6 +10619,36 @@ serve(async (req) => {
 
 ```
 
+# components\__tests__\__snapshots__\ThemedText-test.tsx.snap
+
+```snap
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`renders correctly 1`] = `
+<Text
+  style={
+    [
+      {
+        "color": "#11181C",
+      },
+      {
+        "fontSize": 16,
+        "lineHeight": 24,
+      },
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+    ]
+  }
+>
+  Snapshot test!
+</Text>
+`;
+
+```
+
 # assets\images\onboarding\onboarding5@3x.png
 
 This is a binary file of the type: Image
@@ -10495,6 +10709,18 @@ This is a binary file of the type: Image
 
 This is a binary file of the type: Image
 
+# assets\images\dummies\dummy3.png
+
+This is a binary file of the type: Image
+
+# assets\images\dummies\dummy2.png
+
+This is a binary file of the type: Image
+
+# assets\images\dummies\dummy1.png
+
+This is a binary file of the type: Image
+
 # assets\images\logo\logo_crushy@3x.png
 
 This is a binary file of the type: Image
@@ -10507,15 +10733,39 @@ This is a binary file of the type: Image
 
 This is a binary file of the type: Image
 
-# assets\images\dummies\dummy3.png
+# assets\images\buttons\buttonMatchingLike@3x.png
 
 This is a binary file of the type: Image
 
-# assets\images\dummies\dummy2.png
+# assets\images\buttons\buttonMatchingLike@2x.png
 
 This is a binary file of the type: Image
 
-# assets\images\dummies\dummy1.png
+# assets\images\buttons\buttonMatchingLike.png
+
+This is a binary file of the type: Image
+
+# assets\images\buttons\buttonMatchingDislike@3x.png
+
+This is a binary file of the type: Image
+
+# assets\images\buttons\buttonMatchingDislike@2x.png
+
+This is a binary file of the type: Image
+
+# assets\images\buttons\buttonMatchingDislike.png
+
+This is a binary file of the type: Image
+
+# assets\images\buttons\buttonMatchingChat@3x.png
+
+This is a binary file of the type: Image
+
+# assets\images\buttons\buttonMatchingChat@2x.png
+
+This is a binary file of the type: Image
+
+# assets\images\buttons\buttonMatchingChat.png
 
 This is a binary file of the type: Image
 
@@ -10636,72 +10886,6 @@ This is a binary file of the type: Image
 This is a binary file of the type: Image
 
 # assets\images\icons\iconSharedInterest.png
-
-This is a binary file of the type: Image
-
-# components\__tests__\__snapshots__\ThemedText-test.tsx.snap
-
-```snap
-// Jest Snapshot v1, https://goo.gl/fbAQLP
-
-exports[`renders correctly 1`] = `
-<Text
-  style={
-    [
-      {
-        "color": "#11181C",
-      },
-      {
-        "fontSize": 16,
-        "lineHeight": 24,
-      },
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-    ]
-  }
->
-  Snapshot test!
-</Text>
-`;
-
-```
-
-# assets\images\buttons\buttonMatchingLike@3x.png
-
-This is a binary file of the type: Image
-
-# assets\images\buttons\buttonMatchingLike@2x.png
-
-This is a binary file of the type: Image
-
-# assets\images\buttons\buttonMatchingLike.png
-
-This is a binary file of the type: Image
-
-# assets\images\buttons\buttonMatchingDislike@3x.png
-
-This is a binary file of the type: Image
-
-# assets\images\buttons\buttonMatchingDislike@2x.png
-
-This is a binary file of the type: Image
-
-# assets\images\buttons\buttonMatchingDislike.png
-
-This is a binary file of the type: Image
-
-# assets\images\buttons\buttonMatchingChat@3x.png
-
-This is a binary file of the type: Image
-
-# assets\images\buttons\buttonMatchingChat@2x.png
-
-This is a binary file of the type: Image
-
-# assets\images\buttons\buttonMatchingChat.png
 
 This is a binary file of the type: Image
 
