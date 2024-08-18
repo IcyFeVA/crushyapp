@@ -506,100 +506,6 @@ android/
 .vscode/
 ```
 
-# utils\storage.js
-
-```js
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
-// usage:
-/*
-    import { getData, storeData } from '@/utils/storage';
-
-    storeData('user', session);
-
-    getData('user').then(user => {
-        console.log(user);
-    });
-*/
-
-const storeData = async (key, value) => {
-    try {
-        await AsyncStorage.setItem(key, JSON.stringify(value));
-    } catch (e) {
-        console.error('Error saving data', e);
-    }
-};
-const getData = async (key) => {
-    try {
-        const value = await AsyncStorage.getItem(key);
-        if (value !== null) {
-            return JSON.parse(value);
-        }
-    } catch (e) {
-        console.error('Error reading data', e);
-    }
-};
-
-const resetUserSearchFilters = async () => {
-    const genderPreferencesSet = ['genderPreference', JSON.stringify({ key: '', value: [] })]
-    const ageRangeSet = ['ageRange', JSON.stringify({ key: '', value: '18-30' })]
-    const distanceSet = ['distance', JSON.stringify({ key: '40', value: '40' })]
-    const starSignPreference = ['starSignPreference', JSON.stringify({ key: '', value: '-' })]
-    const bodyTypePreference = ['bodyTypePreference', JSON.stringify({ key: '', value: '-' })]
-    const exerciseFrequency = ['exerciseFrequency', JSON.stringify({ key: '', value: '-' })]
-    const smokingFrequency = ['smokingFrequency', JSON.stringify({ key: '', value: '-' })]
-    const drinkingFrequency = ['drinkingFrequency', JSON.stringify({ key: '', value: '-' })]
-    const cannabisFrequency = ['cannabisFrequency', JSON.stringify({ key: '', value: '-' })]
-    const dietPreference = ['dietPreference', JSON.stringify({ key: '', value: '-' })]
-
-    try {
-        await AsyncStorage.multiSet([genderPreferencesSet, ageRangeSet, distanceSet, starSignPreference, bodyTypePreference,
-            exerciseFrequency, smokingFrequency, drinkingFrequency, cannabisFrequency, dietPreference])
-    } catch (e) {
-        //save error
-    }
-
-    console.log("search filters reset")
-}
-
-
-const clearAllStorage = async () => {
-    try {
-        await AsyncStorage.clear()
-    } catch (e) {
-        // clear error
-    }
-
-    console.log('CLEARING STORAGE')
-}
-
-export { storeData, getData, resetUserSearchFilters, clearAllStorage };
-```
-
-# utils\pixelateImage.js
-
-```js
-import * as ImageManipulator from 'expo-image-manipulator';
-
-async function pixelateImage(uri, pixelSize = 20) {
-    // Resize the image to a smaller size
-    const smallImage = await ImageManipulator.manipulateAsync(
-        uri,
-        [{ resize: { width: 100 } }],
-        { format: 'png' }
-    );
-
-    // Resize it back to original size, creating pixelation effect
-    const pixelatedImage = await ImageManipulator.manipulateAsync(
-        smallImage.uri,
-        [{ resize: { width: 300 } }],
-        { format: 'png' }
-    );
-
-    return pixelatedImage.uri;
-}
-```
-
 # supabase\seed.sql
 
 ```sql
@@ -814,6 +720,100 @@ s3_secret_key = "env(S3_SECRET_KEY)"
 .temp
 .env
 
+```
+
+# utils\storage.js
+
+```js
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+// usage:
+/*
+    import { getData, storeData } from '@/utils/storage';
+
+    storeData('user', session);
+
+    getData('user').then(user => {
+        console.log(user);
+    });
+*/
+
+const storeData = async (key, value) => {
+    try {
+        await AsyncStorage.setItem(key, JSON.stringify(value));
+    } catch (e) {
+        console.error('Error saving data', e);
+    }
+};
+const getData = async (key) => {
+    try {
+        const value = await AsyncStorage.getItem(key);
+        if (value !== null) {
+            return JSON.parse(value);
+        }
+    } catch (e) {
+        console.error('Error reading data', e);
+    }
+};
+
+const resetUserSearchFilters = async () => {
+    const genderPreferencesSet = ['genderPreference', JSON.stringify({ key: '', value: [] })]
+    const ageRangeSet = ['ageRange', JSON.stringify({ key: '', value: '18-30' })]
+    const distanceSet = ['distance', JSON.stringify({ key: '40', value: '40' })]
+    const starSignPreference = ['starSignPreference', JSON.stringify({ key: '', value: '-' })]
+    const bodyTypePreference = ['bodyTypePreference', JSON.stringify({ key: '', value: '-' })]
+    const exerciseFrequency = ['exerciseFrequency', JSON.stringify({ key: '', value: '-' })]
+    const smokingFrequency = ['smokingFrequency', JSON.stringify({ key: '', value: '-' })]
+    const drinkingFrequency = ['drinkingFrequency', JSON.stringify({ key: '', value: '-' })]
+    const cannabisFrequency = ['cannabisFrequency', JSON.stringify({ key: '', value: '-' })]
+    const dietPreference = ['dietPreference', JSON.stringify({ key: '', value: '-' })]
+
+    try {
+        await AsyncStorage.multiSet([genderPreferencesSet, ageRangeSet, distanceSet, starSignPreference, bodyTypePreference,
+            exerciseFrequency, smokingFrequency, drinkingFrequency, cannabisFrequency, dietPreference])
+    } catch (e) {
+        //save error
+    }
+
+    console.log("search filters reset")
+}
+
+
+const clearAllStorage = async () => {
+    try {
+        await AsyncStorage.clear()
+    } catch (e) {
+        // clear error
+    }
+
+    console.log('CLEARING STORAGE')
+}
+
+export { storeData, getData, resetUserSearchFilters, clearAllStorage };
+```
+
+# utils\pixelateImage.js
+
+```js
+import * as ImageManipulator from 'expo-image-manipulator';
+
+async function pixelateImage(uri, pixelSize = 20) {
+    // Resize the image to a smaller size
+    const smallImage = await ImageManipulator.manipulateAsync(
+        uri,
+        [{ resize: { width: 100 } }],
+        { format: 'png' }
+    );
+
+    // Resize it back to original size, creating pixelation effect
+    const pixelatedImage = await ImageManipulator.manipulateAsync(
+        smallImage.uri,
+        [{ resize: { width: 300 } }],
+        { format: 'png' }
+    );
+
+    return pixelatedImage.uri;
+}
 ```
 
 # sql\schema.md
@@ -1622,6 +1622,71 @@ export const getFieldOptions = (field, language = 'en') => {
 }; 
 ```
 
+# contexts\NotificationContext.tsx
+
+```tsx
+// contexts/NotificationContext.ts
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
+import { useRealtimeSubscriptions } from "@/hooks/useRealtimeSubscriptions";
+
+interface NotificationContextType {
+  totalNotifications: number;
+  newMatches: number;
+  unreadMessages: number;
+  resetNotifications: () => void;
+}
+
+const NotificationContext = createContext<NotificationContextType | undefined>(
+  undefined
+);
+
+export const NotificationProvider: React.FC<{ children: ReactNode }> = ({
+  children,
+}) => {
+  const { newMatches, unreadMessages } = useRealtimeSubscriptions();
+  const [totalNotifications, setTotalNotifications] = useState(0);
+
+  useEffect(() => {
+    setTotalNotifications(newMatches + unreadMessages);
+  }, [newMatches, unreadMessages]);
+
+  const resetNotifications = () => {
+    setTotalNotifications(0);
+    // You might want to add logic here to reset newMatches and unreadMessages as well
+  };
+
+  const value = {
+    totalNotifications,
+    newMatches,
+    unreadMessages,
+    resetNotifications,
+  };
+
+  return (
+    <NotificationContext.Provider value={value}>
+      {children}
+    </NotificationContext.Provider>
+  );
+};
+
+export const useNotifications = (): NotificationContextType => {
+  const context = useContext(NotificationContext);
+  if (context === undefined) {
+    throw new Error(
+      "useNotifications must be used within a NotificationProvider"
+    );
+  }
+  return context;
+};
+
+```
+
 # hooks\useWarmUpBrowser.ts
 
 ```ts
@@ -1990,6 +2055,7 @@ export const useAuth = () => {
 import { useState, useCallback } from 'react';
 import { api } from '@/api/supabaseApi';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/lib/supabase';
 
 export const useProfile = () => {
   const session = useAuth();
@@ -2011,18 +2077,28 @@ export const useProfile = () => {
     } finally {
         setLoading(false);
     }
-}, [session]);
+  }, [session]);
 
-const fetchProfileDetails = useCallback(async (userId: string) => {
+  const fetchProfileDetails = useCallback(async (userId: string) => {
     if (!userId) return null;
     try {
-        const data = await api.getProfileDetails(userId);
-        console.log('Fetched Profile Details:', data);
+        const { data, error } = await supabase
+            .from('profile_details')
+            .select('*')
+            .eq('id', userId)
+            .single();
+
+        if (error) {
+            if (error.code === 'PGRST116') {
+                console.log(`No profile details found for user ${userId}`);
+                return null; // Return null instead of throwing an error
+            }
+            throw error;
+        }
         return data;
     } catch (err) {
         console.error('Error fetching profile details:', err);
-        setError(err);
-        return null;
+        return null; // Return null on error
     }
 }, []);
 
@@ -2039,8 +2115,12 @@ export const usePotentialMatches = () => {
     if (!session?.user?.id) return;
     setLoading(true);
     try {
-      const data = await api.getPotentialMatches(session.user.id, limit);
-      setMatches(data);
+      const { data, error } = await supabase.rpc('get_potential_matches', {
+        user_id: session.user.id,
+        limit_count: limit,
+      });
+      if (error) throw error;
+      setMatches(data || []);
     } catch (err) {
       setError(err);
     } finally {
@@ -2048,705 +2128,41 @@ export const usePotentialMatches = () => {
     }
   }, [session]);
 
-
-
   const fetchDiveMatches = useCallback(async (limit = 10) => {
     if (!session?.user?.id) return;
     setLoading(true);
     try {
-        const data = await api.getPotentialDiveMatches(session.user.id, limit);
-        console.log('Fetched Dive Matches:', data);
-        setMatches(data);
+      const { data, error } = await supabase.rpc('get_potential_dive_matches', {
+        user_id: session.user.id,
+        limit_count: limit,
+      });
+      if (error) throw error;
+      setMatches(data || []);
     } catch (err) {
-        console.error('Error fetching dive matches:', err);
-        setError(err);
+      setError(err);
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
-}, [session]);
+  }, [session]);
 
   const recordAction = useCallback(async (matchedUserId: string, action: 'like' | 'dislike') => {
     if (!session?.user?.id) return;
     try {
-      await api.recordMatchAction(session.user.id, matchedUserId, action);
+      const { data, error } = await supabase.rpc('handle_match_action', {
+        acting_user_id: session.user.id,
+        target_user_id: matchedUserId,
+        match_action: action === 'like' ? 1 : 0,
+      });
+      if (error) throw error;
+      return data;
     } catch (err) {
       setError(err);
+      throw err;
     }
   }, [session]);
 
   return { matches, loading, error, fetchMatches, fetchDiveMatches, recordAction };
 };
-
-
-```
-
-# contexts\NotificationContext.tsx
-
-```tsx
-// contexts/NotificationContext.ts
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  ReactNode,
-} from "react";
-import { useRealtimeSubscriptions } from "@/hooks/useRealtimeSubscriptions";
-
-interface NotificationContextType {
-  totalNotifications: number;
-  newMatches: number;
-  unreadMessages: number;
-  resetNotifications: () => void;
-}
-
-const NotificationContext = createContext<NotificationContextType | undefined>(
-  undefined
-);
-
-export const NotificationProvider: React.FC<{ children: ReactNode }> = ({
-  children,
-}) => {
-  const { newMatches, unreadMessages } = useRealtimeSubscriptions();
-  const [totalNotifications, setTotalNotifications] = useState(0);
-
-  useEffect(() => {
-    setTotalNotifications(newMatches + unreadMessages);
-  }, [newMatches, unreadMessages]);
-
-  const resetNotifications = () => {
-    setTotalNotifications(0);
-    // You might want to add logic here to reset newMatches and unreadMessages as well
-  };
-
-  const value = {
-    totalNotifications,
-    newMatches,
-    unreadMessages,
-    resetNotifications,
-  };
-
-  return (
-    <NotificationContext.Provider value={value}>
-      {children}
-    </NotificationContext.Provider>
-  );
-};
-
-export const useNotifications = (): NotificationContextType => {
-  const context = useContext(NotificationContext);
-  if (context === undefined) {
-    throw new Error(
-      "useNotifications must be used within a NotificationProvider"
-    );
-  }
-  return context;
-};
-
-```
-
-# constants\ToastConfig.ts
-
-```ts
-import React from "react"
-import { View, Text } from "react-native-ui-lib"
-import Toast, { BaseToast, ErrorToast } from 'react-native-toast-message';
-
-
-export const toastConfig = {
-
-    success: (props) => (
-        <BaseToast
-            { ...props }
-            style={{ borderLeftColor: 'pink' }}
-contentContainerStyle = {{ paddingHorizontal: 15 }}
-text1Style = {{
-    fontSize: 15,
-        fontWeight: '400'
-}}
-/>
-    ),
-
-error: (props) => (
-    <ErrorToast
-            { ...props }
-            text1Style = {{ fontSize: 17 }}
-text2Style = {{ fontSize: 15 }}
-/>
-    ),
-    /*
-      Or create a completely new type - `default`,
-      building the layout from scratch.
-  
-      I can consume any custom `props` I want.
-      They will be passed when calling the `show` method (see below)
-    */
-    default: ({ text1, text2, props }) => (
-    <View style= {{ display: 'flex', justifyContent: 'center', width: '94%', backgroundColor: Colors.light.accent, borderRadius: 8, padding: 16 }}>
-        <Text style={ { fontFamily: 'HeadingBold', color: 'white' } }> { text1 } < /Text>
-            < Text style = {{ fontFamily: 'BodyRegular', color: 'white' }}> { text2 } < /Text>
-{/* <Text>{props.uuid}</Text> */ }
-</View>
-    )
-};
-```
-
-# constants\Styles.ts
-
-```ts
-import { Colors } from '@/constants/Colors';
-import { Platform, StyleSheet } from 'react-native';
-
-export const defaultStyles = StyleSheet.create({
-    SafeAreaView: {
-        flex: 1,
-        padding: 16,
-        backgroundColor: Colors.light.background,
-    },
-    innerContainer: {
-        flex: 1,
-    },
-    body: {
-        fontFamily: 'BodyRegular',
-        color: Colors.light.text,
-        fontSize: 16,
-        lineHeight: 24
-    },
-    bodyBold: {
-        fontFamily: 'BodyBold',
-        color: Colors.light.text,
-        fontSize: 16,
-        lineHeight: 24
-    },
-    buttonShadow: {
-        ...Platform.select({
-            ios: {
-                shadowColor: "#ccc",
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.5,
-                shadowRadius: 3,
-            },
-            android: {
-                elevation: 3,
-            },
-        }),
-    },
-    h2: {
-        fontSize: 24,
-        fontFamily: 'HeadingBold',
-        color: Colors.light.text
-    },
-    inputLabel: {
-        fontSize: 16,
-        fontFamily: 'BodySemiBold',
-        color: Colors.light.text
-    },
-    button: {
-        display: 'flex',
-        backgroundColor: Colors.light.primary,
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderWidth: 2,
-        borderColor: Colors.light.primaryLight,
-        paddingTop: 6,
-        paddingHorizontal: 32,
-        borderRadius: 8,
-        minHeight: 48,
-    },
-    buttonLabel: {
-        fontSize: 14,
-        fontFamily: 'BodyBold',
-        color: Colors.light.textInverted,
-        textTransform: 'uppercase'
-    },
-    buttonSecondary: {
-        display: 'flex',
-        backgroundColor: Colors.light.background,
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderWidth: 1,
-        borderColor: Colors.light.tertiary,
-        paddingTop: 6,
-        paddingHorizontal: 32,
-        borderRadius: 8,
-        minHeight: 48,
-    },
-    buttonSecondaryLabel: {
-        fontSize: 14,
-        fontFamily: 'BodyBold',
-        color: Colors.light.primary,
-        textTransform: 'uppercase'
-    },
-    settingListButton: {
-        display: 'flex',
-        backgroundColor: Colors.light.background,
-        justifyContent: 'space-between',
-        borderWidth: 1,
-        borderColor: Colors.light.tertiary,
-        padding: 16,
-        borderRadius: 8,
-        height: 64,
-        maxHeight: 64,
-        borderTopWidth: 0,
-    },
-    settingListButtonLabel: {
-        fontSize: 16,
-        fontFamily: 'BodySemiBold',
-        color: Colors.light.text
-    },
-    radioButton: {
-        flex: 1,
-        backgroundColor: Colors.light.background,
-        justifyContent: 'space-between',
-        borderWidth: 1,
-        borderColor: Colors.light.tertiary,
-        padding: 16,
-        borderRadius: 8,
-        marginBottom: 16,
-        height: 64,
-    },
-    radioButtonLabel: {
-        fontSize: 16,
-        fontFamily: 'BodySemiBold',
-        color: Colors.light.text
-    },
-    checkboxButton: {
-        flex: 1,
-        borderWidth: 1,
-        borderColor: Colors.light.tertiary,
-        padding: 16,
-        borderRadius: 8,
-        marginBottom: 16,
-        height: 64,
-        backgroundColor: Colors.light.background,
-    },
-    checkboxButtonLabel: {
-        fontSize: 16,
-        fontFamily: 'BodySemiBold',
-        color: Colors.light.text
-    },
-    noRadius: {
-        borderRadius: 0
-    },
-});
-```
-
-# constants\Interests.ts
-
-```ts
-const hobbiesInterests = [
-    [
-        { value: "1", label: "Hiking" },
-        { value: "2", label: "Camping" },
-        { value: "3", label: "Fishing" },
-        { value: "4", label: "Hunting" },
-        { value: "5", label: "Rock Climbing" },
-        { value: "6", label: "Bird Watching" },
-        { value: "7", label: "Kayaking" },
-        { value: "8", label: "Canoeing" },
-        { value: "9", label: "Surfing" },
-        { value: "10", label: "Snowboarding" },
-        { value: "11", label: "Skiing" },
-        { value: "12", label: "Mountain Biking" },
-        { value: "13", label: "Road Biking" },
-        { value: "14", label: "Running" },
-        { value: "15", label: "Jogging" },
-        { value: "16", label: "Trail Running" },
-        { value: "17", label: "Paddleboarding" },
-        { value: "18", label: "Sailing" },
-        { value: "19", label: "Horseback Riding" },
-        { value: "20", label: "Gardening" },
-        { value: "21", label: "Stargazing" },
-        { value: "22", label: "Geocaching" },
-        { value: "23", label: "Off-roading" },
-        { value: "24", label: "Archery" },
-        { value: "25", label: "Skateboarding" },
-    ],
-    [
-        { value: "26", label: "Basketball" },
-        { value: "27", label: "Football (American)" },
-        { value: "28", label: "Soccer" },
-        { value: "29", label: "Baseball" },
-        { value: "30", label: "Softball" },
-        { value: "31", label: "Volleyball" },
-        { value: "32", label: "Tennis" },
-        { value: "33", label: "Badminton" },
-        { value: "34", label: "Golf" },
-        { value: "35", label: "Swimming" },
-        { value: "36", label: "Martial Arts" },
-        { value: "37", label: "Yoga" },
-        { value: "38", label: "Pilates" },
-        { value: "39", label: "CrossFit" },
-        { value: "40", label: "Weightlifting" },
-        { value: "41", label: "Boxing" },
-        { value: "42", label: "Wrestling" },
-        { value: "43", label: "Cheerleading" },
-        { value: "44", label: "Gymnastics" },
-        { value: "45", label: "Dance" },
-        { value: "46", label: "Ice Hockey" },
-        { value: "47", label: "Lacrosse" },
-        { value: "48", label: "Cricket" },
-        { value: "49", label: "Ultimate Frisbee" },
-        { value: "50", label: "Rugby" },
-    ],
-    [
-        { value: "51", label: "Painting" },
-        { value: "52", label: "Drawing" },
-        { value: "53", label: "Sketching" },
-        { value: "54", label: "Sculpting" },
-        { value: "55", label: "Pottery" },
-        { value: "56", label: "Knitting" },
-        { value: "57", label: "Crocheting" },
-        { value: "58", label: "Sewing" },
-        { value: "59", label: "Quilting" },
-        { value: "60", label: "Embroidery" },
-        { value: "61", label: "Woodworking" },
-        { value: "62", label: "Metalworking" },
-        { value: "63", label: "Calligraphy" },
-        { value: "64", label: "Photography" },
-        { value: "65", label: "Videography" },
-        { value: "66", label: "Filmmaking" },
-        { value: "67", label: "Acting" },
-        { value: "68", label: "Singing" },
-        { value: "69", label: "Songwriting" },
-        { value: "70", label: "Playing Musical Instruments (Guitar, Piano, Drums, etc.)" },
-        { value: "71", label: "Dancing (Ballet, Hip Hop, Salsa, etc.)" },
-        { value: "72", label: "Crafting" },
-        { value: "73", label: "Jewelry Making" },
-        { value: "74", label: "Writing (Poetry, Novels, etc.)" },
-        { value: "75", label: "Journaling" },
-    ],
-    [
-        { value: "76", label: "Reading" },
-        { value: "77", label: "Watching Movies" },
-        { value: "78", label: "Binge-watching" },
-        { value: "79", label: "Theater" },
-        { value: "80", label: "Opera" },
-        { value: "81", label: "Stand-up Comedy" },
-        { value: "82", label: "Attending Concerts" },
-        { value: "83", label: "Music Festivals" },
-        { value: "84", label: "Podcasts" },
-        { value: "85", label: "Gaming (Video Games, Board Games, Card Games, etc.)" },
-        { value: "86", label: "Puzzle Solving (Crosswords, Sudoku, etc.)" },
-        { value: "87", label: "Trivia" },
-        { value: "88", label: "Watching Sports" },
-        { value: "89", label: "Cosplaying" },
-        { value: "90", label: "Collecting (Stamps, Coins, Comics, etc.)" },
-        { value: "91", label: "Magic Tricks" },
-    ],
-    [
-        { value: "92", label: "Cooking" },
-        { value: "93", label: "Baking" },
-        { value: "94", label: "Grilling/BBQ" },
-        { value: "95", label: "Mixology" },
-        { value: "96", label: "Wine Tasting" },
-        { value: "97", label: "Beer Brewing" },
-        { value: "98", label: "Coffee Tasting" },
-        { value: "99", label: "Tea Tasting" },
-        { value: "100", label: "Food Blogging" },
-        { value: "101", label: "Trying New Restaurants" },
-        { value: "102", label: "Vegetarian/Vegan Cooking" },
-    ],
-    [
-        { value: "103", label: "Traveling" },
-        { value: "104", label: "Road Trips" },
-        { value: "105", label: "Exploring New Cities" },
-        { value: "106", label: "Visiting Museums" },
-        { value: "107", label: "Visiting Art Galleries" },
-        { value: "108", label: "Attending Festivals" },
-        { value: "109", label: "Volunteering" },
-        { value: "110", label: "Charity Work" },
-        { value: "111", label: "Social Clubs" },
-        { value: "112", label: "Book Clubs" },
-        { value: "113", label: "Networking Events" },
-        { value: "114", label: "Public Speaking" },
-        { value: "115", label: "Debate" },
-        { value: "116", label: "Language Learning" },
-        { value: "117", label: "Cultural Events" },
-    ],
-    [
-        { value: "118", label: "Coding" },
-        { value: "119", label: "Robotics" },
-        { value: "120", label: "3D Printing" },
-        { value: "121", label: "Virtual Reality" },
-        { value: "122", label: "Augmented Reality" },
-        { value: "123", label: "Building Computers" },
-        { value: "124", label: "Electronics" },
-        { value: "125", label: "Astronomy" },
-        { value: "126", label: "Science Experiments" },
-        { value: "127", label: "Drone Flying" },
-    ],
-    [
-        { value: "128", label: "Chess" },
-        { value: "129", label: "Strategy Games" },
-        { value: "130", label: "Philosophy" },
-        { value: "131", label: "History" },
-        { value: "132", label: "Archaeology" },
-        { value: "133", label: "Anthropology" },
-        { value: "134", label: "Psychology" },
-        { value: "135", label: "Economics" },
-        { value: "136", label: "Politics" },
-        { value: "137", label: "Debate" },
-        { value: "138", label: "Mathematics" },
-        { value: "139", label: "Cryptography" },
-        { value: "140", label: "Puzzles" },
-    ],
-    [
-        { value: "141", label: "Bird Watching" },
-        { value: "142", label: "Wildlife Photography" },
-        { value: "143", label: "Beekeeping" },
-        { value: "144", label: "Dog Training" },
-        { value: "145", label: "Cat Care" },
-        { value: "146", label: "Reptile Keeping" },
-        { value: "147", label: "Fish Keeping" },
-        { value: "148", label: "Animal Rescue" },
-        { value: "149", label: "Farming" },
-        { value: "150", label: "Permaculture" },
-    ],
-    [
-        { value: "151", label: "Collecting Antiques" },
-        { value: "152", label: "Miniatures" },
-        { value: "153", label: "Model Building" },
-        { value: "154", label: "Trainspotting" },
-        { value: "155", label: "Urban Exploration" },
-        { value: "156", label: "Home Improvement" },
-        { value: "157", label: "Interior Design" },
-        { value: "158", label: "Feng Shui" },
-        { value: "159", label: "Meditation" },
-        { value: "160", label: "Astrology" },
-        { value: "161", label: "Tarot Reading" },
-        { value: "162", label: "Numerology" },
-        { value: "163", label: "Genealogy" },
-        { value: "164", label: "Thrill Seeking" },
-        { value: "165", label: "Fandom Activities (Sci-Fi, Fantasy, etc.)" },
-        { value: "166", label: "Vlogging" },
-        { value: "167", label: "Blogging" },
-        { value: "168", label: "Sustainable Living" },
-        { value: "169", label: "Zero Waste Lifestyle" },
-        { value: "170", label: "Environmental Activism" }
-    ],
-];
-
-// const hobbiesInterests = [
-//     { value: 1, label: "Hiking" },
-//     { value: 2, label: "Camping" },
-//     { value: 3, label: "Fishing" },
-//     { value: 4, label: "Hunting" },
-//     { value: 5, label: "Rock Climbing" },
-//     { value: 6, label: "Bird Watching" },
-//     { value: 7, label: "Kayaking" },
-//     { value: 8, label: "Canoeing" },
-//     { value: 9, label: "Surfing" },
-//     { value: 10, label: "Snowboarding" },
-//     { value: 11, label: "Skiing" },
-//     { value: 12, label: "Mountain Biking" },
-//     { value: 13, label: "Road Biking" },
-//     { value: 14, label: "Running" },
-//     { value: 15, label: "Jogging" },
-//     { value: 16, label: "Trail Running" },
-//     { value: 17, label: "Paddleboarding" },
-//     { value: 18, label: "Sailing" },
-//     { value: 19, label: "Horseback Riding" },
-//     { value: 20, label: "Gardening" },
-//     { value: 21, label: "Stargazing" },
-//     { value: 22, label: "Geocaching" },
-//     { value: 23, label: "Off-roading" },
-//     { value: 24, label: "Archery" },
-//     { value: 25, label: "Skateboarding" },
-//     { value: 26, label: "Basketball" },
-//     { value: 27, label: "Football (American)" },
-//     { value: 28, label: "Soccer" },
-//     { value: 29, label: "Baseball" },
-//     { value: 30, label: "Softball" },
-//     { value: 31, label: "Volleyball" },
-//     { value: 32, label: "Tennis" },
-//     { value: 33, label: "Badminton" },
-//     { value: 34, label: "Golf" },
-//     { value: 35, label: "Swimming" },
-//     { value: 36, label: "Martial Arts" },
-//     { value: 37, label: "Yoga" },
-//     { value: 38, label: "Pilates" },
-//     { value: 39, label: "CrossFit" },
-//     { value: 40, label: "Weightlifting" },
-//     { value: 41, label: "Boxing" },
-//     { value: 42, label: "Wrestling" },
-//     { value: 43, label: "Cheerleading" },
-//     { value: 44, label: "Gymnastics" },
-//     { value: 45, label: "Dance" },
-//     { value: 46, label: "Ice Hockey" },
-//     { value: 47, label: "Lacrosse" },
-//     { value: 48, label: "Cricket" },
-//     { value: 49, label: "Ultimate Frisbee" },
-//     { value: 50, label: "Rugby" },
-//     { value: 51, label: "Painting" },
-//     { value: 52, label: "Drawing" },
-//     { value: 53, label: "Sketching" },
-//     { value: 54, label: "Sculpting" },
-//     { value: 55, label: "Pottery" },
-//     { value: 56, label: "Knitting" },
-//     { value: 57, label: "Crocheting" },
-//     { value: 58, label: "Sewing" },
-//     { value: 59, label: "Quilting" },
-//     { value: 60, label: "Embroidery" },
-//     { value: 61, label: "Woodworking" },
-//     { value: 62, label: "Metalworking" },
-//     { value: 63, label: "Calligraphy" },
-//     { value: 64, label: "Photography" },
-//     { value: 65, label: "Videography" },
-//     { value: 66, label: "Filmmaking" },
-//     { value: 67, label: "Acting" },
-//     { value: 68, label: "Singing" },
-//     { value: 69, label: "Songwriting" },
-//     { value: 70, label: "Playing Musical Instruments (Guitar, Piano, Drums, etc.)" },
-//     { value: 71, label: "Dancing (Ballet, Hip Hop, Salsa, etc.)" },
-//     { value: 72, label: "Crafting" },
-//     { value: 73, label: "Jewelry Making" },
-//     { value: 74, label: "Writing (Poetry, Novels, etc.)" },
-//     { value: 75, label: "Journaling" },
-//     { value: 76, label: "Reading" },
-//     { value: 77, label: "Watching Movies" },
-//     { value: 78, label: "Binge-watching TV Shows" },
-//     { value: 79, label: "Theater" },
-//     { value: 80, label: "Opera" },
-//     { value: 81, label: "Stand-up Comedy" },
-//     { value: 82, label: "Attending Concerts" },
-//     { value: 83, label: "Music Festivals" },
-//     { value: 84, label: "Podcasts" },
-//     { value: 85, label: "Gaming (Video Games, Board Games, Card Games, etc.)" },
-//     { value: 86, label: "Puzzle Solving (Crosswords, Sudoku, etc.)" },
-//     { value: 87, label: "Trivia" },
-//     { value: 88, label: "Watching Sports" },
-//     { value: 89, label: "Cosplaying" },
-//     { value: 90, label: "Collecting (Stamps, Coins, Comics, etc.)" },
-//     { value: 91, label: "Magic Tricks" },
-//     { value: 92, label: "Cooking" },
-//     { value: 93, label: "Baking" },
-//     { value: 94, label: "Grilling/BBQ" },
-//     { value: 95, label: "Mixology" },
-//     { value: 96, label: "Wine Tasting" },
-//     { value: 97, label: "Beer Brewing" },
-//     { value: 98, label: "Coffee Tasting" },
-//     { value: 99, label: "Tea Tasting" },
-//     { value: 100, label: "Food Blogging" },
-//     { value: 101, label: "Trying New Restaurants" },
-//     { value: 102, label: "Vegetarian/Vegan Cooking" },
-//     { value: 103, label: "Traveling" },
-//     { value: 104, label: "Road Trips" },
-//     { value: 105, label: "Exploring New Cities" },
-//     { value: 106, label: "Visiting Museums" },
-//     { value: 107, label: "Visiting Art Galleries" },
-//     { value: 108, label: "Attending Festivals" },
-//     { value: 109, label: "Volunteering" },
-//     { value: 110, label: "Charity Work" },
-//     { value: 111, label: "Social Clubs" },
-//     { value: 112, label: "Book Clubs" },
-//     { value: 113, label: "Networking Events" },
-//     { value: 114, label: "Public Speaking" },
-//     { value: 115, label: "Debate" },
-//     { value: 116, label: "Language Learning" },
-//     { value: 117, label: "Cultural Events" },
-//     { value: 118, label: "Coding" },
-//     { value: 119, label: "Robotics" },
-//     { value: 120, label: "3D Printing" },
-//     { value: 121, label: "Virtual Reality" },
-//     { value: 122, label: "Augmented Reality" },
-//     { value: 123, label: "Building Computers" },
-//     { value: 124, label: "Electronics" },
-//     { value: 125, label: "Astronomy" },
-//     { value: 126, label: "Science Experiments" },
-//     { value: 127, label: "Drone Flying" },
-//     { value: 128, label: "Chess" },
-//     { value: 129, label: "Strategy Games" },
-//     { value: 130, label: "Philosophy" },
-//     { value: 131, label: "History" },
-//     { value: 132, label: "Archaeology" },
-//     { value: 133, label: "Anthropology" },
-//     { value: 134, label: "Psychology" },
-//     { value: 135, label: "Economics" },
-//     { value: 136, label: "Politics" },
-//     { value: 137, label: "Debate" },
-//     { value: 138, label: "Mathematics" },
-//     { value: 139, label: "Cryptography" },
-//     { value: 140, label: "Puzzles" },
-//     { value: 141, label: "Bird Watching" },
-//     { value: 142, label: "Wildlife Photography" },
-//     { value: 143, label: "Beekeeping" },
-//     { value: 144, label: "Dog Training" },
-//     { value: 145, label: "Cat Care" },
-//     { value: 146, label: "Reptile Keeping" },
-//     { value: 147, label: "Fish Keeping" },
-//     { value: 148, label: "Animal Rescue" },
-//     { value: 149, label: "Farming" },
-//     { value: 150, label: "Permaculture" },
-//     { value: 151, label: "Collecting Antiques" },
-//     { value: 152, label: "Miniatures" },
-//     { value: 153, label: "Model Building" },
-//     { value: 154, label: "Trainspotting" },
-//     { value: 155, label: "Urban Exploration" },
-//     { value: 156, label: "Home Improvement" },
-//     { value: 157, label: "Interior Design" },
-//     { value: 158, label: "Feng Shui" },
-//     { value: 159, label: "Meditation" },
-//     { value: 160, label: "Astrology" },
-//     { value: 161, label: "Tarot Reading" },
-//     { value: 162, label: "Numerology" },
-//     { value: 163, label: "Genealogy" },
-//     { value: 164, label: "Thrill Seeking (Skydiving, Bungee Jumping, etc.)" },
-//     { value: 165, label: "Fandom Activities (Sci-Fi, Fantasy, etc.)" },
-//     { value: 166, label: "Vlogging" },
-//     { value: 167, label: "Blogging" },
-//     { value: 168, label: "Sustainable Living" },
-//     { value: 169, label: "Zero Waste Lifestyle" },
-//     { value: 170, label: "Environmental Activism" }
-// ];
-
-
-
-export default hobbiesInterests;
-
-```
-
-# constants\Colors.ts
-
-```ts
-/**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
- */
-
-const tintColorLight = '#0a7ea4';
-const tintColorDark = '#fff';
-
-export const Colors = {
-  light: {
-    white: '#FFFFFF',
-    black: '#000000',
-    text: '#341D1D',
-    textSecondary: '#867272',
-    textInverted: '#FFFFFF',
-    background: '#FDFFFF',
-    backgroundSecondary: '#FFFAF8',
-    tint: tintColorLight,
-    icon: '#687076',
-    tabIconDefault: '#687076',
-    tabIconSelected: tintColorLight,
-    primary: '#DA2778',
-    primaryLight: '#F76BB1',
-    accent: '#7A37D0',
-    secondary: '#F1F1F1',
-    tertiary: '#D9D9D9',
-  },
-  dark: {
-    text: '#ECEDEE',
-    background: '#151718',
-    tint: tintColorDark,
-    icon: '#9BA1A6',
-    tabIconDefault: '#9BA1A6',
-    tabIconSelected: tintColorDark,
-    tertiary: '#D9D9D9',
-  },
-};
-
 ```
 
 # components\TypewriterEffect.tsx
@@ -5358,6 +4774,610 @@ const styles = StyleSheet.create({
 })
 ```
 
+# constants\ToastConfig.ts
+
+```ts
+import React from "react"
+import { View, Text } from "react-native-ui-lib"
+import Toast, { BaseToast, ErrorToast } from 'react-native-toast-message';
+
+
+export const toastConfig = {
+
+    success: (props) => (
+        <BaseToast
+            { ...props }
+            style={{ borderLeftColor: 'pink' }}
+contentContainerStyle = {{ paddingHorizontal: 15 }}
+text1Style = {{
+    fontSize: 15,
+        fontWeight: '400'
+}}
+/>
+    ),
+
+error: (props) => (
+    <ErrorToast
+            { ...props }
+            text1Style = {{ fontSize: 17 }}
+text2Style = {{ fontSize: 15 }}
+/>
+    ),
+    /*
+      Or create a completely new type - `default`,
+      building the layout from scratch.
+  
+      I can consume any custom `props` I want.
+      They will be passed when calling the `show` method (see below)
+    */
+    default: ({ text1, text2, props }) => (
+    <View style= {{ display: 'flex', justifyContent: 'center', width: '94%', backgroundColor: Colors.light.accent, borderRadius: 8, padding: 16 }}>
+        <Text style={ { fontFamily: 'HeadingBold', color: 'white' } }> { text1 } < /Text>
+            < Text style = {{ fontFamily: 'BodyRegular', color: 'white' }}> { text2 } < /Text>
+{/* <Text>{props.uuid}</Text> */ }
+</View>
+    )
+};
+```
+
+# constants\Styles.ts
+
+```ts
+import { Colors } from '@/constants/Colors';
+import { Platform, StyleSheet } from 'react-native';
+
+export const defaultStyles = StyleSheet.create({
+    SafeAreaView: {
+        flex: 1,
+        padding: 16,
+        backgroundColor: Colors.light.background,
+    },
+    innerContainer: {
+        flex: 1,
+    },
+    body: {
+        fontFamily: 'BodyRegular',
+        color: Colors.light.text,
+        fontSize: 16,
+        lineHeight: 24
+    },
+    bodyBold: {
+        fontFamily: 'BodyBold',
+        color: Colors.light.text,
+        fontSize: 16,
+        lineHeight: 24
+    },
+    buttonShadow: {
+        ...Platform.select({
+            ios: {
+                shadowColor: "#ccc",
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.5,
+                shadowRadius: 3,
+            },
+            android: {
+                elevation: 3,
+            },
+        }),
+    },
+    h2: {
+        fontSize: 24,
+        fontFamily: 'HeadingBold',
+        color: Colors.light.text
+    },
+    inputLabel: {
+        fontSize: 16,
+        fontFamily: 'BodySemiBold',
+        color: Colors.light.text
+    },
+    button: {
+        display: 'flex',
+        backgroundColor: Colors.light.primary,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 2,
+        borderColor: Colors.light.primaryLight,
+        paddingTop: 6,
+        paddingHorizontal: 32,
+        borderRadius: 8,
+        minHeight: 48,
+    },
+    buttonLabel: {
+        fontSize: 14,
+        fontFamily: 'BodyBold',
+        color: Colors.light.textInverted,
+        textTransform: 'uppercase'
+    },
+    buttonSecondary: {
+        display: 'flex',
+        backgroundColor: Colors.light.background,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: Colors.light.tertiary,
+        paddingTop: 6,
+        paddingHorizontal: 32,
+        borderRadius: 8,
+        minHeight: 48,
+    },
+    buttonSecondaryLabel: {
+        fontSize: 14,
+        fontFamily: 'BodyBold',
+        color: Colors.light.primary,
+        textTransform: 'uppercase'
+    },
+    settingListButton: {
+        display: 'flex',
+        backgroundColor: Colors.light.background,
+        justifyContent: 'space-between',
+        borderWidth: 1,
+        borderColor: Colors.light.tertiary,
+        padding: 16,
+        borderRadius: 8,
+        height: 64,
+        maxHeight: 64,
+        borderTopWidth: 0,
+    },
+    settingListButtonLabel: {
+        fontSize: 16,
+        fontFamily: 'BodySemiBold',
+        color: Colors.light.text
+    },
+    radioButton: {
+        flex: 1,
+        backgroundColor: Colors.light.background,
+        justifyContent: 'space-between',
+        borderWidth: 1,
+        borderColor: Colors.light.tertiary,
+        padding: 16,
+        borderRadius: 8,
+        marginBottom: 16,
+        height: 64,
+    },
+    radioButtonLabel: {
+        fontSize: 16,
+        fontFamily: 'BodySemiBold',
+        color: Colors.light.text
+    },
+    checkboxButton: {
+        flex: 1,
+        borderWidth: 1,
+        borderColor: Colors.light.tertiary,
+        padding: 16,
+        borderRadius: 8,
+        marginBottom: 16,
+        height: 64,
+        backgroundColor: Colors.light.background,
+    },
+    checkboxButtonLabel: {
+        fontSize: 16,
+        fontFamily: 'BodySemiBold',
+        color: Colors.light.text
+    },
+    noRadius: {
+        borderRadius: 0
+    },
+});
+```
+
+# constants\Interests.ts
+
+```ts
+const hobbiesInterests = [
+    [
+        { value: "1", label: "Hiking" },
+        { value: "2", label: "Camping" },
+        { value: "3", label: "Fishing" },
+        { value: "4", label: "Hunting" },
+        { value: "5", label: "Rock Climbing" },
+        { value: "6", label: "Bird Watching" },
+        { value: "7", label: "Kayaking" },
+        { value: "8", label: "Canoeing" },
+        { value: "9", label: "Surfing" },
+        { value: "10", label: "Snowboarding" },
+        { value: "11", label: "Skiing" },
+        { value: "12", label: "Mountain Biking" },
+        { value: "13", label: "Road Biking" },
+        { value: "14", label: "Running" },
+        { value: "15", label: "Jogging" },
+        { value: "16", label: "Trail Running" },
+        { value: "17", label: "Paddleboarding" },
+        { value: "18", label: "Sailing" },
+        { value: "19", label: "Horseback Riding" },
+        { value: "20", label: "Gardening" },
+        { value: "21", label: "Stargazing" },
+        { value: "22", label: "Geocaching" },
+        { value: "23", label: "Off-roading" },
+        { value: "24", label: "Archery" },
+        { value: "25", label: "Skateboarding" },
+    ],
+    [
+        { value: "26", label: "Basketball" },
+        { value: "27", label: "Football (American)" },
+        { value: "28", label: "Soccer" },
+        { value: "29", label: "Baseball" },
+        { value: "30", label: "Softball" },
+        { value: "31", label: "Volleyball" },
+        { value: "32", label: "Tennis" },
+        { value: "33", label: "Badminton" },
+        { value: "34", label: "Golf" },
+        { value: "35", label: "Swimming" },
+        { value: "36", label: "Martial Arts" },
+        { value: "37", label: "Yoga" },
+        { value: "38", label: "Pilates" },
+        { value: "39", label: "CrossFit" },
+        { value: "40", label: "Weightlifting" },
+        { value: "41", label: "Boxing" },
+        { value: "42", label: "Wrestling" },
+        { value: "43", label: "Cheerleading" },
+        { value: "44", label: "Gymnastics" },
+        { value: "45", label: "Dance" },
+        { value: "46", label: "Ice Hockey" },
+        { value: "47", label: "Lacrosse" },
+        { value: "48", label: "Cricket" },
+        { value: "49", label: "Ultimate Frisbee" },
+        { value: "50", label: "Rugby" },
+    ],
+    [
+        { value: "51", label: "Painting" },
+        { value: "52", label: "Drawing" },
+        { value: "53", label: "Sketching" },
+        { value: "54", label: "Sculpting" },
+        { value: "55", label: "Pottery" },
+        { value: "56", label: "Knitting" },
+        { value: "57", label: "Crocheting" },
+        { value: "58", label: "Sewing" },
+        { value: "59", label: "Quilting" },
+        { value: "60", label: "Embroidery" },
+        { value: "61", label: "Woodworking" },
+        { value: "62", label: "Metalworking" },
+        { value: "63", label: "Calligraphy" },
+        { value: "64", label: "Photography" },
+        { value: "65", label: "Videography" },
+        { value: "66", label: "Filmmaking" },
+        { value: "67", label: "Acting" },
+        { value: "68", label: "Singing" },
+        { value: "69", label: "Songwriting" },
+        { value: "70", label: "Playing Musical Instruments (Guitar, Piano, Drums, etc.)" },
+        { value: "71", label: "Dancing (Ballet, Hip Hop, Salsa, etc.)" },
+        { value: "72", label: "Crafting" },
+        { value: "73", label: "Jewelry Making" },
+        { value: "74", label: "Writing (Poetry, Novels, etc.)" },
+        { value: "75", label: "Journaling" },
+    ],
+    [
+        { value: "76", label: "Reading" },
+        { value: "77", label: "Watching Movies" },
+        { value: "78", label: "Binge-watching" },
+        { value: "79", label: "Theater" },
+        { value: "80", label: "Opera" },
+        { value: "81", label: "Stand-up Comedy" },
+        { value: "82", label: "Attending Concerts" },
+        { value: "83", label: "Music Festivals" },
+        { value: "84", label: "Podcasts" },
+        { value: "85", label: "Gaming (Video Games, Board Games, Card Games, etc.)" },
+        { value: "86", label: "Puzzle Solving (Crosswords, Sudoku, etc.)" },
+        { value: "87", label: "Trivia" },
+        { value: "88", label: "Watching Sports" },
+        { value: "89", label: "Cosplaying" },
+        { value: "90", label: "Collecting (Stamps, Coins, Comics, etc.)" },
+        { value: "91", label: "Magic Tricks" },
+    ],
+    [
+        { value: "92", label: "Cooking" },
+        { value: "93", label: "Baking" },
+        { value: "94", label: "Grilling/BBQ" },
+        { value: "95", label: "Mixology" },
+        { value: "96", label: "Wine Tasting" },
+        { value: "97", label: "Beer Brewing" },
+        { value: "98", label: "Coffee Tasting" },
+        { value: "99", label: "Tea Tasting" },
+        { value: "100", label: "Food Blogging" },
+        { value: "101", label: "Trying New Restaurants" },
+        { value: "102", label: "Vegetarian/Vegan Cooking" },
+    ],
+    [
+        { value: "103", label: "Traveling" },
+        { value: "104", label: "Road Trips" },
+        { value: "105", label: "Exploring New Cities" },
+        { value: "106", label: "Visiting Museums" },
+        { value: "107", label: "Visiting Art Galleries" },
+        { value: "108", label: "Attending Festivals" },
+        { value: "109", label: "Volunteering" },
+        { value: "110", label: "Charity Work" },
+        { value: "111", label: "Social Clubs" },
+        { value: "112", label: "Book Clubs" },
+        { value: "113", label: "Networking Events" },
+        { value: "114", label: "Public Speaking" },
+        { value: "115", label: "Debate" },
+        { value: "116", label: "Language Learning" },
+        { value: "117", label: "Cultural Events" },
+    ],
+    [
+        { value: "118", label: "Coding" },
+        { value: "119", label: "Robotics" },
+        { value: "120", label: "3D Printing" },
+        { value: "121", label: "Virtual Reality" },
+        { value: "122", label: "Augmented Reality" },
+        { value: "123", label: "Building Computers" },
+        { value: "124", label: "Electronics" },
+        { value: "125", label: "Astronomy" },
+        { value: "126", label: "Science Experiments" },
+        { value: "127", label: "Drone Flying" },
+    ],
+    [
+        { value: "128", label: "Chess" },
+        { value: "129", label: "Strategy Games" },
+        { value: "130", label: "Philosophy" },
+        { value: "131", label: "History" },
+        { value: "132", label: "Archaeology" },
+        { value: "133", label: "Anthropology" },
+        { value: "134", label: "Psychology" },
+        { value: "135", label: "Economics" },
+        { value: "136", label: "Politics" },
+        { value: "137", label: "Debate" },
+        { value: "138", label: "Mathematics" },
+        { value: "139", label: "Cryptography" },
+        { value: "140", label: "Puzzles" },
+    ],
+    [
+        { value: "141", label: "Bird Watching" },
+        { value: "142", label: "Wildlife Photography" },
+        { value: "143", label: "Beekeeping" },
+        { value: "144", label: "Dog Training" },
+        { value: "145", label: "Cat Care" },
+        { value: "146", label: "Reptile Keeping" },
+        { value: "147", label: "Fish Keeping" },
+        { value: "148", label: "Animal Rescue" },
+        { value: "149", label: "Farming" },
+        { value: "150", label: "Permaculture" },
+    ],
+    [
+        { value: "151", label: "Collecting Antiques" },
+        { value: "152", label: "Miniatures" },
+        { value: "153", label: "Model Building" },
+        { value: "154", label: "Trainspotting" },
+        { value: "155", label: "Urban Exploration" },
+        { value: "156", label: "Home Improvement" },
+        { value: "157", label: "Interior Design" },
+        { value: "158", label: "Feng Shui" },
+        { value: "159", label: "Meditation" },
+        { value: "160", label: "Astrology" },
+        { value: "161", label: "Tarot Reading" },
+        { value: "162", label: "Numerology" },
+        { value: "163", label: "Genealogy" },
+        { value: "164", label: "Thrill Seeking" },
+        { value: "165", label: "Fandom Activities (Sci-Fi, Fantasy, etc.)" },
+        { value: "166", label: "Vlogging" },
+        { value: "167", label: "Blogging" },
+        { value: "168", label: "Sustainable Living" },
+        { value: "169", label: "Zero Waste Lifestyle" },
+        { value: "170", label: "Environmental Activism" }
+    ],
+];
+
+// const hobbiesInterests = [
+//     { value: 1, label: "Hiking" },
+//     { value: 2, label: "Camping" },
+//     { value: 3, label: "Fishing" },
+//     { value: 4, label: "Hunting" },
+//     { value: 5, label: "Rock Climbing" },
+//     { value: 6, label: "Bird Watching" },
+//     { value: 7, label: "Kayaking" },
+//     { value: 8, label: "Canoeing" },
+//     { value: 9, label: "Surfing" },
+//     { value: 10, label: "Snowboarding" },
+//     { value: 11, label: "Skiing" },
+//     { value: 12, label: "Mountain Biking" },
+//     { value: 13, label: "Road Biking" },
+//     { value: 14, label: "Running" },
+//     { value: 15, label: "Jogging" },
+//     { value: 16, label: "Trail Running" },
+//     { value: 17, label: "Paddleboarding" },
+//     { value: 18, label: "Sailing" },
+//     { value: 19, label: "Horseback Riding" },
+//     { value: 20, label: "Gardening" },
+//     { value: 21, label: "Stargazing" },
+//     { value: 22, label: "Geocaching" },
+//     { value: 23, label: "Off-roading" },
+//     { value: 24, label: "Archery" },
+//     { value: 25, label: "Skateboarding" },
+//     { value: 26, label: "Basketball" },
+//     { value: 27, label: "Football (American)" },
+//     { value: 28, label: "Soccer" },
+//     { value: 29, label: "Baseball" },
+//     { value: 30, label: "Softball" },
+//     { value: 31, label: "Volleyball" },
+//     { value: 32, label: "Tennis" },
+//     { value: 33, label: "Badminton" },
+//     { value: 34, label: "Golf" },
+//     { value: 35, label: "Swimming" },
+//     { value: 36, label: "Martial Arts" },
+//     { value: 37, label: "Yoga" },
+//     { value: 38, label: "Pilates" },
+//     { value: 39, label: "CrossFit" },
+//     { value: 40, label: "Weightlifting" },
+//     { value: 41, label: "Boxing" },
+//     { value: 42, label: "Wrestling" },
+//     { value: 43, label: "Cheerleading" },
+//     { value: 44, label: "Gymnastics" },
+//     { value: 45, label: "Dance" },
+//     { value: 46, label: "Ice Hockey" },
+//     { value: 47, label: "Lacrosse" },
+//     { value: 48, label: "Cricket" },
+//     { value: 49, label: "Ultimate Frisbee" },
+//     { value: 50, label: "Rugby" },
+//     { value: 51, label: "Painting" },
+//     { value: 52, label: "Drawing" },
+//     { value: 53, label: "Sketching" },
+//     { value: 54, label: "Sculpting" },
+//     { value: 55, label: "Pottery" },
+//     { value: 56, label: "Knitting" },
+//     { value: 57, label: "Crocheting" },
+//     { value: 58, label: "Sewing" },
+//     { value: 59, label: "Quilting" },
+//     { value: 60, label: "Embroidery" },
+//     { value: 61, label: "Woodworking" },
+//     { value: 62, label: "Metalworking" },
+//     { value: 63, label: "Calligraphy" },
+//     { value: 64, label: "Photography" },
+//     { value: 65, label: "Videography" },
+//     { value: 66, label: "Filmmaking" },
+//     { value: 67, label: "Acting" },
+//     { value: 68, label: "Singing" },
+//     { value: 69, label: "Songwriting" },
+//     { value: 70, label: "Playing Musical Instruments (Guitar, Piano, Drums, etc.)" },
+//     { value: 71, label: "Dancing (Ballet, Hip Hop, Salsa, etc.)" },
+//     { value: 72, label: "Crafting" },
+//     { value: 73, label: "Jewelry Making" },
+//     { value: 74, label: "Writing (Poetry, Novels, etc.)" },
+//     { value: 75, label: "Journaling" },
+//     { value: 76, label: "Reading" },
+//     { value: 77, label: "Watching Movies" },
+//     { value: 78, label: "Binge-watching TV Shows" },
+//     { value: 79, label: "Theater" },
+//     { value: 80, label: "Opera" },
+//     { value: 81, label: "Stand-up Comedy" },
+//     { value: 82, label: "Attending Concerts" },
+//     { value: 83, label: "Music Festivals" },
+//     { value: 84, label: "Podcasts" },
+//     { value: 85, label: "Gaming (Video Games, Board Games, Card Games, etc.)" },
+//     { value: 86, label: "Puzzle Solving (Crosswords, Sudoku, etc.)" },
+//     { value: 87, label: "Trivia" },
+//     { value: 88, label: "Watching Sports" },
+//     { value: 89, label: "Cosplaying" },
+//     { value: 90, label: "Collecting (Stamps, Coins, Comics, etc.)" },
+//     { value: 91, label: "Magic Tricks" },
+//     { value: 92, label: "Cooking" },
+//     { value: 93, label: "Baking" },
+//     { value: 94, label: "Grilling/BBQ" },
+//     { value: 95, label: "Mixology" },
+//     { value: 96, label: "Wine Tasting" },
+//     { value: 97, label: "Beer Brewing" },
+//     { value: 98, label: "Coffee Tasting" },
+//     { value: 99, label: "Tea Tasting" },
+//     { value: 100, label: "Food Blogging" },
+//     { value: 101, label: "Trying New Restaurants" },
+//     { value: 102, label: "Vegetarian/Vegan Cooking" },
+//     { value: 103, label: "Traveling" },
+//     { value: 104, label: "Road Trips" },
+//     { value: 105, label: "Exploring New Cities" },
+//     { value: 106, label: "Visiting Museums" },
+//     { value: 107, label: "Visiting Art Galleries" },
+//     { value: 108, label: "Attending Festivals" },
+//     { value: 109, label: "Volunteering" },
+//     { value: 110, label: "Charity Work" },
+//     { value: 111, label: "Social Clubs" },
+//     { value: 112, label: "Book Clubs" },
+//     { value: 113, label: "Networking Events" },
+//     { value: 114, label: "Public Speaking" },
+//     { value: 115, label: "Debate" },
+//     { value: 116, label: "Language Learning" },
+//     { value: 117, label: "Cultural Events" },
+//     { value: 118, label: "Coding" },
+//     { value: 119, label: "Robotics" },
+//     { value: 120, label: "3D Printing" },
+//     { value: 121, label: "Virtual Reality" },
+//     { value: 122, label: "Augmented Reality" },
+//     { value: 123, label: "Building Computers" },
+//     { value: 124, label: "Electronics" },
+//     { value: 125, label: "Astronomy" },
+//     { value: 126, label: "Science Experiments" },
+//     { value: 127, label: "Drone Flying" },
+//     { value: 128, label: "Chess" },
+//     { value: 129, label: "Strategy Games" },
+//     { value: 130, label: "Philosophy" },
+//     { value: 131, label: "History" },
+//     { value: 132, label: "Archaeology" },
+//     { value: 133, label: "Anthropology" },
+//     { value: 134, label: "Psychology" },
+//     { value: 135, label: "Economics" },
+//     { value: 136, label: "Politics" },
+//     { value: 137, label: "Debate" },
+//     { value: 138, label: "Mathematics" },
+//     { value: 139, label: "Cryptography" },
+//     { value: 140, label: "Puzzles" },
+//     { value: 141, label: "Bird Watching" },
+//     { value: 142, label: "Wildlife Photography" },
+//     { value: 143, label: "Beekeeping" },
+//     { value: 144, label: "Dog Training" },
+//     { value: 145, label: "Cat Care" },
+//     { value: 146, label: "Reptile Keeping" },
+//     { value: 147, label: "Fish Keeping" },
+//     { value: 148, label: "Animal Rescue" },
+//     { value: 149, label: "Farming" },
+//     { value: 150, label: "Permaculture" },
+//     { value: 151, label: "Collecting Antiques" },
+//     { value: 152, label: "Miniatures" },
+//     { value: 153, label: "Model Building" },
+//     { value: 154, label: "Trainspotting" },
+//     { value: 155, label: "Urban Exploration" },
+//     { value: 156, label: "Home Improvement" },
+//     { value: 157, label: "Interior Design" },
+//     { value: 158, label: "Feng Shui" },
+//     { value: 159, label: "Meditation" },
+//     { value: 160, label: "Astrology" },
+//     { value: 161, label: "Tarot Reading" },
+//     { value: 162, label: "Numerology" },
+//     { value: 163, label: "Genealogy" },
+//     { value: 164, label: "Thrill Seeking (Skydiving, Bungee Jumping, etc.)" },
+//     { value: 165, label: "Fandom Activities (Sci-Fi, Fantasy, etc.)" },
+//     { value: 166, label: "Vlogging" },
+//     { value: 167, label: "Blogging" },
+//     { value: 168, label: "Sustainable Living" },
+//     { value: 169, label: "Zero Waste Lifestyle" },
+//     { value: 170, label: "Environmental Activism" }
+// ];
+
+
+
+export default hobbiesInterests;
+
+```
+
+# constants\Colors.ts
+
+```ts
+/**
+ * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
+ * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
+ */
+
+const tintColorLight = '#0a7ea4';
+const tintColorDark = '#fff';
+
+export const Colors = {
+  light: {
+    white: '#FFFFFF',
+    black: '#000000',
+    text: '#341D1D',
+    textSecondary: '#867272',
+    textInverted: '#FFFFFF',
+    background: '#FDFFFF',
+    backgroundSecondary: '#FFFAF8',
+    tint: tintColorLight,
+    icon: '#687076',
+    tabIconDefault: '#687076',
+    tabIconSelected: tintColorLight,
+    primary: '#DA2778',
+    primaryLight: '#F76BB1',
+    accent: '#7A37D0',
+    secondary: '#F1F1F1',
+    tertiary: '#D9D9D9',
+  },
+  dark: {
+    text: '#ECEDEE',
+    background: '#151718',
+    tint: tintColorDark,
+    icon: '#9BA1A6',
+    tabIconDefault: '#9BA1A6',
+    tabIconSelected: tintColorDark,
+    tertiary: '#D9D9D9',
+  },
+};
+
+```
+
 # app-example\_layout.tsx
 
 ```tsx
@@ -5536,240 +5556,6 @@ body {
   }
 }`;
 
-```
-
-# api\supabaseApi.ts
-
-```ts
-import { supabase } from '@/lib/supabase';
-
-export const api = {
-  
-  getCurrentUserProfile: async (userId: string) => {
-    const { data, error } = await supabase
-        .from('profiles_test')
-        .select('*')
-        .eq('id', userId)
-        .single();
-    
-    if (error) {
-        console.error('Error fetching current user profile:', error);
-        throw error;
-    }
-    console.log('Current User Profile Data:', data);
-    return data;
-},
-
-
-  updateProfile: async (userId: string, updates: any) => {
-    const { data, error } = await supabase
-      .from('profiles_test')
-      .upsert({ id: userId, ...updates })
-      .select();
-    
-    if (error) throw error;
-    return data;
-  },
-
-  getPotentialMatches: async (userId: string, limit: number) => {
-    const { data, error } = await supabase.rpc('get_potential_matches', {
-      user_id: userId,
-      limit_count: limit,
-    });
-    
-    if (error) throw error;
-    return data;
-  },
-
-
-  getProfileDetails: async (userId: string) => {
-    const { data, error } = await supabase
-        .from('profile_details')
-        .select('*')
-        .eq('id', userId)
-        .single();
-    
-    if (error) {
-        console.error('Error fetching profile details:', error);
-        throw error;
-    }
-    console.log('Profile Details Data:', data);
-    return data;
-},
-
-getPotentialDiveMatches: async (userId: string, limit: number) => {
-  const { data, error } = await supabase.rpc('get_potential_dive_matches', {
-      user_id: userId,
-      limit_count: limit,
-  });
-  
-  if (error) {
-      console.error('Error fetching potential dive matches:', error);
-      throw error;
-  }
-  console.log('Potential Dive Matches Data:', data);
-  return data;
-},
-
-  recordMatchAction: async (userId: string, matchedUserId: string, action: 'like' | 'dislike') => {
-    const { data, error } = await supabase
-      .rpc('handle_match_action', { 
-        acting_user_id: userId, 
-        target_user_id: matchedUserId,
-        match_action: action === 'like' ? 1 : 0,
-      });
-    
-    if (error) {
-      console.error('Error in handle_match_action:', error);
-    } else {
-      console.log('Match action handled, is new match:', data);
-    }
-  },
-
-  getOrCreateConversation: async (user1Id: string, user2Id: string) => {
-    const { data, error } = await supabase.rpc('get_or_create_conversation', {
-      user1_id: user1Id,
-      user2_id: user2Id
-    });
-    if (error) throw error;
-    return data;
-  },
-
-  getRecentConversations: async (userId: string) => {
-    const { data, error } = await supabase.rpc('get_recent_conversations', {
-      user_id: userId
-    });
-    
-    if (error) throw error;
-    
-    return data || [];
-  },
-
-  sendMessage: async (conversationId: string, senderId: string, content: string) => {
-    const { data, error } = await supabase
-      .from('messages')
-      .insert({
-        conversation_id: conversationId,
-        sender_id: senderId,
-        content: content
-      })
-      .select();
-    if (error) throw error;
-    return data[0];
-  },
-
-  getMessages: async (conversationId: string) => {
-    const { data, error } = await supabase
-      .from('messages')
-      .select('*')
-      .eq('conversation_id', conversationId)
-      .order('created_at', { ascending: true });
-    if (error) throw error;
-    return data;
-  },
-
-  subscribeToMessages: (conversationId: string, callback: (payload: any) => void) => {
-    return supabase
-      .channel(`messages:${conversationId}`)
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'messages',
-        filter: `conversation_id=eq.${conversationId}`
-      }, callback)
-      .subscribe();
-  }, 
-  
-  getTableInfo: async() => {
-  // Fetch all tables in the public schema
-  const { data: tables, error: tablesError } = await supabase
-    .rpc('get_tables')
-
-  if (tablesError) {
-    console.error('Error fetching tables:', tablesError)
-    return
-  }
-
-  for (const tableObj of tables) {
-    const tableName = tableObj.table_name
-    console.log(`Table: ${tableName}`)
-
-    // Fetch columns for each table
-    const { data: columns, error: columnsError } = await supabase
-      .rpc('get_columns', { table_name: tableName })
-
-    if (columnsError) {
-      console.error(`Error fetching columns for ${tableName}:`, columnsError)
-      continue
-    }
-
-    columns.forEach(column => {
-      console.log(`  - ${column.column_name}: ${column.data_type} (${column.is_nullable ? 'nullable' : 'not nullable'})`)
-    })
-    console.log('\n')
-  }
-},
-  
-  
-
-};
-```
-
-# api\auth.ts
-
-```ts
-import { supabase } from '@/lib/supabase';
-
-export async function fetchStreamToken(userId: string): Promise<string> {
-  try {
-    console.log("Fetching Stream token for user:", userId);
-    const { data, error } = await supabase.functions.invoke('generate-stream-token', {
-      body: { user: { id: userId } },
-    });
-
-    if (error) {
-      console.error("Supabase function error:", error);
-      throw error;
-    }
-    if (!data || !data.token) {
-      console.error("No token received. Data:", data);
-      throw new Error('No token received');
-    }
-
-    console.log("Stream token fetched successfully");
-    return data.token;
-  } catch (error) {
-    console.error('Error fetching Stream token:', error);
-    if (error.response) {
-      console.error('Response status:', error.response.status);
-      console.error('Response data:', await error.response.text());
-    }
-    throw error;
-  }
-}
-
-
-/*
-usage in component:
-
-
-import { fetchStreamToken } from '@/api/auth';
-
-// In your component or hook
-useEffect(() => {
-  const getStreamToken = async () => {
-    try {
-      const token = await fetchStreamToken(userId);
-      console.log("Received token:", token);
-      // Use the token here
-    } catch (error) {
-      console.error("Error getting stream token:", error);
-    }
-  };
-
-  getStreamToken();
-}, [userId]);
-*/
 ```
 
 # app\profile.tsx
@@ -7467,6 +7253,242 @@ async function registerForPushNotificationsAsync() {
 }
 ```
 
+# api\supabaseApi.ts
+
+```ts
+import { supabase } from '@/lib/supabase';
+
+export const api = {
+  
+  getCurrentUserProfile: async (userId: string) => {
+    const { data, error } = await supabase
+        .from('profiles_test')
+        .select('*')
+        .eq('id', userId)
+        .single();
+    
+    if (error) {
+        console.error('Error fetching current user profile:', error);
+        throw error;
+    }
+    console.log('Current User Profile Data:', data);
+    return data;
+},
+
+
+  updateProfile: async (userId: string, updates: any) => {
+    const { data, error } = await supabase
+      .from('profiles_test')
+      .upsert({ id: userId, ...updates })
+      .select();
+    
+    if (error) throw error;
+    return data;
+  },
+
+  getPotentialMatches: async (userId: string, limit: number) => {
+    const { data, error } = await supabase.rpc('get_potential_matches', {
+      user_id: userId,
+      limit_count: limit,
+    });
+    
+    if (error) throw error;
+    return data;
+  },
+
+
+  getProfileDetails: async (userId: string) => {
+    const { data, error } = await supabase
+        .from('profile_details')
+        .select('*')
+        .eq('id', userId)
+        .single();
+    
+    if (error) {
+        console.error('Error fetching profile details:', error);
+        throw error;
+    }
+    console.log('Profile Details Data:', data);
+    return data;
+},
+
+getPotentialDiveMatches: async (userId: string, limit: number) => {
+  const { data, error } = await supabase.rpc('get_potential_dive_matches', {
+      user_id: userId,
+      limit_count: limit,
+  });
+  
+  if (error) {
+      console.error('Error fetching potential dive matches:', error);
+      throw error;
+  }
+  console.log('Potential Dive Matches Data:', data);
+  return data;
+},
+
+  recordMatchAction: async (userId: string, matchedUserId: string, action: 'like' | 'dislike') => {
+    const { data, error } = await supabase
+      .rpc('handle_match_action', { 
+        acting_user_id: userId, 
+        target_user_id: matchedUserId,
+        match_action: action === 'like' ? 1 : 0,
+      });
+      console.log(userId, matchedUserId, action);
+      
+    
+    if (error) {
+      console.error('Error in handle_match_action:', error);
+    } else {
+      console.log('Match action handled, is new match:', data);
+    }
+  },
+
+  getOrCreateConversation: async (user1Id: string, user2Id: string) => {
+    const { data, error } = await supabase.rpc('get_or_create_conversation', {
+      user1_id: user1Id,
+      user2_id: user2Id
+    });
+    if (error) throw error;
+    return data;
+  },
+
+  getRecentConversations: async (userId: string) => {
+    const { data, error } = await supabase.rpc('get_recent_conversations', {
+      user_id: userId
+    });
+    
+    if (error) throw error;
+    
+    return data || [];
+  },
+
+  sendMessage: async (conversationId: string, senderId: string, content: string) => {
+    const { data, error } = await supabase
+      .from('messages')
+      .insert({
+        conversation_id: conversationId,
+        sender_id: senderId,
+        content: content
+      })
+      .select();
+    if (error) throw error;
+    return data[0];
+  },
+
+  getMessages: async (conversationId: string) => {
+    const { data, error } = await supabase
+      .from('messages')
+      .select('*')
+      .eq('conversation_id', conversationId)
+      .order('created_at', { ascending: true });
+    if (error) throw error;
+    return data;
+  },
+
+  subscribeToMessages: (conversationId: string, callback: (payload: any) => void) => {
+    return supabase
+      .channel(`messages:${conversationId}`)
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'messages',
+        filter: `conversation_id=eq.${conversationId}`
+      }, callback)
+      .subscribe();
+  }, 
+  
+  getTableInfo: async() => {
+  // Fetch all tables in the public schema
+  const { data: tables, error: tablesError } = await supabase
+    .rpc('get_tables')
+
+  if (tablesError) {
+    console.error('Error fetching tables:', tablesError)
+    return
+  }
+
+  for (const tableObj of tables) {
+    const tableName = tableObj.table_name
+    console.log(`Table: ${tableName}`)
+
+    // Fetch columns for each table
+    const { data: columns, error: columnsError } = await supabase
+      .rpc('get_columns', { table_name: tableName })
+
+    if (columnsError) {
+      console.error(`Error fetching columns for ${tableName}:`, columnsError)
+      continue
+    }
+
+    columns.forEach(column => {
+      console.log(`  - ${column.column_name}: ${column.data_type} (${column.is_nullable ? 'nullable' : 'not nullable'})`)
+    })
+    console.log('\n')
+  }
+},
+  
+  
+
+};
+```
+
+# api\auth.ts
+
+```ts
+import { supabase } from '@/lib/supabase';
+
+export async function fetchStreamToken(userId: string): Promise<string> {
+  try {
+    console.log("Fetching Stream token for user:", userId);
+    const { data, error } = await supabase.functions.invoke('generate-stream-token', {
+      body: { user: { id: userId } },
+    });
+
+    if (error) {
+      console.error("Supabase function error:", error);
+      throw error;
+    }
+    if (!data || !data.token) {
+      console.error("No token received. Data:", data);
+      throw new Error('No token received');
+    }
+
+    console.log("Stream token fetched successfully");
+    return data.token;
+  } catch (error) {
+    console.error('Error fetching Stream token:', error);
+    if (error.response) {
+      console.error('Response status:', error.response.status);
+      console.error('Response data:', await error.response.text());
+    }
+    throw error;
+  }
+}
+
+
+/*
+usage in component:
+
+
+import { fetchStreamToken } from '@/api/auth';
+
+// In your component or hook
+useEffect(() => {
+  const getStreamToken = async () => {
+    try {
+      const token = await fetchStreamToken(userId);
+      console.log("Received token:", token);
+      // Use the token here
+    } catch (error) {
+      console.error("Error getting stream token:", error);
+    }
+  };
+
+  getStreamToken();
+}, [userId]);
+*/
+```
+
 # supabase\.temp\cli-latest
 
 ```
@@ -7570,79 +7592,19 @@ const SecondaryButtonText = styled(Text, 'uppercase text-center text-primary-700
 export { PrimaryButton, PrimaryButtonText, SecondaryButton, SecondaryButtonText }
 ```
 
-# components\onboarding\StepInterests.tsx
+# components\navigation\TabBarIcon.tsx
 
 ```tsx
-import React, { useCallback, useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
-import { FlashList } from '@shopify/flash-list';
-import { Checkbox } from 'react-native-ui-lib';
-import { Colors } from '@/constants/Colors';
-import { defaultStyles } from '@/constants/Styles';
-import hobbiesInterests from '@/constants/Interests';
-import Spacer from '@/components/Spacer';
+// You can explore the built-in icon families and icons on the web at https://icons.expo.fyi/
 
-const StepInterests = ({ onInterestsSelected }) => {
-    const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
-    const flattenedInterests = React.useMemo(() => hobbiesInterests.flat(), []);
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { type IconProps } from '@expo/vector-icons/build/createIconSet';
+import { type ComponentProps } from 'react';
 
-    const handleInterestToggle = useCallback((interest: string) => {
-        setSelectedInterests(prevInterests => {
-            if (prevInterests.includes(interest)) {
-                return prevInterests.filter(i => i !== interest);
-            } else {
-                return [...prevInterests, interest];
-            }
-        });
-    }, []);
+export function TabBarIcon({ style, ...rest }: IconProps<ComponentProps<typeof Ionicons>['name']>) {
+  return <Ionicons size={28} style={[{ marginBottom: -3 }, style]} {...rest} />;
+}
 
-    useEffect(() => {
-        onInterestsSelected(selectedInterests);
-    }, [selectedInterests, onInterestsSelected]);
-
-    const renderItem = useCallback(({ item }) => (
-        <Pressable onPress={() => handleInterestToggle(item.value)}>
-            <Checkbox
-                color={selectedInterests.includes(item.value) ? Colors.light.text : Colors.light.tertiary}
-                label={item.label}
-                value={selectedInterests.includes(item.value)}
-                containerStyle={[defaultStyles.checkboxButton, { borderColor: selectedInterests.includes(item.value) ? Colors.light.text : Colors.light.tertiary }]}
-                labelStyle={defaultStyles.checkboxButtonLabel}
-                onValueChange={() => handleInterestToggle(item.value)}
-            />
-        </Pressable>
-    ), [selectedInterests, handleInterestToggle]);
-
-    return (
-        <View style={styles.container}>
-            <Text style={defaultStyles.h2}>Interests ({selectedInterests.length})</Text>
-            <Spacer height={8} />
-            <Text style={defaultStyles.body}>
-                This helps us find people with the same hobbies and interests.
-            </Text>
-            <Spacer height={24} />
-            <FlashList
-                data={flattenedInterests}
-                renderItem={renderItem}
-                estimatedItemSize={75}
-                keyExtractor={(item) => item.value}
-                contentContainerStyle={styles.listContainer}
-            />
-        </View>
-    );
-};
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        padding: 16,
-    },
-    listContainer: {
-        paddingBottom: 16,
-    },
-});
-
-export default StepInterests;
 ```
 
 # components\tabs\surf.tsx
@@ -7660,403 +7622,479 @@ import { Chip, Fader } from 'react-native-ui-lib';
 import TypewriterEffect from '@/components/CrushyTypewriterEffect';
 import { useNavigation, StackActions } from '@react-navigation/native';
 import { usePotentialMatches, useProfile } from '@/hooks/useApi';
-import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/lib/supabase';
+import { useAuth } from "@/hooks/useAuth";
 
 export default function Surf() {
-    const session = useAuth();
-    const { matches: potentialMatches, loading, error, fetchMatches, recordAction } = usePotentialMatches();
-    const { currentUserProfile, fetchCurrentUserProfile } = useProfile();
-    const [currentMatchIndex, setCurrentMatchIndex] = useState(0);
-    const [imageUrl, setImageUrl] = useState<string | number>(require('@/assets/images/react-logo.png'));
-    const navigation = useNavigation();
-    const typewriterKey = useRef(0);
+  const session = useAuth();
+  const {
+    matches: potentialMatches,
+    loading,
+    error,
+    fetchMatches,
+    recordAction,
+  } = usePotentialMatches();
+  const { currentUserProfile, fetchCurrentUserProfile } = useProfile();
+  const [currentMatchIndex, setCurrentMatchIndex] = useState(0);
+  const [imageUrl, setImageUrl] = useState<string | number>(
+    require("@/assets/images/react-logo.png")
+  );
+  const navigation = useNavigation();
+  const typewriterKey = useRef(0);
 
-    useEffect(() => {
-        if (session?.user?.id) {
-            fetchMatches();
-            fetchCurrentUserProfile();
-        }
-    }, [session, fetchMatches, fetchCurrentUserProfile]);
+  useEffect(() => {
+    if (session?.user?.id) {
+      fetchMatches();
+      fetchCurrentUserProfile();
+    }
+  }, [session, fetchMatches, fetchCurrentUserProfile]);
 
-    useEffect(() => {
-        const currentMatch = potentialMatches[currentMatchIndex];
-        if (currentMatch?.avatar_url) {
-            setImageUrl(currentMatch.avatar_url);
-        } else {
-            setImageUrl(require('@/assets/images/react-logo.png'));
-        }
-    }, [currentMatchIndex, potentialMatches]);
-
+  useEffect(() => {
     const currentMatch = potentialMatches[currentMatchIndex];
+    if (currentMatch?.avatar_url) {
+      setImageUrl(currentMatch.avatar_url);
+    } else {
+      setImageUrl(require("@/assets/images/react-logo.png"));
+    }
+  }, [currentMatchIndex, potentialMatches]);
 
-    const handleAction = useCallback(async (action: 'like' | 'dislike') => {
-        if (!session?.user?.id || !currentMatch) return;
+  const currentMatch = potentialMatches[currentMatchIndex];
 
-        try {
-            await recordAction(currentMatch.id, action);
+  const handleAction = useCallback(async (action: 'like' | 'dislike') => {
+    if (!session?.user?.id || !currentMatch) return;
 
-            if (action === 'like') {
-                const isMatch = await checkForMatch(session.user.id, currentMatch.id);
-                if (isMatch) {
-                    Alert.alert(
-                        "It's a Match!",
-                        `You and ${currentMatch.name} have liked each other!`,
-                        [{ text: "OK", onPress: () => console.log("OK Pressed") }]
-                    );
-                }
-            }
+    try {
+        const isNewMatch = await recordAction(currentMatch.id, action);
 
-            moveToNextMatch();
-        } catch (error) {
-            console.error('Error in handleAction:', error);
-        }
-    }, [session, currentMatch, recordAction]);
-
-    const moveToNextMatch = useCallback(() => {
-        if (currentMatchIndex < potentialMatches.length - 1) {
-            setCurrentMatchIndex(prevIndex => prevIndex + 1);
-        } else {
-            fetchMatches();
-            setCurrentMatchIndex(0);
-        }
-
-        typewriterKey.current += 1;
-    }, [currentMatchIndex, potentialMatches.length, fetchMatches]);
-
-    const handleLike = () => handleAction('like');
-    const handleDislike = () => handleAction('dislike');
-
-    const checkForMatch = async (currentUserId: string, likedUserId: string) => {
-        const { data, error } = await supabase
-            .from('matches')
-            .select('*')
-            .eq('user1_id', likedUserId)
-            .eq('user2_id', currentUserId)
-            .eq('user1_action', 1);
-
-        if (error && error.code !== 'PGRST116') {
-            console.error('Error checking for match:', error);
-            return false;
-        }
-
-        return data && data.length > 0;
-    };
-
-    const renderInterestChips = useCallback(() => {
-        if (!currentMatch || !currentUserProfile?.interests) return null;
-
-        const sortedInterests = [...currentMatch.interests].sort((a, b) => {
-            const aIsShared = currentUserProfile.interests.includes(a);
-            const bIsShared = currentUserProfile.interests.includes(b);
-            if (aIsShared && !bIsShared) return -1;
-            if (!aIsShared && bIsShared) return 1;
-            return 0;
-        });
-
-        return sortedInterests.map((interestId, index) => {
-            const interestObject = hobbiesInterests.flat().find(item => item.value === interestId.toString());
-
-            if (!interestObject) {
-                console.error(`No label found for interest: ${interestId}`);
-                return null;
-            }
-
-            const isLast = index === sortedInterests.length - 1;
-            const isShared = currentUserProfile.interests.includes(interestId);
-
-            return (
-                <Chip
-                    key={`${currentMatch.id}-${interestId}`}
-                    label={interestObject.label}
-                    labelStyle={[styles.chipLabel, isShared && styles.sharedChipLabel]}
-                    containerStyle={[
-                        styles.chip,
-                        isShared && styles.sharedChip,
-                        isLast && { marginRight: 32 }
-                    ]}
-                    iconSource={isShared ? require('@/assets/images/icons/iconSharedInterest.png') : null}
-                />
+        if (action === 'like' && isNewMatch) {
+            Alert.alert(
+                "It's a Match!",
+                `You and ${currentMatch.name} have liked each other!`,
+                [{ text: "OK", onPress: () => moveToNextMatch() }]
             );
-        });
-    }, [currentMatch, currentUserProfile]);
+        } else {
+            moveToNextMatch();
+        }
+    } catch (error) {
+        console.error('Error in handleAction:', error);
+        Alert.alert("Error", "An error occurred while processing your action. Please try again.");
+    }
+}, [session, currentMatch, recordAction, moveToNextMatch]);
 
-    if (error) {
-        return (
-            <SafeAreaView style={styles.container}>
-                <View style={styles.errorContainer}>
-                    <Text style={styles.errorText}>An error occurred. Please try again later.</Text>
-                </View>
-            </SafeAreaView>
-        );
+const moveToNextMatch = useCallback(() => {
+    if (currentMatchIndex < potentialMatches.length - 1) {
+        setCurrentMatchIndex(prevIndex => prevIndex + 1);
+    } else {
+        fetchMatches();
+        setCurrentMatchIndex(0);
     }
 
-    if (!currentMatch) {
-        return (
-            <SafeAreaView style={styles.container}>
-                <View style={styles.noMatchesContainer}>
-                    <Ionicons name="albums-outline" size={64} color={Colors.light.primary} />
-                    <Text style={styles.noMatchesTitle}>You've reached the end</Text>
-                    <Text style={styles.noMatchesText}>No more potential matches to show.</Text>
-                    <Text style={styles.noMatchesText}>Adjust search filters, or check back later.</Text>
-                    <Spacer height={40} />
-                    <Pressable style={[styles.buttonFilter]} onPress={() => { navigation.navigate('SearchFilters') }}>
-                        <Ionicons name="search" size={12} color={Colors.light.text} style={{ marginTop: 2 }} />
-                        <Text style={styles.buttonFilterText}>Search Filters</Text>
-                    </Pressable>
-                    <Spacer height={40} />
-                    <Pressable onPress={() => { navigation.dispatch(StackActions.popToTop()) }}>
-                        <Text style={styles.refreshText}>Back Home</Text>
-                    </Pressable>
-                </View>
-            </SafeAreaView>
-        );
-    }
+    typewriterKey.current += 1;
+}, [currentMatchIndex, potentialMatches.length, fetchMatches]);
 
+  const handleLike = () => handleAction("like");
+  const handleDislike = () => handleAction("dislike");
+
+  const renderInterestChips = useCallback(() => {
+    if (!currentMatch || !currentUserProfile?.interests) return null;
+
+    const sortedInterests = [...currentMatch.interests].sort((a, b) => {
+      const aIsShared = currentUserProfile.interests.includes(a);
+      const bIsShared = currentUserProfile.interests.includes(b);
+      if (aIsShared && !bIsShared) return -1;
+      if (!aIsShared && bIsShared) return 1;
+      return 0;
+    });
+
+    return sortedInterests.map((interestId, index) => {
+      const interestObject = hobbiesInterests
+        .flat()
+        .find((item) => item.value === interestId.toString());
+
+      if (!interestObject) {
+        console.error(`No label found for interest: ${interestId}`);
+        return null;
+      }
+
+      const isLast = index === sortedInterests.length - 1;
+      const isShared = currentUserProfile.interests.includes(interestId);
+
+      return (
+        <Chip
+          key={`${currentMatch.id}-${interestId}`}
+          label={interestObject.label}
+          labelStyle={[styles.chipLabel, isShared && styles.sharedChipLabel]}
+          containerStyle={[
+            styles.chip,
+            isShared && styles.sharedChip,
+            isLast && { marginRight: 32 },
+          ]}
+          iconSource={
+            isShared
+              ? require("@/assets/images/icons/iconSharedInterest.png")
+              : null
+          }
+        />
+      );
+    });
+  }, [currentMatch, currentUserProfile]);
+
+  if (error) {
     return (
-        <SafeAreaView style={styles.container}>
-            <View style={styles.innerContainer}>
-                <View style={styles.header}>
-                    <Image source={require('@/assets/images/logo/logo_crushy.png')} style={styles.logo} />
-
-                    <View style={{ display: 'flex', flexDirection: 'row', gap: 8 }}>
-                        <Pressable style={[styles.buttonFilter]} onPress={() => { navigation.navigate('SearchFilters') }}>
-                            <Ionicons name="search" size={12} color={Colors.light.text} style={{ marginTop: 2 }} />
-                            <Text style={styles.buttonFilterText}>Search Filters</Text>
-                        </Pressable>
-
-                        <Pressable style={[styles.buttonFilter]} onPress={() => { navigation.goBack() }}>
-                            <Image source={require('@/assets/images/icons/tab-home.png')} style={{ width: 32, aspectRatio: '1' }} />
-                        </Pressable>
-                    </View>
-                </View>
-
-                <View style={styles.personContainer}>
-                    <Image
-                        source={typeof imageUrl === 'string' ? { uri: imageUrl } : imageUrl}
-                        style={styles.person}
-                        onError={() => {
-                            console.log('Error loading image, setting default');
-                            setImageUrl(require('@/assets/images/react-logo.png'));
-                        }}
-                    />
-
-                    <Fader visible position={Fader.position.BOTTOM} tintColor={'#282828'} size={222} />
-
-                    {!loading && (
-                        <View style={{ width: '78%' }}>
-                            <View style={styles.personInfo}>
-                                <TypewriterEffect
-                                    key={typewriterKey.current}
-                                    text={currentMatch.name + ', ' + currentMatch.age.toString()}
-                                    style={styles.personName}
-                                    delay={12}
-                                    numberOfLines={1}
-                                    adjustsFontSizeToFit={true}
-                                />
-                            </View>
-                        </View>
-                    )}
-
-                    <ScrollView horizontal style={styles.chipsContainer} showsHorizontalScrollIndicator={false}>
-                        {renderInterestChips()}
-                    </ScrollView>
-
-                    <Pressable onPress={() => { navigation.navigate('Profile', { id: currentMatch.id, imageUrl: imageUrl }) }} style={[styles.buttonExpand, defaultStyles.buttonShadow]}>
-                        <Ionicons name="chevron-down" size={24} color={Colors.light.accent} />
-                    </Pressable>
-                </View>
-                <View style={styles.buttonsMatching}>
-                    <Pressable onPress={handleDislike} disabled={loading}>
-                        <Image source={require('@/assets/images/buttons/buttonMatchingDislike.png')} style={styles.buttonsMatchingSecondary} />
-                    </Pressable>
-                    <Pressable onPress={handleLike} disabled={loading}>
-                        <Image source={require('@/assets/images/buttons/buttonMatchingLike.png')} style={styles.buttonsMatchingPrimary} />
-                    </Pressable>
-                    <Pressable onPress={() => { alert("This feature will be available in the future.") }} disabled={loading}>
-                        <Image source={require('@/assets/images/buttons/buttonMatchingChat.png')} style={styles.buttonsMatchingSecondary} />
-                    </Pressable>
-                </View>
-
-                {loading && <ActivityIndicator size="small" color={Colors.light.accent} style={styles.loader} />}
-            </View>
-        </SafeAreaView>
+      <SafeAreaView style={styles.container}>
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>
+            An error occurred. Please try again later. ${error.message}
+          </Text>
+        </View>
+      </SafeAreaView>
     );
+  }
+
+  if (!currentMatch) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.noMatchesContainer}>
+          <Ionicons
+            name="albums-outline"
+            size={64}
+            color={Colors.light.primary}
+          />
+          <Text style={styles.noMatchesTitle}>You've reached the end</Text>
+          <Text style={styles.noMatchesText}>
+            No more potential matches to show.
+          </Text>
+          <Text style={styles.noMatchesText}>
+            Adjust search filters, or check back later.
+          </Text>
+          <Spacer height={40} />
+          <Pressable
+            style={[styles.buttonFilter]}
+            onPress={() => {
+              navigation.navigate("SearchFilters");
+            }}
+          >
+            <Ionicons
+              name="search"
+              size={12}
+              color={Colors.light.text}
+              style={{ marginTop: 2 }}
+            />
+            <Text style={styles.buttonFilterText}>Search Filters</Text>
+          </Pressable>
+          <Spacer height={40} />
+          <Pressable
+            onPress={() => {
+              navigation.dispatch(StackActions.popToTop());
+            }}
+          >
+            <Text style={styles.refreshText}>Back Home</Text>
+          </Pressable>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <View style={styles.innerContainer}>
+        <View style={styles.header}>
+          <Image
+            source={require("@/assets/images/logo/logo_crushy.png")}
+            style={styles.logo}
+          />
+
+          <View style={{ display: "flex", flexDirection: "row", gap: 8 }}>
+            <Pressable
+              style={[styles.buttonFilter]}
+              onPress={() => {
+                navigation.navigate("SearchFilters");
+              }}
+            >
+              <Ionicons
+                name="search"
+                size={12}
+                color={Colors.light.text}
+                style={{ marginTop: 2 }}
+              />
+              <Text style={styles.buttonFilterText}>Search Filters</Text>
+            </Pressable>
+
+            <Pressable
+              style={[styles.buttonFilter]}
+              onPress={() => {
+                navigation.goBack();
+              }}
+            >
+              <Image
+                source={require("@/assets/images/icons/tab-home.png")}
+                style={{ width: 32, aspectRatio: "1" }}
+              />
+            </Pressable>
+          </View>
+        </View>
+
+        <View style={styles.personContainer}>
+          <Image
+            source={typeof imageUrl === "string" ? { uri: imageUrl } : imageUrl}
+            style={styles.person}
+            onError={() => {
+              console.log("Error loading image, setting default");
+              setImageUrl(require("@/assets/images/react-logo.png"));
+            }}
+          />
+
+          <Fader
+            visible
+            position={Fader.position.BOTTOM}
+            tintColor={"#282828"}
+            size={222}
+          />
+
+          {!loading && (
+            <View style={{ width: "78%" }}>
+              <View style={styles.personInfo}>
+                <TypewriterEffect
+                  key={typewriterKey.current}
+                  text={currentMatch.name + ", " + currentMatch.age.toString()}
+                  style={styles.personName}
+                  delay={12}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit={true}
+                />
+              </View>
+            </View>
+          )}
+
+          <ScrollView
+            horizontal
+            style={styles.chipsContainer}
+            showsHorizontalScrollIndicator={false}
+          >
+            {renderInterestChips()}
+          </ScrollView>
+
+          <Pressable
+            onPress={() => {
+              navigation.navigate("Profile", {
+                id: currentMatch.id,
+                imageUrl: imageUrl,
+              });
+            }}
+            style={[styles.buttonExpand, defaultStyles.buttonShadow]}
+          >
+            <Ionicons
+              name="chevron-down"
+              size={24}
+              color={Colors.light.accent}
+            />
+          </Pressable>
+        </View>
+        <View style={styles.buttonsMatching}>
+          <Pressable onPress={handleDislike} disabled={loading}>
+            <Image
+              source={require("@/assets/images/buttons/buttonMatchingDislike.png")}
+              style={styles.buttonsMatchingSecondary}
+            />
+          </Pressable>
+          <Pressable onPress={handleLike} disabled={loading}>
+            <Image
+              source={require("@/assets/images/buttons/buttonMatchingLike.png")}
+              style={styles.buttonsMatchingPrimary}
+            />
+          </Pressable>
+          <Pressable
+            onPress={() => {
+              alert("This feature will be available in the future.");
+            }}
+            disabled={loading}
+          >
+            <Image
+              source={require("@/assets/images/buttons/buttonMatchingChat.png")}
+              style={styles.buttonsMatchingSecondary}
+            />
+          </Pressable>
+        </View>
+
+        {loading && (
+          <ActivityIndicator
+            size="small"
+            color={Colors.light.accent}
+            style={styles.loader}
+          />
+        )}
+      </View>
+    </SafeAreaView>
+  );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: Colors.light.background,
-    },
-    innerContainer: {
-        flex: 1,
-        padding: 16,
-    },
-    header: {
-        width: '100%',
-        marginTop: 16,
-        marginBottom: 16,
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-    },
-    logo: {
-        width: 96,
-        resizeMode: 'contain'
-    },
-    buttonFilter: {
-        backgroundColor: Colors.light.white,
-        paddingBottom: 2,
-        paddingHorizontal: 12,
-        borderRadius: 99,
-        borderWidth: 1,
-        borderColor: Colors.light.tertiary,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        minHeight: 32,
-        gap: 4,
-    },
-    buttonFilterText: {
-        fontSize: 14,
-        fontFamily: 'BodyRegular',
-        color: Colors.light.text,
-    },
-    personContainer: {
-        flex: 1,
-        borderRadius: 20,
-        overflow: 'hidden',
-        width: '100%',
-        height: '100%',
-    },
-    person: {
-        width: '100%',
-        height: '100%',
-        resizeMode: 'cover',
-        backgroundColor: Colors.light.backgroundSecondary,
-    },
-
-    loader: {
-        position: 'absolute',
-        top: 8,
-        left: 16,
-        zIndex: 5,
-    },
-    personInfo: {
-        flexDirection: 'row',
-        alignItems: 'flex-end',
-        gap: 8,
-        position: 'absolute',
-        bottom: 64,
-        left: 16,
-    },
-    personName: {
-        fontFamily: 'HeadingBold',
-        fontSize: 32,
-        color: Colors.light.white,
-    },
-    personAge: {
-        fontFamily: 'HeadingBold',
-        fontSize: 32,
-        color: Colors.light.white,
-        opacity: 0.7
-    },
-    chipsContainer: {
-        flex: 1,
-        position: 'absolute',
-        bottom: 16,
-        paddingHorizontal: 16,
-    },
-    chip: {
-        backgroundColor: Colors.light.white,
-        paddingVertical: 8,
-        paddingHorizontal: 4,
-        marginRight: 8,
-        borderRadius: 99,
-        borderWidth: 0,
-    },
-    chipLabel: {
-        color: Colors.light.text,
-        fontSize: 13,
-        fontFamily: 'BodyRegular',
-    },
-    buttonClose: {
-        backgroundColor: Colors.light.white,
-        width: 32,
-        height: 32,
-        borderWidth: 1,
-        borderColor: Colors.light.tertiary,
-        borderRadius: 99,
-        justifyContent: 'center',
-        alignItems: 'center',
-        shadowColor: Colors.light.black,
-        position: 'absolute',
-        top: 16,
-        right: 16,
-    },
-    buttonExpand: {
-        backgroundColor: Colors.light.white,
-        width: 32,
-        height: 32,
-        borderWidth: 1,
-        borderColor: Colors.light.tertiary,
-        borderRadius: 99,
-        justifyContent: 'center',
-        alignItems: 'center',
-        shadowColor: Colors.light.black,
-        position: 'absolute',
-        bottom: 68,
-        right: 16,
-    },
-    buttonsMatching: {
-        flexDirection: 'row',
-        width: '100%',
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginTop: 16,
-        marginBottom: 16,
-    },
-    buttonsMatchingPrimary: {
-        maxWidth: 90,
-        maxHeight: 90,
-    },
-    buttonsMatchingSecondary: {
-        maxWidth: 80,
-        maxHeight: 80,
-        marginHorizontal: 16,
-    },
-    noMatchesContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    noMatchesTitle: {
-        fontFamily: 'HeadingBold',
-        fontSize: 24,
-        color: Colors.light.text,
-        marginTop: 16,
-    },
-    noMatchesText: {
-        fontFamily: 'BodyRegular',
-        fontSize: 16,
-        color: Colors.light.text,
-        lineHeight: 22,
-    },
-    refreshText: {
-        fontFamily: 'BodySemiBold',
-        fontSize: 18,
-        color: Colors.light.accent,
-    },
-    sharedChip: {
-        paddingLeft: 12,
-        backgroundColor: Colors.light.white,
-    },
-    sharedChipLabel: {
-        color: Colors.light.text,
-    },
+  container: {
+    flex: 1,
+    backgroundColor: Colors.light.background,
+  },
+  innerContainer: {
+    flex: 1,
+    padding: 16,
+  },
+  header: {
+    width: "100%",
+    marginTop: 16,
+    marginBottom: 16,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  logo: {
+    width: 96,
+    resizeMode: "contain",
+  },
+  buttonFilter: {
+    backgroundColor: Colors.light.white,
+    paddingBottom: 2,
+    paddingHorizontal: 12,
+    borderRadius: 99,
+    borderWidth: 1,
+    borderColor: Colors.light.tertiary,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: 32,
+    gap: 4,
+  },
+  buttonFilterText: {
+    fontSize: 14,
+    fontFamily: "BodyRegular",
+    color: Colors.light.text,
+  },
+  personContainer: {
+    flex: 1,
+    borderRadius: 20,
+    overflow: "hidden",
+    width: "100%",
+    height: "100%",
+  },
+  person: {
+    width: "100%",
+    height: "100%",
+    resizeMode: "cover",
+    backgroundColor: Colors.light.backgroundSecondary,
+  },
+  loader: {
+    position: "absolute",
+    top: 8,
+    left: 16,
+    zIndex: 5,
+  },
+  personInfo: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    gap: 8,
+    position: "absolute",
+    bottom: 64,
+    left: 16,
+  },
+  personName: {
+    fontFamily: "HeadingBold",
+    fontSize: 32,
+    color: Colors.light.white,
+  },
+  personAge: {
+    fontFamily: "HeadingBold",
+    fontSize: 32,
+    color: Colors.light.white,
+    opacity: 0.7,
+  },
+  chipsContainer: {
+    flex: 1,
+    position: "absolute",
+    bottom: 16,
+    paddingHorizontal: 16,
+  },
+  chip: {
+    backgroundColor: Colors.light.white,
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+    marginRight: 8,
+    borderRadius: 99,
+    borderWidth: 0,
+  },
+  chipLabel: {
+    color: Colors.light.text,
+    fontSize: 13,
+    fontFamily: "BodyRegular",
+  },
+  buttonExpand: {
+    backgroundColor: Colors.light.white,
+    width: 32,
+    height: 32,
+    borderWidth: 1,
+    borderColor: Colors.light.tertiary,
+    borderRadius: 99,
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: Colors.light.black,
+    position: "absolute",
+    bottom: 68,
+    right: 16,
+  },
+  buttonsMatching: {
+    flexDirection: "row",
+    width: "100%",
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 16,
+    marginBottom: 16,
+  },
+  buttonsMatchingPrimary: {
+    maxWidth: 90,
+    maxHeight: 90,
+  },
+  buttonsMatchingSecondary: {
+    maxWidth: 80,
+    maxHeight: 80,
+    marginHorizontal: 16,
+  },
+  noMatchesContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  noMatchesTitle: {
+    fontFamily: "HeadingBold",
+    fontSize: 24,
+    color: Colors.light.text,
+    marginTop: 16,
+  },
+  noMatchesText: {
+    fontFamily: "BodyRegular",
+    fontSize: 16,
+    color: Colors.light.text,
+    lineHeight: 22,
+  },
+  refreshText: {
+    fontFamily: "BodySemiBold",
+    fontSize: 18,
+    color: Colors.light.accent,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  errorText: {
+    fontFamily: "BodyRegular",
+    fontSize: 16,
+    color: Colors.light.text,
+    textAlign: "center",
+  },
+  sharedChip: {
+    paddingLeft: 12,
+    backgroundColor: Colors.light.white,
+  },
+  sharedChipLabel: {
+    color: Colors.light.text,
+  },
 });
-
 ```
 
 # components\tabs\me.tsx
@@ -8409,482 +8447,605 @@ export default function Explore() {
 # components\tabs\dive.tsx
 
 ```tsx
-import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
-import { View, Text, Image, StyleSheet, Pressable, ScrollView, ActivityIndicator, Alert } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
-import { Colors } from '@/constants/Colors';
-import hobbiesInterests from '@/constants/Interests';
-import { defaultStyles } from '@/constants/Styles';
-import Spacer from '@/components/Spacer';
-import { Chip } from 'react-native-ui-lib';
-import { useNavigation, StackActions } from '@react-navigation/native';
-import { usePotentialMatches, useProfile } from '@/hooks/useApi';
-import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/lib/supabase';
-
-
-interface PotentialMatch {
-    id: string;
-    name: string;
-    age: number;
-    gender: number;
-    avatar_pixelated_url: string;
-    interests: number[];
-}
+import React, { useEffect, useState, useCallback, useRef } from "react";
+import {
+  View,
+  Text,
+  Image,
+  StyleSheet,
+  Pressable,
+  ScrollView,
+  ActivityIndicator,
+  Alert,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
+import { Colors } from "@/constants/Colors";
+import hobbiesInterests from "@/constants/Interests";
+import { defaultStyles } from "@/constants/Styles";
+import Spacer from "@/components/Spacer";
+import { Chip } from "react-native-ui-lib";
+import { useNavigation, StackActions } from "@react-navigation/native";
+import { usePotentialMatches, useProfile } from "@/hooks/useApi";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function Dive() {
-    const session = useAuth();
-    const navigation = useNavigation();
-    const { matches: potentialMatches, loading, error, fetchDiveMatches, recordAction } = usePotentialMatches();
-    const { currentUserProfile, loading: profileLoading, error: profileError, fetchCurrentUserProfile, fetchProfileDetails } = useProfile();
-    const [currentMatchIndex, setCurrentMatchIndex] = useState(0);
-    const [imageUrl, setImageUrl] = useState<string | number>(require('@/assets/images/react-logo.png'));
-    const scrollViewRef = useRef<ScrollView>(null);
-    const [currentMatchProfile, setCurrentMatchProfile] = useState(null);
+  const session = useAuth();
+  const navigation = useNavigation();
+  const {
+    matches: potentialMatches,
+    loading,
+    error,
+    fetchDiveMatches,
+    recordAction,
+  } = usePotentialMatches();
+  const {
+    currentUserProfile,
+    loading: profileLoading,
+    error: profileError,
+    fetchCurrentUserProfile,
+    fetchProfileDetails,
+  } = useProfile();
+  const [currentMatchIndex, setCurrentMatchIndex] = useState(0);
+  const [imageUrl, setImageUrl] = useState<string | number>(
+    require("@/assets/images/react-logo.png")
+  );
+  const scrollViewRef = useRef<ScrollView>(null);
+  const [currentMatchProfile, setCurrentMatchProfile] = useState(null);
 
-    const currentMatch = potentialMatches[currentMatchIndex];
+  const currentMatch = potentialMatches[currentMatchIndex];
 
-    const interestsList = useMemo(() => hobbiesInterests.flat(), []);
+  useEffect(() => {
+    if (session?.user?.id) {
+      fetchDiveMatches();
+      fetchCurrentUserProfile();
+    }
+  }, [session, fetchDiveMatches, fetchCurrentUserProfile]);
 
-    useEffect(() => {
-        if (session?.user?.id) {
-            fetchDiveMatches();
-            fetchCurrentUserProfile();
-        }
-    }, [session, fetchDiveMatches, fetchCurrentUserProfile]);
+  useEffect(() => {
+    if (currentMatch?.id) {
+      fetchProfileDetails(currentMatch.id)
+        .then((profile) => {
+          if (profile) {
+            setCurrentMatchProfile(profile);
+          } else {
+            console.log(`No profile details found for user ${currentMatch.id}`);
+            setCurrentMatchProfile(null);
+          }
+        })
+        .catch((error) => {
+          console.error("Error fetching profile details:", error);
+          setCurrentMatchProfile(null);
+        });
+    }
+  }, [currentMatch, fetchProfileDetails]);
 
-    useEffect(() => {
-        if (currentMatch?.id) {
-            fetchProfileDetails(currentMatch.id).then(setCurrentMatchProfile);
-        }
-    }, [currentMatch, fetchProfileDetails]);
+  useEffect(() => {
+    if (currentMatch?.avatar_pixelated_url) {
+      setImageUrl(currentMatch.avatar_pixelated_url);
+    } else {
+      setImageUrl(require("@/assets/images/react-logo.png"));
+    }
+  }, [currentMatch]);
 
-    useEffect(() => {
-        console.log('Current Match:', currentMatch);
-        console.log('Current User Profile:', currentUserProfile);
-        console.log('Current Match Profile:', currentMatchProfile);
-    }, [currentMatch, currentUserProfile, currentMatchProfile]);
+  const handleAction = useCallback(
+    async (action: "like" | "dislike") => {
+      if (!session?.user?.id || !currentMatch) return;
 
+      scrollToTop();
 
-    useEffect(() => {
-        if (currentMatch?.avatar_pixelated_url) {
-            setImageUrl(currentMatch.avatar_pixelated_url);
+      try {
+        const isNewMatch = await recordAction(currentMatch.id, action);
+
+        if (action === "like" && isNewMatch) {
+          Alert.alert(
+            "It's a Match!",
+            `You and ${currentMatch.name} have liked each other!`,
+            [{ text: "OK", onPress: () => moveToNextMatch() }]
+          );
         } else {
-            setImageUrl(require('@/assets/images/react-logo.png'));
+          moveToNextMatch();
         }
-    }, [currentMatch]);
-
-
-
-
-    const checkForMatch = useCallback(async (currentUserId: string, likedUserId: string) => {
-        const { data, error } = await supabase
-            .from('matches')
-            .select('*')
-            .eq('user1_id', likedUserId)
-            .eq('user2_id', currentUserId)
-            .eq('user1_action', 1);
-
-        if (error && error.code !== 'PGRST116') {
-            console.error('Error checking for match:', error);
-            return false;
-        }
-
-        return data && data.length > 0;
-    }, []);
-
-
-
-    const handleAction = useCallback(async (action: 'like' | 'dislike') => {
-        if (!session?.user?.id || !currentMatch) return;
-
-        scrollToTop();
-
-        try {
-            await recordAction(currentMatch.id, action);
-
-            if (action === 'like') {
-                const isMatch = await checkForMatch(session.user.id, currentMatch.id);
-                if (isMatch) {
-                    Alert.alert(
-                        "It's a Match!",
-                        `You and ${currentMatch.name} have liked each other!`,
-                        [{ text: "OK", onPress: () => console.log("OK Pressed") }]
-                    );
-                }
-            }
-
-            // Move to next match
-            if (currentMatchIndex < potentialMatches.length - 1) {
-                setCurrentMatchIndex(prevIndex => prevIndex + 1);
-            } else {
-                // Fetch new matches if we've reached the end
-                await fetchDiveMatches();
-                setCurrentMatchIndex(0);
-            }
-
-        } catch (error) {
-            console.error('Error in handleAction:', error);
-        }
-    }, [session, currentMatch, recordAction, checkForMatch]);
-
-
-
-    const renderInterestChips = useCallback((type: string) => {
-        console.log('Rendering Interest Chips:', type);
-        console.log('Current Match Interests:', currentMatch?.interests);
-        console.log('Current User Interests:', currentUserProfile?.interests);
-
-        if (!currentMatch?.interests || !currentUserProfile?.interests) {
-            console.log('Interests not available');
-            return null;
-        }
-
-        const matchInterests = currentMatch.interests;
-        const userInterests = currentUserProfile.interests;
-
-        const sortedInterests = [...matchInterests].sort((a: number, b: number) => {
-            const aIncluded = userInterests.includes(a);
-            const bIncluded = userInterests.includes(b);
-            if (aIncluded && !bIncluded) return -1;
-            if (!aIncluded && bIncluded) return 1;
-            return 0;
-        });
-
-        return sortedInterests.map((interest: number, index: number) => {
-            const interestObject = interestsList.find(item => parseInt(item.value) === interest);
-            if (!interestObject) return null;
-
-            const isShared = userInterests.includes(interest);
-            if (type === 'shared' && isShared) {
-                return (
-                    <Chip
-                        key={index}
-                        label={interestObject.label}
-                        labelStyle={[styles.chipLabel, styles.sharedChipLabel]}
-                        containerStyle={[styles.chip, styles.sharedChip]}
-                        iconSource={require('@/assets/images/icons/iconSharedInterest.png')}
-                    />
-                );
-            } else if (type !== 'shared' && !isShared) {
-                return (
-                    <Chip
-                        key={index}
-                        label={interestObject.label}
-                        labelStyle={[styles.chipLabel]}
-                        containerStyle={[styles.chip]}
-                    />
-                );
-            }
-            return null;
-        });
-    }, [currentMatch, currentUserProfile, interestsList]);
-
-
-    const unescapeText = useCallback((text: string) => {
-        return text
-            .replace(/\\'/g, "'")
-            .replace(/\\n/g, '\n')
-            .replace(/\\\\/g, '\\');
-    }, []);
-
-    const scrollToTop = useCallback(() => {
-        scrollViewRef.current?.scrollTo({ x: 0, y: 0, animated: true });
-    }, []);
-
-    if (error) {
-        return (
-            <SafeAreaView style={styles.container}>
-                <View style={styles.errorContainer}>
-                    <Text style={styles.errorText}>An error occurred. Please try again later. {error}</Text>
-                </View>
-            </SafeAreaView>
+      } catch (error) {
+        console.error("Error in handleAction:", error);
+        Alert.alert(
+          "Error",
+          "An error occurred while processing your action. Please try again."
         );
-    }
+      }
+    },
+    [session, currentMatch, recordAction, moveToNextMatch]
+  );
 
-    if (!currentMatch) {
-        return (
-            <SafeAreaView style={styles.container}>
-                <View style={styles.noMatchesContainer}>
-                    <Ionicons name="albums-outline" size={64} color={Colors.light.primary} />
-                    <Text style={styles.noMatchesTitle}>You've reached the end</Text>
-                    <Text style={styles.noMatchesText}>No more potential matches to show.</Text>
-                    <Text style={styles.noMatchesText}>Adjust search filters, or check back later.</Text>
-                    <Spacer height={40} />
-                    <Pressable style={[styles.buttonFilter]} onPress={() => { navigation.navigate('SearchFilters') }}>
-                        <Ionicons name="search" size={12} color={Colors.light.text} style={{ marginTop: 2 }} />
-                        <Text style={styles.buttonFilterText}>Search Filters</Text>
-                    </Pressable>
-                    <Spacer height={40} />
-                    <Pressable onPress={() => { navigation.dispatch(StackActions.popToTop()) }}>
-                        <Text style={styles.refreshText}>Back Home</Text>
-                    </Pressable>
-                </View>
-            </SafeAreaView>
-        );
+  const moveToNextMatch = useCallback(() => {
+    if (currentMatchIndex < potentialMatches.length - 1) {
+      setCurrentMatchIndex((prevIndex) => prevIndex + 1);
+    } else {
+      fetchDiveMatches();
+      setCurrentMatchIndex(0);
     }
+  }, [currentMatchIndex, potentialMatches.length, fetchDiveMatches]);
 
+  const scrollToTop = useCallback(() => {
+    scrollViewRef.current?.scrollTo({ x: 0, y: 0, animated: true });
+  }, []);
+
+  const renderInterestChips = useCallback(
+    (type: string) => {
+      if (!currentMatch?.interests || !currentUserProfile?.interests) {
+        return null;
+      }
+
+      const matchInterests = currentMatch.interests;
+      const userInterests = currentUserProfile.interests;
+
+      const sortedInterests = [...matchInterests].sort(
+        (a: number, b: number) => {
+          const aIncluded = userInterests.includes(a);
+          const bIncluded = userInterests.includes(b);
+          if (aIncluded && !bIncluded) return -1;
+          if (!aIncluded && bIncluded) return 1;
+          return 0;
+        }
+      );
+
+      return sortedInterests.map((interestId: number, index: number) => {
+        const interestObject = hobbiesInterests
+          .flat()
+          .find((item) => parseInt(item.value) === interestId);
+        if (!interestObject) return null;
+
+        const isShared = userInterests.includes(interestId);
+        if (type === "shared" && isShared) {
+          return (
+            <Chip
+              key={index}
+              label={interestObject.label}
+              labelStyle={[styles.chipLabel, styles.sharedChipLabel]}
+              containerStyle={[styles.chip, styles.sharedChip]}
+              iconSource={require("@/assets/images/icons/iconSharedInterest.png")}
+            />
+          );
+        } else if (type !== "shared" && !isShared) {
+          return (
+            <Chip
+              key={index}
+              label={interestObject.label}
+              labelStyle={[styles.chipLabel]}
+              containerStyle={[styles.chip]}
+            />
+          );
+        }
+        return null;
+      });
+    },
+    [currentMatch, currentUserProfile]
+  );
+
+  if (error || profileError) {
     return (
-        <SafeAreaView style={styles.container}>
-            {loading && <ActivityIndicator size="small" color={Colors.light.accent} style={styles.loader} />}
-
-            <View style={styles.innerContainer}>
-                <View style={styles.header}>
-                    <Image source={require('@/assets/images/logo/logo_crushy.png')} style={styles.logo} />
-                    <View style={{ flexDirection: 'row', gap: 8 }}>
-                        <Pressable style={[styles.buttonFilter]} onPress={() => { navigation.navigate('SearchFilters') }}>
-                            <Ionicons name="search" size={12} color={Colors.light.text} style={{ marginTop: 2 }} />
-                            <Text style={styles.buttonFilterText}>Search Filters</Text>
-                        </Pressable>
-                        <Pressable style={[styles.buttonFilter]} onPress={() => { navigation.goBack() }}>
-                            <Image source={require('@/assets/images/icons/tab-home.png')} style={{ width: 32, aspectRatio: 1 }} />
-                        </Pressable>
-                    </View>
-                </View>
-            </View>
-
-            <ScrollView ref={scrollViewRef} style={styles.pageContent}>
-                <View style={styles.personContainer}>
-                    <View style={{ flexDirection: 'row', justifyContent: 'center' }}>
-                        <Image
-                            source={typeof imageUrl === 'string' ? { uri: imageUrl } : imageUrl}
-                            style={styles.person}
-                            onError={() => setImageUrl(require('@/assets/images/react-logo.png'))}
-                        />
-                    </View>
-
-                    <View style={{ marginTop: 16 }}>
-                        <View style={styles.personInfo}>
-                            <Text style={styles.personName}>{!loading ? `${currentMatch.name}, ${currentMatch.age}` : '...'}</Text>
-                        </View>
-                    </View>
-
-                    {currentMatch?.interests?.length > 0 && currentUserProfile?.interests?.length > 0 && (
-                        <View style={{ paddingHorizontal: 16 }}>
-                            <Spacer height={32} />
-                            <Text style={styles.sectionTitle}>Shared Hobbies & Interests</Text>
-                            <View style={styles.chipsContainer}>
-                                {renderInterestChips('shared')}
-                            </View>
-                        </View>
-                    )}
-
-                    <Spacer height={32} />
-
-                    {currentMatchProfile?.bio && (
-                        <View>
-                            <View style={{ paddingHorizontal: 16 }}>
-                                <Text style={styles.sectionTitle}>Bio</Text>
-                                <Spacer height={8} />
-                                <Text style={styles.bioText}>{unescapeText(currentMatchProfile.bio)}</Text>
-                            </View>
-                            <Spacer height={32} />
-                        </View>
-                    )}
-
-
-                    {currentMatch?.interests?.length > 0 && currentUserProfile?.interests?.length > 0 && (
-                        <View style={{ paddingHorizontal: 16 }}>
-                            <Spacer height={32} />
-                            <Text style={styles.sectionTitle}>Shared Hobbies & Interests</Text>
-                            <View style={styles.chipsContainer}>
-                                {renderInterestChips('')}
-                            </View>
-                        </View>
-                    )}
-                </View>
-
-                <View style={styles.buttonsMatching}>
-                    <Pressable onPress={() => handleAction('dislike')} disabled={loading}>
-                        <Image source={require('@/assets/images/buttons/buttonMatchingDislike.png')} style={styles.buttonsMatchingSecondary} />
-                    </Pressable>
-                    <Pressable onPress={() => handleAction('like')} disabled={loading}>
-                        <Image source={require('@/assets/images/buttons/buttonMatchingLike.png')} style={styles.buttonsMatchingPrimary} />
-                    </Pressable>
-                    <Pressable onPress={() => { alert("This feature will be available in the future.") }} disabled={loading}>
-                        <Image source={require('@/assets/images/buttons/buttonMatchingChat.png')} style={styles.buttonsMatchingSecondary} />
-                    </Pressable>
-                </View>
-            </ScrollView>
-        </SafeAreaView>
+      <SafeAreaView style={styles.container}>
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>
+            An error occurred. Please try again later.
+          </Text>
+        </View>
+      </SafeAreaView>
     );
+  }
+
+  if (!currentMatch) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.noMatchesContainer}>
+          <Ionicons
+            name="albums-outline"
+            size={64}
+            color={Colors.light.primary}
+          />
+          <Text style={styles.noMatchesTitle}>You've reached the end</Text>
+          <Text style={styles.noMatchesText}>
+            No more potential matches to show.
+          </Text>
+          <Text style={styles.noMatchesText}>
+            Adjust search filters, or check back later.
+          </Text>
+          <Spacer height={40} />
+          <Pressable
+            style={[styles.buttonFilter]}
+            onPress={() => {
+              navigation.navigate("SearchFilters");
+            }}
+          >
+            <Ionicons
+              name="search"
+              size={12}
+              color={Colors.light.text}
+              style={{ marginTop: 2 }}
+            />
+            <Text style={styles.buttonFilterText}>Search Filters</Text>
+          </Pressable>
+          <Spacer height={40} />
+          <Pressable
+            onPress={() => {
+              navigation.dispatch(StackActions.popToTop());
+            }}
+          >
+            <Text style={styles.refreshText}>Back Home</Text>
+          </Pressable>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  return (
+    <SafeAreaView style={styles.container}>
+      {loading && (
+        <ActivityIndicator
+          size="small"
+          color={Colors.light.accent}
+          style={styles.loader}
+        />
+      )}
+
+      <View style={styles.innerContainer}>
+        <View style={styles.header}>
+          <Image
+            source={require("@/assets/images/logo/logo_crushy.png")}
+            style={styles.logo}
+          />
+          <View style={{ flexDirection: "row", gap: 8 }}>
+            <Pressable
+              style={[styles.buttonFilter]}
+              onPress={() => {
+                navigation.navigate("SearchFilters");
+              }}
+            >
+              <Ionicons
+                name="search"
+                size={12}
+                color={Colors.light.text}
+                style={{ marginTop: 2 }}
+              />
+              <Text style={styles.buttonFilterText}>Search Filters</Text>
+            </Pressable>
+            <Pressable
+              style={[styles.buttonFilter]}
+              onPress={() => {
+                navigation.goBack();
+              }}
+            >
+              <Image
+                source={require("@/assets/images/icons/tab-home.png")}
+                style={{ width: 32, aspectRatio: 1 }}
+              />
+            </Pressable>
+          </View>
+        </View>
+      </View>
+
+      <ScrollView ref={scrollViewRef} style={styles.pageContent}>
+        <View style={styles.personContainer}>
+          <View style={{ flexDirection: "row", justifyContent: "center" }}>
+            <Image
+              source={
+                typeof imageUrl === "string" ? { uri: imageUrl } : imageUrl
+              }
+              style={styles.person}
+              onError={() =>
+                setImageUrl(require("@/assets/images/react-logo.png"))
+              }
+            />
+          </View>
+
+          <View style={{ marginTop: 16 }}>
+            <View style={styles.personInfo}>
+              <Text style={styles.personName}>
+                {!loading ? `${currentMatch.name}, ${currentMatch.age}` : "..."}
+              </Text>
+            </View>
+          </View>
+
+          {currentMatch?.interests?.length > 0 &&
+            currentUserProfile?.interests?.length > 0 && (
+              <View style={{ paddingHorizontal: 16 }}>
+                <Spacer height={32} />
+                <Text style={styles.sectionTitle}>
+                  Shared Hobbies & Interests
+                </Text>
+                <View style={styles.chipsContainer}>
+                  {renderInterestChips("shared")}
+                </View>
+              </View>
+            )}
+
+          <Spacer height={32} />
+
+          {currentMatchProfile?.bio && (
+            <View>
+              <View style={{ paddingHorizontal: 16 }}>
+                <Text style={styles.sectionTitle}>Bio</Text>
+                <Spacer height={8} />
+                <Text style={styles.bioText}>{currentMatchProfile.bio}</Text>
+              </View>
+              <Spacer height={32} />
+            </View>
+          )}
+
+          {currentMatch?.interests?.length > 0 &&
+            currentUserProfile?.interests?.length > 0 && (
+              <View style={{ paddingHorizontal: 16 }}>
+                <Spacer height={32} />
+                <Text style={styles.sectionTitle}>
+                  Other Hobbies & Interests
+                </Text>
+                <View style={styles.chipsContainer}>
+                  {renderInterestChips("")}
+                </View>
+              </View>
+            )}
+        </View>
+
+        <View style={styles.buttonsMatching}>
+          <Pressable onPress={() => handleAction("dislike")} disabled={loading}>
+            <Image
+              source={require("@/assets/images/buttons/buttonMatchingDislike.png")}
+              style={styles.buttonsMatchingSecondary}
+            />
+          </Pressable>
+          <Pressable onPress={() => handleAction("like")} disabled={loading}>
+            <Image
+              source={require("@/assets/images/buttons/buttonMatchingLike.png")}
+              style={styles.buttonsMatchingPrimary}
+            />
+          </Pressable>
+          <Pressable
+            onPress={() => {
+              alert("This feature will be available in the future.");
+            }}
+            disabled={loading}
+          >
+            <Image
+              source={require("@/assets/images/buttons/buttonMatchingChat.png")}
+              style={styles.buttonsMatchingSecondary}
+            />
+          </Pressable>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
+  );
 }
 
-
-
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: Colors.light.background,
-    },
-    innerContainer: {
-        paddingTop: 16,
-        paddingHorizontal: 16,
-    },
-    pageContent: {
-
-    },
-    header: {
-        width: '100%',
-        marginTop: 16,
-        marginBottom: 0,
-        paddingBottom: 8,
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        borderBottomWidth: 1,
-        borderColor: Colors.light.tertiary,
-    },
-    logo: {
-        width: 96,
-        resizeMode: 'contain'
-    },
-    buttonFilter: {
-        backgroundColor: Colors.light.white,
-        paddingBottom: 2,
-        paddingHorizontal: 12,
-        borderRadius: 99,
-        borderWidth: 1,
-        borderColor: Colors.light.tertiary,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        minHeight: 32,
-        gap: 4,
-    },
-    buttonFilterText: {
-        fontSize: 14,
-        fontFamily: 'BodyRegular',
-        color: Colors.light.text,
-    },
-    personContainer: {
-        // flex: 1,
-        marginTop: 32,
-    },
-    person: {
-        width: 80,
-        height: 80,
-        resizeMode: 'cover',
-        borderRadius: 80,
-        backgroundColor: Colors.light.tertiary,
-    },
-    loader: {
-        position: 'absolute',
-        top: 8,
-        left: 16,
-        zIndex: 5,
-    },
-    personInfo: {
-        flexDirection: 'row',
-        justifyContent: 'center',
-    },
-    personName: {
-        fontFamily: 'HeadingBold',
-        fontSize: 32,
-        color: Colors.light.text,
-    },
-    personAge: {
-        fontFamily: 'HeadingBold',
-        fontSize: 32,
-        color: Colors.light.text,
-        opacity: 0.7
-    },
-    chipsContainer: {
-        display: 'flex',
-        flex: 1,
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        marginTop: 16,
-        rowGap: 8,
-    },
-    chip: {
-        backgroundColor: Colors.light.white,
-        paddingVertical: 8,
-        paddingHorizontal: 4,
-        marginRight: 8,
-        borderRadius: 99,
-        shadowColor: Colors.light.black,
-    },
-    sharedChip: {
-        paddingLeft: 12,
-        backgroundColor: Colors.light.white,
-    },
-    sharedChipLabel: {
-        color: Colors.light.text,
-    },
-    chipLabel: {
-        color: Colors.light.text,
-        fontSize: 13,
-        fontFamily: 'BodyRegular',
-    },
-    buttonsMatching: {
-        flexDirection: 'row',
-        width: '100%',
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginTop: 40,
-        marginBottom: 16,
-    },
-    buttonsMatchingPrimary: {
-        maxWidth: 90,
-        maxHeight: 90,
-    },
-    buttonsMatchingSecondary: {
-        maxWidth: 80,
-        maxHeight: 80,
-        marginHorizontal: 16,
-    },
-    noMatchesContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    noMatchesTitle: {
-        fontFamily: 'HeadingBold',
-        fontSize: 24,
-        color: Colors.light.text,
-        marginTop: 16,
-    },
-    noMatchesText: {
-        fontFamily: 'BodyRegular',
-        fontSize: 16,
-        color: Colors.light.text,
-        lineHeight: 22,
-    },
-    refreshText: {
-        fontFamily: 'BodySemiBold',
-        fontSize: 18,
-        color: Colors.light.accent,
-    },
-    sectionTitle: {
-        fontFamily: 'HeadingBold',
-        fontSize: 22,
-        color: Colors.light.text,
-        marginTop: 16,
-    },
-    bioText: {
-        fontFamily: 'BodyRegular',
-        fontSize: 18,
-        lineHeight: 26,
-    },
+  container: {
+    flex: 1,
+    backgroundColor: Colors.light.background,
+  },
+  innerContainer: {
+    paddingTop: 16,
+    paddingHorizontal: 16,
+  },
+  pageContent: {},
+  header: {
+    width: "100%",
+    marginTop: 16,
+    marginBottom: 0,
+    paddingBottom: 8,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    borderBottomWidth: 1,
+    borderColor: Colors.light.tertiary,
+  },
+  logo: {
+    width: 96,
+    resizeMode: "contain",
+  },
+  buttonFilter: {
+    backgroundColor: Colors.light.white,
+    paddingBottom: 2,
+    paddingHorizontal: 12,
+    borderRadius: 99,
+    borderWidth: 1,
+    borderColor: Colors.light.tertiary,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: 32,
+    gap: 4,
+  },
+  buttonFilterText: {
+    fontSize: 14,
+    fontFamily: "BodyRegular",
+    color: Colors.light.text,
+  },
+  personContainer: {
+    // flex: 1,
+    marginTop: 32,
+  },
+  person: {
+    width: 80,
+    height: 80,
+    resizeMode: "cover",
+    borderRadius: 80,
+    backgroundColor: Colors.light.tertiary,
+  },
+  loader: {
+    position: "absolute",
+    top: 8,
+    left: 16,
+    zIndex: 5,
+  },
+  personInfo: {
+    flexDirection: "row",
+    justifyContent: "center",
+  },
+  personName: {
+    fontFamily: "HeadingBold",
+    fontSize: 32,
+    color: Colors.light.text,
+  },
+  personAge: {
+    fontFamily: "HeadingBold",
+    fontSize: 32,
+    color: Colors.light.text,
+    opacity: 0.7,
+  },
+  chipsContainer: {
+    display: "flex",
+    flex: 1,
+    flexDirection: "row",
+    flexWrap: "wrap",
+    marginTop: 16,
+    rowGap: 8,
+  },
+  chip: {
+    backgroundColor: Colors.light.white,
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+    marginRight: 8,
+    borderRadius: 99,
+    shadowColor: Colors.light.black,
+  },
+  sharedChip: {
+    paddingLeft: 12,
+    backgroundColor: Colors.light.white,
+  },
+  sharedChipLabel: {
+    color: Colors.light.text,
+  },
+  chipLabel: {
+    color: Colors.light.text,
+    fontSize: 13,
+    fontFamily: "BodyRegular",
+  },
+  buttonsMatching: {
+    flexDirection: "row",
+    width: "100%",
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 40,
+    marginBottom: 16,
+  },
+  buttonsMatchingPrimary: {
+    maxWidth: 90,
+    maxHeight: 90,
+  },
+  buttonsMatchingSecondary: {
+    maxWidth: 80,
+    maxHeight: 80,
+    marginHorizontal: 16,
+  },
+  noMatchesContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  noMatchesTitle: {
+    fontFamily: "HeadingBold",
+    fontSize: 24,
+    color: Colors.light.text,
+    marginTop: 16,
+  },
+  noMatchesText: {
+    fontFamily: "BodyRegular",
+    fontSize: 16,
+    color: Colors.light.text,
+    lineHeight: 22,
+  },
+  refreshText: {
+    fontFamily: "BodySemiBold",
+    fontSize: 18,
+    color: Colors.light.accent,
+  },
+  sectionTitle: {
+    fontFamily: "HeadingBold",
+    fontSize: 22,
+    color: Colors.light.text,
+    marginTop: 16,
+  },
+  bioText: {
+    fontFamily: "BodyRegular",
+    fontSize: 18,
+    lineHeight: 26,
+  },
 });
 
 ```
 
-# components\navigation\TabBarIcon.tsx
+# components\onboarding\StepInterests.tsx
 
 ```tsx
-// You can explore the built-in icon families and icons on the web at https://icons.expo.fyi/
+import React, { useCallback, useState, useEffect } from 'react';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
+import { Checkbox } from 'react-native-ui-lib';
+import { Colors } from '@/constants/Colors';
+import { defaultStyles } from '@/constants/Styles';
+import hobbiesInterests from '@/constants/Interests';
+import Spacer from '@/components/Spacer';
 
-import Ionicons from '@expo/vector-icons/Ionicons';
-import { type IconProps } from '@expo/vector-icons/build/createIconSet';
-import { type ComponentProps } from 'react';
+const StepInterests = ({ onInterestsSelected }) => {
+    const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
+    const flattenedInterests = React.useMemo(() => hobbiesInterests.flat(), []);
 
-export function TabBarIcon({ style, ...rest }: IconProps<ComponentProps<typeof Ionicons>['name']>) {
-  return <Ionicons size={28} style={[{ marginBottom: -3 }, style]} {...rest} />;
-}
+    const handleInterestToggle = useCallback((interest: string) => {
+        setSelectedInterests(prevInterests => {
+            if (prevInterests.includes(interest)) {
+                return prevInterests.filter(i => i !== interest);
+            } else {
+                return [...prevInterests, interest];
+            }
+        });
+    }, []);
 
+    useEffect(() => {
+        onInterestsSelected(selectedInterests);
+    }, [selectedInterests, onInterestsSelected]);
+
+    const renderItem = useCallback(({ item }) => (
+        <Pressable onPress={() => handleInterestToggle(item.value)}>
+            <Checkbox
+                color={selectedInterests.includes(item.value) ? Colors.light.text : Colors.light.tertiary}
+                label={item.label}
+                value={selectedInterests.includes(item.value)}
+                containerStyle={[defaultStyles.checkboxButton, { borderColor: selectedInterests.includes(item.value) ? Colors.light.text : Colors.light.tertiary }]}
+                labelStyle={defaultStyles.checkboxButtonLabel}
+                onValueChange={() => handleInterestToggle(item.value)}
+            />
+        </Pressable>
+    ), [selectedInterests, handleInterestToggle]);
+
+    return (
+        <View style={styles.container}>
+            <Text style={defaultStyles.h2}>Interests ({selectedInterests.length})</Text>
+            <Spacer height={8} />
+            <Text style={defaultStyles.body}>
+                This helps us find people with the same hobbies and interests.
+            </Text>
+            <Spacer height={24} />
+            <FlashList
+                data={flattenedInterests}
+                renderItem={renderItem}
+                estimatedItemSize={75}
+                keyExtractor={(item) => item.value}
+                contentContainerStyle={styles.listContainer}
+            />
+        </View>
+    );
+};
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        padding: 16,
+    },
+    listContainer: {
+        paddingBottom: 16,
+    },
+});
+
+export default StepInterests;
 ```
 
 # assets\sounds\notification.wav
@@ -10397,6 +10558,48 @@ serve(async (req) => {
 })
 ```
 
+# supabase\functions\invoke-process-match-notifications\index.ts
+
+```ts
+// Follow this setup guide to integrate the Deno language server with your editor:
+// https://deno.land/manual/getting_started/setup_your_environment
+// This enables autocomplete, go to definition, etc.
+
+// Setup type definitions for built-in Supabase Runtime APIs
+import "https://esm.sh/@supabase/functions-js/src/edge-runtime.d.ts"
+
+console.log("Hello from invoke function!")
+
+Deno.serve(async (req) => {
+  const supabaseUrl = Deno.env.get('SUPABASE_URL')!
+  const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!
+
+  const response = await fetch(`${supabaseUrl}/functions/v1/process-match-notifications`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${supabaseAnonKey}`,
+      'Content-Type': 'application/json'
+    }
+  })
+
+  const data = await response.json()
+  return new Response(JSON.stringify(data), { status: response.status })
+})
+
+/* To invoke locally:
+
+  1. Run `supabase start` (see: https://supabase.com/docs/reference/cli/supabase-start)
+  2. Make an HTTP request:
+
+  curl -i --location --request POST 'http://127.0.0.1:54321/functions/v1/invoke-process-match-notifications' \
+    --header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0' \
+    --header 'Content-Type: application/json' \
+    --data '{"name":"Functions"}'
+
+*/
+
+```
+
 # supabase\functions\process-match-notifications\index.ts
 
 ```ts
@@ -10487,48 +10690,6 @@ Deno.serve(async (req) => {
 
   return new Response(JSON.stringify({ message: 'Notifications processed' }), { status: 200 })
 })
-```
-
-# supabase\functions\invoke-process-match-notifications\index.ts
-
-```ts
-// Follow this setup guide to integrate the Deno language server with your editor:
-// https://deno.land/manual/getting_started/setup_your_environment
-// This enables autocomplete, go to definition, etc.
-
-// Setup type definitions for built-in Supabase Runtime APIs
-import "https://esm.sh/@supabase/functions-js/src/edge-runtime.d.ts"
-
-console.log("Hello from invoke function!")
-
-Deno.serve(async (req) => {
-  const supabaseUrl = Deno.env.get('SUPABASE_URL')!
-  const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!
-
-  const response = await fetch(`${supabaseUrl}/functions/v1/process-match-notifications`, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${supabaseAnonKey}`,
-      'Content-Type': 'application/json'
-    }
-  })
-
-  const data = await response.json()
-  return new Response(JSON.stringify(data), { status: response.status })
-})
-
-/* To invoke locally:
-
-  1. Run `supabase start` (see: https://supabase.com/docs/reference/cli/supabase-start)
-  2. Make an HTTP request:
-
-  curl -i --location --request POST 'http://127.0.0.1:54321/functions/v1/invoke-process-match-notifications' \
-    --header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0' \
-    --header 'Content-Type: application/json' \
-    --data '{"name":"Functions"}'
-
-*/
-
 ```
 
 # supabase\functions\generate-stream-token\index.ts
@@ -10649,6 +10810,18 @@ exports[`renders correctly 1`] = `
 
 ```
 
+# assets\images\logo\logo_crushy@3x.png
+
+This is a binary file of the type: Image
+
+# assets\images\logo\logo_crushy@2x.png
+
+This is a binary file of the type: Image
+
+# assets\images\logo\logo_crushy.png
+
+This is a binary file of the type: Image
+
 # assets\images\onboarding\onboarding5@3x.png
 
 This is a binary file of the type: Image
@@ -10718,54 +10891,6 @@ This is a binary file of the type: Image
 This is a binary file of the type: Image
 
 # assets\images\dummies\dummy1.png
-
-This is a binary file of the type: Image
-
-# assets\images\logo\logo_crushy@3x.png
-
-This is a binary file of the type: Image
-
-# assets\images\logo\logo_crushy@2x.png
-
-This is a binary file of the type: Image
-
-# assets\images\logo\logo_crushy.png
-
-This is a binary file of the type: Image
-
-# assets\images\buttons\buttonMatchingLike@3x.png
-
-This is a binary file of the type: Image
-
-# assets\images\buttons\buttonMatchingLike@2x.png
-
-This is a binary file of the type: Image
-
-# assets\images\buttons\buttonMatchingLike.png
-
-This is a binary file of the type: Image
-
-# assets\images\buttons\buttonMatchingDislike@3x.png
-
-This is a binary file of the type: Image
-
-# assets\images\buttons\buttonMatchingDislike@2x.png
-
-This is a binary file of the type: Image
-
-# assets\images\buttons\buttonMatchingDislike.png
-
-This is a binary file of the type: Image
-
-# assets\images\buttons\buttonMatchingChat@3x.png
-
-This is a binary file of the type: Image
-
-# assets\images\buttons\buttonMatchingChat@2x.png
-
-This is a binary file of the type: Image
-
-# assets\images\buttons\buttonMatchingChat.png
 
 This is a binary file of the type: Image
 
@@ -10886,6 +11011,42 @@ This is a binary file of the type: Image
 This is a binary file of the type: Image
 
 # assets\images\icons\iconSharedInterest.png
+
+This is a binary file of the type: Image
+
+# assets\images\buttons\buttonMatchingLike@3x.png
+
+This is a binary file of the type: Image
+
+# assets\images\buttons\buttonMatchingLike@2x.png
+
+This is a binary file of the type: Image
+
+# assets\images\buttons\buttonMatchingLike.png
+
+This is a binary file of the type: Image
+
+# assets\images\buttons\buttonMatchingDislike@3x.png
+
+This is a binary file of the type: Image
+
+# assets\images\buttons\buttonMatchingDislike@2x.png
+
+This is a binary file of the type: Image
+
+# assets\images\buttons\buttonMatchingDislike.png
+
+This is a binary file of the type: Image
+
+# assets\images\buttons\buttonMatchingChat@3x.png
+
+This is a binary file of the type: Image
+
+# assets\images\buttons\buttonMatchingChat@2x.png
+
+This is a binary file of the type: Image
+
+# assets\images\buttons\buttonMatchingChat.png
 
 This is a binary file of the type: Image
 

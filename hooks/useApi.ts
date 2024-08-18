@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { api } from '@/api/supabaseApi';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/lib/supabase';
 
 export const useProfile = () => {
   const session = useAuth();
@@ -22,18 +23,28 @@ export const useProfile = () => {
     } finally {
         setLoading(false);
     }
-}, [session]);
+  }, [session]);
 
-const fetchProfileDetails = useCallback(async (userId: string) => {
+  const fetchProfileDetails = useCallback(async (userId: string) => {
     if (!userId) return null;
     try {
-        const data = await api.getProfileDetails(userId);
-        console.log('Fetched Profile Details:', data);
+        const { data, error } = await supabase
+            .from('profile_details')
+            .select('*')
+            .eq('id', userId)
+            .single();
+
+        if (error) {
+            if (error.code === 'PGRST116') {
+                console.log(`No profile details found for user ${userId}`);
+                return null; // Return null instead of throwing an error
+            }
+            throw error;
+        }
         return data;
     } catch (err) {
         console.error('Error fetching profile details:', err);
-        setError(err);
-        return null;
+        return null; // Return null on error
     }
 }, []);
 
@@ -50,8 +61,12 @@ export const usePotentialMatches = () => {
     if (!session?.user?.id) return;
     setLoading(true);
     try {
-      const data = await api.getPotentialMatches(session.user.id, limit);
-      setMatches(data);
+      const { data, error } = await supabase.rpc('get_potential_matches', {
+        user_id: session.user.id,
+        limit_count: limit,
+      });
+      if (error) throw error;
+      setMatches(data || []);
     } catch (err) {
       setError(err);
     } finally {
@@ -59,32 +74,38 @@ export const usePotentialMatches = () => {
     }
   }, [session]);
 
-
-
   const fetchDiveMatches = useCallback(async (limit = 10) => {
     if (!session?.user?.id) return;
     setLoading(true);
     try {
-        const data = await api.getPotentialDiveMatches(session.user.id, limit);
-        console.log('Fetched Dive Matches:', data);
-        setMatches(data);
+      const { data, error } = await supabase.rpc('get_potential_dive_matches', {
+        user_id: session.user.id,
+        limit_count: limit,
+      });
+      if (error) throw error;
+      setMatches(data || []);
     } catch (err) {
-        console.error('Error fetching dive matches:', err);
-        setError(err);
+      setError(err);
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
-}, [session]);
+  }, [session]);
 
   const recordAction = useCallback(async (matchedUserId: string, action: 'like' | 'dislike') => {
     if (!session?.user?.id) return;
     try {
-      await api.recordMatchAction(session.user.id, matchedUserId, action);
+      const { data, error } = await supabase.rpc('handle_match_action', {
+        acting_user_id: session.user.id,
+        target_user_id: matchedUserId,
+        match_action: action === 'like' ? 1 : 0,
+      });
+      if (error) throw error;
+      return data;
     } catch (err) {
       setError(err);
+      throw err;
     }
   }, [session]);
 
   return { matches, loading, error, fetchMatches, fetchDiveMatches, recordAction };
 };
-

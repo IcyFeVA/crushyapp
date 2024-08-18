@@ -75,6 +75,8 @@ getPotentialDiveMatches: async (userId: string, limit: number) => {
         target_user_id: matchedUserId,
         match_action: action === 'like' ? 1 : 0,
       });
+      console.log(userId, matchedUserId, action);
+      
     
     if (error) {
       console.error('Error in handle_match_action:', error);
