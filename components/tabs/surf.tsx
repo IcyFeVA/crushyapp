@@ -63,8 +63,7 @@ export default function Surf() {
             moveToNextMatch();
         }
     } catch (error) {
-        console.error('Error in handleAction:', error);
-        Alert.alert("Error", "An error occurred while processing your action. Please try again.");
+        console.error("Error in handleAction:", error);
     }
 }, [session, currentMatch, recordAction, moveToNextMatch]);
 

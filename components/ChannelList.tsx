@@ -248,10 +248,27 @@ export default function Inbox() {
     }
   }, [resetNotifications]);
 
+
+
   return (
-    <Tab.Navigator>
+    <Tab.Navigator
+      initialRouteName="Chats"
+      screenOptions={{
+        tabBarScrollEnabled: false,
+        tabBarInactiveTintColor: Colors.light.text,
+        tabBarActiveTintColor: Colors.light.text,
+        tabBarLabelStyle: { fontSize: 14, fontWeight: "bold" },
+        tabBarIndicatorStyle: {
+          backgroundColor: Colors.light.tertiary,
+          height: 4,
+        },
+        tabBarAndroidRipple: { borderless: false },
+        // tabBarStyle: { backgroundColor: "powderblue" },
+        // swipeEnabled: true,
+      }}
+    >
       <Tab.Screen
-        name="Matches"
+        name="Inbox"
         component={MatchesTab}
         options={{
           tabBarBadge: newMatches > 0 ? newMatches : undefined,

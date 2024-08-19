@@ -89,7 +89,7 @@ export default function RootLayout() {
           console.log("table data", data);
         }
       };
-      //getTables();
+      // getTables();
 
       getData("genderPreference").then((genderPreference) => {
         if (genderPreference === undefined) {
