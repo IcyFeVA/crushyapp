@@ -498,6 +498,9 @@ export default function ChatChannel() {
               value={inputMessage}
               onChangeText={setInputMessage}
               placeholder="Type a message..."
+              inputMode="text"
+              multiline={true}
+              // numberOfLines={3}
             />
             <Pressable style={styles.sendButton} onPress={sendMessage}>
               <Ionicons
@@ -541,6 +544,7 @@ const styles = StyleSheet.create({
   },
   inputContainer: {
     flexDirection: "row",
+    alignItems: "flex-end",
     padding: 10,
     borderTopWidth: 1,
     borderTopColor: Colors.light.tertiary,
@@ -553,6 +557,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     marginRight: 10,
+    textAlignVertical: "top",
+    maxHeight: 100,
   },
   sendButton: {
     backgroundColor: Colors.light.primary,
@@ -560,6 +566,8 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 16,
     justifyContent: "center",
+    minHeight: 48,
+    maxHeight: 48,
   },
   sendButtonText: {
     color: Colors.light.textInverted,

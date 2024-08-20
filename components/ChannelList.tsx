@@ -259,8 +259,8 @@ export default function Inbox() {
         tabBarActiveTintColor: Colors.light.text,
         tabBarLabelStyle: { fontSize: 14, fontWeight: "bold" },
         tabBarIndicatorStyle: {
-          backgroundColor: Colors.light.tertiary,
-          height: 4,
+          backgroundColor: Colors.light.text,
+          height: 2,
         },
         tabBarAndroidRipple: { borderless: false },
         // tabBarStyle: { backgroundColor: "powderblue" },
