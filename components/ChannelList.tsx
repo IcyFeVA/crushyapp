@@ -147,7 +147,7 @@ function MatchesTab() {
   if (loading) {
     return (
       <View style={styles.centerContainer}>
-        <Text>Loading matches...</Text>
+        <Text>Loading...</Text>
       </View>
     );
   }
@@ -161,7 +161,7 @@ function MatchesTab() {
           keyExtractor={(item) => item.id}
         />
       ) : (
-        <Text style={styles.noMatchesText}>No new matches</Text>
+        <Text style={styles.noMatchesText}>Nothing new here...</Text>
       )}
     </View>
   );
@@ -210,7 +210,9 @@ function ChatsTab({ refreshKey, refresh }) {
       }
     >
       <Text style={styles.userName}>{item.other_user_name}</Text>
-      <Text style={styles.lastMessage}>{item.last_message}</Text>
+      <Text numberOfLines={1} style={styles.lastMessage}>
+        {item.last_message}
+      </Text>
     </Pressable>
   );
 
@@ -247,8 +249,6 @@ export default function Inbox() {
       resetNotifications();
     }
   }, [resetNotifications]);
-
-
 
   return (
     <Tab.Navigator
@@ -300,6 +300,7 @@ const styles = StyleSheet.create({
     padding: 15,
     borderBottomWidth: 1,
     borderBottomColor: Colors.light.tertiary,
+    backgroundColor: Colors.light.white,
   },
   userName: {
     fontSize: 16,
