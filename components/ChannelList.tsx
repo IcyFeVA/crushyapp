@@ -17,6 +17,7 @@ import { defaultStyles } from "@/constants/Styles";
 import { supabase } from "@/lib/supabase";
 import { useTabFocus } from "@/hooks/useTabFocus";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { useNotifications } from "@/contexts/NotificationContext";
 
 const Tab = createMaterialTopTabNavigator();
 
@@ -285,6 +286,13 @@ function ChatsTab() {
 }
 
 export default function Inbox() {
+  const { newMatches, unreadMessages, resetNotifications } = useNotifications();
+
+  React.useEffect(() => {
+    // Reset notifications when entering the Inbox
+    resetNotifications();
+  }, [resetNotifications]);
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <Tab.Navigator
@@ -302,8 +310,66 @@ export default function Inbox() {
           swipeEnabled: true,
         }}
       >
-        <Tab.Screen name="Matches" component={MatchesTab} />
-        <Tab.Screen name="Chats" component={ChatsTab} />
+        <Tab.Screen
+          name="Matches"
+          component={MatchesTab}
+          options={{
+            tabBarLabel: ({ color }) => (
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
+                <Text style={{ color, fontWeight: "bold", fontSize: 16 }}>
+                  Inbox
+                </Text>
+                {newMatches > 0 && (
+                  <View
+                    style={{
+                      backgroundColor: Colors.light.primary,
+                      borderRadius: 10,
+                      width: 20,
+                      height: 20,
+                      justifyContent: "center",
+                      alignItems: "center",
+                      marginLeft: 5,
+                    }}
+                  >
+                    <Text style={{ color: "white", fontSize: 12 }}>
+                      {newMatches}
+                    </Text>
+                  </View>
+                )}
+              </View>
+            ),
+          }}
+        />
+        <Tab.Screen
+          name="Chats"
+          component={ChatsTab}
+          options={{
+            tabBarLabel: ({ color }) => (
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
+                <Text style={{ color, fontWeight: "bold", fontSize: 16 }}>
+                  Chats
+                </Text>
+                {unreadMessages == 0 && (
+                  <View
+                    style={{
+                      backgroundColor: Colors.light.primary,
+                      borderRadius: 10,
+                      width: 20,
+                      height: 20,
+                      justifyContent: "center",
+                      alignItems: "center",
+                      marginLeft: 5,
+                    }}
+                  >
+                    <Text style={{ color: "white", fontSize: 12 }}>
+                      {unreadMessages}
+                    </Text>
+                  </View>
+                )}
+              </View>
+            ),
+          }}
+        />
       </Tab.Navigator>
     </GestureHandlerRootView>
   );
