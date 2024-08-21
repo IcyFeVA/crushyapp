@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import {
   View,
   Text,
@@ -180,10 +180,17 @@ function ChatsTab() {
   const navigation = useNavigation();
   const session = useAuth();
   const { refreshKey, refresh } = useTabFocus();
+  const conversationIdsRef = useRef<string[]>([]);
 
   useEffect(() => {
     if (session?.user) {
       fetchConversations();
+      const subscription = subscribeToUserConversations();
+      return () => {
+        if (subscription) {
+          supabase.removeChannel(subscription);
+        }
+      };
     }
   }, [session, refreshKey]);
 
@@ -192,11 +199,48 @@ function ChatsTab() {
       setLoading(true);
       const data = await api.getRecentConversations(session.user.id);
       setConversations(data);
+      conversationIdsRef.current = data.map((conv) => conv.conversation_id);
     } catch (error) {
       console.error("Error fetching conversations:", error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const subscribeToUserConversations = () => {
+    return supabase
+      .channel("user-conversations")
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "messages",
+          filter: `conversation_id=in.(${conversationIdsRef.current.join(
+            ","
+          )})`,
+        },
+        handleNewMessage
+      )
+      .subscribe();
+  };
+
+  const handleNewMessage = async (payload) => {
+    const updatedConversation = await api.getConversation(
+      payload.new.conversation_id
+    );
+    setConversations((prevConversations) => {
+      const index = prevConversations.findIndex(
+        (conv) => conv.conversation_id === payload.new.conversation_id
+      );
+      if (index !== -1) {
+        const newConversations = [...prevConversations];
+        newConversations[index] = updatedConversation;
+        return newConversations;
+      } else {
+        return [updatedConversation, ...prevConversations];
+      }
+    });
   };
 
   const renderConversationItem = ({ item }: { item: Conversation }) => (
@@ -244,6 +288,7 @@ export default function Inbox() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <Tab.Navigator
+        initialRouteName="Chats"
         screenOptions={{
           tabBarScrollEnabled: false,
           tabBarInactiveTintColor: Colors.light.text,
