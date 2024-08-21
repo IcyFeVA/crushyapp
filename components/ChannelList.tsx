@@ -61,13 +61,10 @@ function MatchesTab() {
       const { data, error } = await supabase
         .from("matches")
         .select(
-          `
-          id,
+          `id,
           user2_id,
           profiles_test!matches_user2_id_fkey(name),
-          created_at,
-          conversation_id
-        `
+          created_at`
         )
         .eq("user1_id", session.user.id)
         .not("matched_at", "is", null)
@@ -137,17 +134,10 @@ function MatchesTab() {
       <Pressable
         style={styles.startChatButton}
         onPress={() =>
-          handleStartConversation(
-            item.id,
-            item.user2_id,
-            item.other_user_name,
-            item.conversation_id
-          )
+          handleStartConversation(item.id, item.user2_id, item.other_user_name)
         }
       >
-        <Text style={styles.startChatButtonText}>
-          {item.conversation_id ? "Continue Chat" : "Start Chat"}
-        </Text>
+        <Text style={styles.startChatButtonText}>Start Chat</Text>
       </Pressable>
     </View>
   );

@@ -71,9 +71,11 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({
           event: "INSERT",
           schema: "public",
           table: "messages",
-          filter: `conversation_id=in.(select conversation_id from conversation_participants where user_id=eq.${session.user.id})`,
+          // filter: `conversation_id=in.(select conversation_id from conversation_participants where user_id=eq.${session.user.id})`,
         },
-        async (payload) => {
+        (payload) => {
+          console.log("new message", payload);
+
           if (payload.new.sender_id !== session.user.id) {
             setUnreadMessages((prev) => prev + 1);
           }
