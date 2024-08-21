@@ -173,18 +173,20 @@ function ChatsTab() {
   const { refreshKey, refresh } = useTabFocus();
   const { unreadMessages } = useNotifications();
 
-  useEffect(() => {
-    if (session?.user) {
-      fetchConversations();
-    }
-  }, [session, refreshKey]);
-
   // Add this effect to refetch conversations when there are new unread messages
   React.useEffect(() => {
     if (unreadMessages > 0) {
       fetchConversations();
     }
   }, [unreadMessages]);
+
+  useEffect(() => {
+    if (session?.user) {
+      fetchConversations();
+    } else {
+      setLoading(false); // Set loading to false if there's no session
+    }
+  }, [session, refreshKey]);
 
   const fetchConversations = async () => {
     try {
@@ -245,7 +247,7 @@ export default function Inbox() {
   React.useEffect(() => {
     // Reset notifications when entering the Inbox
     resetNotifications();
-  }, [resetNotifications]);
+  }, []);
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>

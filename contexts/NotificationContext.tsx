@@ -71,6 +71,8 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({
           event: "INSERT",
           schema: "public",
           table: "messages",
+          // TODO: add filter here to avoid fetching all messages (slow)
+          // the filter blow doesn't work. seems to be to complex
           // filter: `conversation_id=in.(select conversation_id from conversation_participants where user_id=eq.${session.user.id})`,
         },
         (payload) => {
