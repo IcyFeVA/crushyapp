@@ -1,5 +1,12 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { View, Text, FlatList, Pressable, StyleSheet } from "react-native";
+import {
+  View,
+  Text,
+  FlatList,
+  Pressable,
+  StyleSheet,
+  ActivityIndicator,
+} from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
@@ -9,7 +16,7 @@ import { Colors } from "@/constants/Colors";
 import { defaultStyles } from "@/constants/Styles";
 import { supabase } from "@/lib/supabase";
 import { useTabFocus } from "@/hooks/useTabFocus";
-import { useNotifications } from "@/hooks/useNotifications";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 const Tab = createMaterialTopTabNavigator();
 
@@ -43,7 +50,7 @@ function MatchesTab() {
   const [loading, setLoading] = useState(true);
   const navigation = useNavigation();
   const session = useAuth();
-  const { newMatches } = useNotifications();
+  const { refreshKey, refresh } = useTabFocus();
 
   const fetchMatches = useCallback(async () => {
     if (!session?.user) return;
@@ -82,7 +89,7 @@ function MatchesTab() {
 
   useEffect(() => {
     fetchMatches();
-  }, [fetchMatches, newMatches]);
+  }, [fetchMatches, refreshKey]);
 
   const handleStartConversation = async (
     matchId: string,
@@ -147,7 +154,7 @@ function MatchesTab() {
   if (loading) {
     return (
       <View style={styles.centerContainer}>
-        <Text>Loading...</Text>
+        <ActivityIndicator size="large" color={Colors.light.primary} />
       </View>
     );
   }
@@ -167,18 +174,12 @@ function MatchesTab() {
   );
 }
 
-function ChatsTab({ refreshKey, refresh }) {
+function ChatsTab() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
   const navigation = useNavigation();
   const session = useAuth();
-  const { unreadMessages } = useNotifications();
-
-  React.useEffect(() => {
-    if (unreadMessages > 0) {
-      fetchConversations();
-    }
-  }, [unreadMessages]);
+  const { refreshKey, refresh } = useTabFocus();
 
   useEffect(() => {
     if (session?.user) {
@@ -219,7 +220,7 @@ function ChatsTab({ refreshKey, refresh }) {
   if (loading) {
     return (
       <View style={styles.centerContainer}>
-        <Text>Loading conversations...</Text>
+        <ActivityIndicator size="large" color={Colors.light.primary} />
       </View>
     );
   }
@@ -240,48 +241,26 @@ function ChatsTab({ refreshKey, refresh }) {
 }
 
 export default function Inbox() {
-  const { newMatches, unreadMessages, resetNotifications } = useNotifications();
-  const { refreshKey, refresh } = useTabFocus();
-
-  React.useEffect(() => {
-    // Reset notifications when entering the Inbox
-    if (resetNotifications) {
-      resetNotifications();
-    }
-  }, [resetNotifications]);
-
   return (
-    <Tab.Navigator
-      initialRouteName="Chats"
-      screenOptions={{
-        tabBarScrollEnabled: false,
-        tabBarInactiveTintColor: Colors.light.text,
-        tabBarActiveTintColor: Colors.light.text,
-        tabBarLabelStyle: { fontSize: 14, fontWeight: "bold" },
-        tabBarIndicatorStyle: {
-          backgroundColor: Colors.light.text,
-          height: 2,
-        },
-        tabBarAndroidRipple: { borderless: false },
-        // tabBarStyle: { backgroundColor: "powderblue" },
-        // swipeEnabled: true,
-      }}
-    >
-      <Tab.Screen
-        name="Inbox"
-        component={MatchesTab}
-        options={{
-          tabBarBadge: newMatches > 0 ? newMatches : undefined,
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <Tab.Navigator
+        screenOptions={{
+          tabBarScrollEnabled: false,
+          tabBarInactiveTintColor: Colors.light.text,
+          tabBarActiveTintColor: Colors.light.text,
+          tabBarLabelStyle: { fontSize: 14, fontWeight: "bold" },
+          tabBarIndicatorStyle: {
+            backgroundColor: Colors.light.text,
+            height: 2,
+          },
+          tabBarAndroidRipple: { borderless: false },
+          swipeEnabled: true,
         }}
-      />
-      <Tab.Screen
-        name="Chats"
-        component={ChatsTab}
-        options={{
-          tabBarBadge: unreadMessages > 0 ? unreadMessages : undefined,
-        }}
-      />
-    </Tab.Navigator>
+      >
+        <Tab.Screen name="Matches" component={MatchesTab} />
+        <Tab.Screen name="Chats" component={ChatsTab} />
+      </Tab.Navigator>
+    </GestureHandlerRootView>
   );
 }
 

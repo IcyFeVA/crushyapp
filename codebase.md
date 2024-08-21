@@ -1622,71 +1622,6 @@ export const getFieldOptions = (field, language = 'en') => {
 }; 
 ```
 
-# contexts\NotificationContext.tsx
-
-```tsx
-// contexts/NotificationContext.ts
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  ReactNode,
-} from "react";
-import { useRealtimeSubscriptions } from "@/hooks/useRealtimeSubscriptions";
-
-interface NotificationContextType {
-  totalNotifications: number;
-  newMatches: number;
-  unreadMessages: number;
-  resetNotifications: () => void;
-}
-
-const NotificationContext = createContext<NotificationContextType | undefined>(
-  undefined
-);
-
-export const NotificationProvider: React.FC<{ children: ReactNode }> = ({
-  children,
-}) => {
-  const { newMatches, unreadMessages } = useRealtimeSubscriptions();
-  const [totalNotifications, setTotalNotifications] = useState(0);
-
-  useEffect(() => {
-    setTotalNotifications(newMatches + unreadMessages);
-  }, [newMatches, unreadMessages]);
-
-  const resetNotifications = () => {
-    setTotalNotifications(0);
-    // You might want to add logic here to reset newMatches and unreadMessages as well
-  };
-
-  const value = {
-    totalNotifications,
-    newMatches,
-    unreadMessages,
-    resetNotifications,
-  };
-
-  return (
-    <NotificationContext.Provider value={value}>
-      {children}
-    </NotificationContext.Provider>
-  );
-};
-
-export const useNotifications = (): NotificationContextType => {
-  const context = useContext(NotificationContext);
-  if (context === undefined) {
-    throw new Error(
-      "useNotifications must be used within a NotificationProvider"
-    );
-  }
-  return context;
-};
-
-```
-
 # hooks\useWarmUpBrowser.ts
 
 ```ts
@@ -2163,6 +2098,71 @@ export const usePotentialMatches = () => {
 
   return { matches, loading, error, fetchMatches, fetchDiveMatches, recordAction };
 };
+```
+
+# contexts\NotificationContext.tsx
+
+```tsx
+// contexts/NotificationContext.ts
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
+import { useRealtimeSubscriptions } from "@/hooks/useRealtimeSubscriptions";
+
+interface NotificationContextType {
+  totalNotifications: number;
+  newMatches: number;
+  unreadMessages: number;
+  resetNotifications: () => void;
+}
+
+const NotificationContext = createContext<NotificationContextType | undefined>(
+  undefined
+);
+
+export const NotificationProvider: React.FC<{ children: ReactNode }> = ({
+  children,
+}) => {
+  const { newMatches, unreadMessages } = useRealtimeSubscriptions();
+  const [totalNotifications, setTotalNotifications] = useState(0);
+
+  useEffect(() => {
+    setTotalNotifications(newMatches + unreadMessages);
+  }, [newMatches, unreadMessages]);
+
+  const resetNotifications = () => {
+    setTotalNotifications(0);
+    // You might want to add logic here to reset newMatches and unreadMessages as well
+  };
+
+  const value = {
+    totalNotifications,
+    newMatches,
+    unreadMessages,
+    resetNotifications,
+  };
+
+  return (
+    <NotificationContext.Provider value={value}>
+      {children}
+    </NotificationContext.Provider>
+  );
+};
+
+export const useNotifications = (): NotificationContextType => {
+  const context = useContext(NotificationContext);
+  if (context === undefined) {
+    throw new Error(
+      "useNotifications must be used within a NotificationProvider"
+    );
+  }
+  return context;
+};
+
 ```
 
 # constants\ToastConfig.ts
@@ -4095,6 +4095,9 @@ export default function ChatChannel() {
               value={inputMessage}
               onChangeText={setInputMessage}
               placeholder="Type a message..."
+              inputMode="text"
+              multiline={true}
+              // numberOfLines={3}
             />
             <Pressable style={styles.sendButton} onPress={sendMessage}>
               <Ionicons
@@ -4138,6 +4141,7 @@ const styles = StyleSheet.create({
   },
   inputContainer: {
     flexDirection: "row",
+    alignItems: "flex-end",
     padding: 10,
     borderTopWidth: 1,
     borderTopColor: Colors.light.tertiary,
@@ -4150,6 +4154,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     marginRight: 10,
+    textAlignVertical: "top",
+    maxHeight: 100,
   },
   sendButton: {
     backgroundColor: Colors.light.primary,
@@ -4157,6 +4163,8 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 16,
     justifyContent: "center",
+    minHeight: 48,
+    maxHeight: 48,
   },
   sendButtonText: {
     color: Colors.light.textInverted,
@@ -4394,7 +4402,7 @@ function MatchesTab() {
   if (loading) {
     return (
       <View style={styles.centerContainer}>
-        <Text>Loading matches...</Text>
+        <Text>Loading...</Text>
       </View>
     );
   }
@@ -4408,7 +4416,7 @@ function MatchesTab() {
           keyExtractor={(item) => item.id}
         />
       ) : (
-        <Text style={styles.noMatchesText}>No new matches</Text>
+        <Text style={styles.noMatchesText}>Nothing new here...</Text>
       )}
     </View>
   );
@@ -4457,7 +4465,9 @@ function ChatsTab({ refreshKey, refresh }) {
       }
     >
       <Text style={styles.userName}>{item.other_user_name}</Text>
-      <Text style={styles.lastMessage}>{item.last_message}</Text>
+      <Text numberOfLines={1} style={styles.lastMessage}>
+        {item.last_message}
+      </Text>
     </Pressable>
   );
 
@@ -4496,9 +4506,24 @@ export default function Inbox() {
   }, [resetNotifications]);
 
   return (
-    <Tab.Navigator>
+    <Tab.Navigator
+      initialRouteName="Chats"
+      screenOptions={{
+        tabBarScrollEnabled: false,
+        tabBarInactiveTintColor: Colors.light.text,
+        tabBarActiveTintColor: Colors.light.text,
+        tabBarLabelStyle: { fontSize: 14, fontWeight: "bold" },
+        tabBarIndicatorStyle: {
+          backgroundColor: Colors.light.text,
+          height: 2,
+        },
+        tabBarAndroidRipple: { borderless: false },
+        // tabBarStyle: { backgroundColor: "powderblue" },
+        // swipeEnabled: true,
+      }}
+    >
       <Tab.Screen
-        name="Matches"
+        name="Inbox"
         component={MatchesTab}
         options={{
           tabBarBadge: newMatches > 0 ? newMatches : undefined,
@@ -4530,6 +4555,7 @@ const styles = StyleSheet.create({
     padding: 15,
     borderBottomWidth: 1,
     borderBottomColor: Colors.light.tertiary,
+    backgroundColor: Colors.light.white,
   },
   userName: {
     fontSize: 16,
@@ -7529,7 +7555,205 @@ BEGIN
     LIMIT get_potential_matches.limit_count;
 END;
 $$ LANGUAGE plpgsql;
+
+
+
+
+DECLARE
+  existing_match_id UUID;
+  is_new_match BOOLEAN := FALSE;
+BEGIN
+  -- Check if a match record already exists
+  SELECT id INTO existing_match_id
+  FROM matches
+  WHERE (user1_id = acting_user_id AND user2_id = target_user_id)
+     OR (user1_id = target_user_id AND user2_id = acting_user_id);
+
+  IF existing_match_id IS NULL THEN
+    -- Create a new match record
+    INSERT INTO matches (user1_id, user2_id, user1_action, matched_at)
+    VALUES (
+      acting_user_id, 
+      target_user_id, 
+      match_action, 
+      CASE WHEN match_action = 1 THEN NOW() ELSE NULL END
+    );
+    
+    -- Check if this new action resulted in a match
+    SELECT EXISTS(
+      SELECT 1 FROM matches 
+      WHERE user2_id = acting_user_id AND user1_id = target_user_id AND user1_action = 1
+    ) INTO is_new_match;
+  ELSE
+    -- Update the existing match record
+    UPDATE matches
+    SET 
+      user1_action = CASE WHEN user1_id = acting_user_id THEN match_action ELSE user1_action END,
+      user2_action = CASE WHEN user2_id = acting_user_id THEN match_action ELSE user2_action END,
+      matched_at = CASE 
+        WHEN (
+          (user1_id = acting_user_id AND user2_action = 1 AND match_action = 1) OR
+          (user2_id = acting_user_id AND user1_action = 1 AND match_action = 1)
+        ) THEN NOW()
+        ELSE matched_at
+      END
+    WHERE id = existing_match_id
+    RETURNING (user1_action = 1 AND user2_action = 1) INTO is_new_match;
+  END IF;
+
+  RETURN is_new_match;
+END;
+
+
+
+CREATE TABLE conversations (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user1_id UUID NOT NULL REFERENCES profiles_test(id),
+  user2_id UUID NOT NULL REFERENCES profiles_test(id),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  last_message_at TIMESTAMP WITH TIME ZONE
+);
 ```
+
+# assets\sounds\notification.wav
+
+This is a binary file of the type: Binary
+
+# assets\images\splash.png
+
+This is a binary file of the type: Image
+
+# assets\images\react-logo@3x.png
+
+This is a binary file of the type: Image
+
+# assets\images\react-logo@2x.png
+
+This is a binary file of the type: Image
+
+# assets\images\react-logo.png
+
+This is a binary file of the type: Image
+
+# assets\images\partial-react-logo.png
+
+This is a binary file of the type: Image
+
+# assets\images\icon.png
+
+This is a binary file of the type: Image
+
+# assets\images\favicon.png
+
+This is a binary file of the type: Image
+
+# assets\images\adaptive-icon.png
+
+This is a binary file of the type: Image
+
+# assets\fonts\RobotoSlab-Thin.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\RobotoSlab-SemiBold.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\RobotoSlab-Regular.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\RobotoSlab-Medium.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\RobotoSlab-Light.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\RobotoSlab-ExtraLight.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\RobotoSlab-ExtraBold.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\RobotoSlab-Bold.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\RobotoSlab-Black.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-SemiBoldItalic.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-SemiBold.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-Regular.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-MediumItalic.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-Medium.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-LightItalic.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-Light.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-Italic.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-ExtraLightItalic.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-ExtraLight.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-ExtraBoldItalic.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-ExtraBold.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-BoldItalic.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-Bold.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\Copernicus-Extrabold.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\Copernicus-Book.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\Copernicus-Bold.ttf
+
+This is a binary file of the type: Binary
 
 # components\__tests__\ThemedText-test.tsx
 
@@ -7545,6 +7769,141 @@ it(`renders correctly`, () => {
   expect(tree).toMatchSnapshot();
 });
 
+```
+
+# components\ui\Textfields.tsx
+
+```tsx
+
+import { TextInput } from 'react-native';
+import { styled } from 'nativewind';
+
+const Textfield = styled(TextInput, 'w-full radius-4 text-lg bg-gray-100 p-2 rounded-lg h-12 border-2 border-gray-200');
+
+
+export { Textfield }
+```
+
+# components\ui\Containers.tsx
+
+```tsx
+
+import { View } from 'react-native';
+import { styled } from 'nativewind';
+
+const Pageview = styled(View, 'p-6');
+
+
+export { Pageview }
+
+
+```
+
+# components\ui\Buttons.tsx
+
+```tsx
+
+import { Text, Button } from 'react-native-ui-lib';
+import { styled } from 'nativewind';
+
+const PrimaryButton = styled(Button, 'w-full h-12 rounded-lg justify-center bg-primary-600 border-2 border-primary-400 shadow active:shadow-none');
+const PrimaryButtonText = styled(Text, 'uppercase text-center text-white font-bold');
+
+const SecondaryButton = styled(Button, 'w-full h-12 rounded-lg justify-center bg-white border-2 border-primary-200 shadow active:shadow-none');
+const SecondaryButtonText = styled(Text, 'uppercase text-center text-primary-700 font-bold');
+
+
+export { PrimaryButton, PrimaryButtonText, SecondaryButton, SecondaryButtonText }
+```
+
+# components\navigation\TabBarIcon.tsx
+
+```tsx
+// You can explore the built-in icon families and icons on the web at https://icons.expo.fyi/
+
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { type IconProps } from '@expo/vector-icons/build/createIconSet';
+import { type ComponentProps } from 'react';
+
+export function TabBarIcon({ style, ...rest }: IconProps<ComponentProps<typeof Ionicons>['name']>) {
+  return <Ionicons size={28} style={[{ marginBottom: -3 }, style]} {...rest} />;
+}
+
+```
+
+# components\onboarding\StepInterests.tsx
+
+```tsx
+import React, { useCallback, useState, useEffect } from 'react';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
+import { Checkbox } from 'react-native-ui-lib';
+import { Colors } from '@/constants/Colors';
+import { defaultStyles } from '@/constants/Styles';
+import hobbiesInterests from '@/constants/Interests';
+import Spacer from '@/components/Spacer';
+
+const StepInterests = ({ onInterestsSelected }) => {
+    const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
+    const flattenedInterests = React.useMemo(() => hobbiesInterests.flat(), []);
+
+    const handleInterestToggle = useCallback((interest: string) => {
+        setSelectedInterests(prevInterests => {
+            if (prevInterests.includes(interest)) {
+                return prevInterests.filter(i => i !== interest);
+            } else {
+                return [...prevInterests, interest];
+            }
+        });
+    }, []);
+
+    useEffect(() => {
+        onInterestsSelected(selectedInterests);
+    }, [selectedInterests, onInterestsSelected]);
+
+    const renderItem = useCallback(({ item }) => (
+        <Pressable onPress={() => handleInterestToggle(item.value)}>
+            <Checkbox
+                color={selectedInterests.includes(item.value) ? Colors.light.text : Colors.light.tertiary}
+                label={item.label}
+                value={selectedInterests.includes(item.value)}
+                containerStyle={[defaultStyles.checkboxButton, { borderColor: selectedInterests.includes(item.value) ? Colors.light.text : Colors.light.tertiary }]}
+                labelStyle={defaultStyles.checkboxButtonLabel}
+                onValueChange={() => handleInterestToggle(item.value)}
+            />
+        </Pressable>
+    ), [selectedInterests, handleInterestToggle]);
+
+    return (
+        <View style={styles.container}>
+            <Text style={defaultStyles.h2}>Interests ({selectedInterests.length})</Text>
+            <Spacer height={8} />
+            <Text style={defaultStyles.body}>
+                This helps us find people with the same hobbies and interests.
+            </Text>
+            <Spacer height={24} />
+            <FlashList
+                data={flattenedInterests}
+                renderItem={renderItem}
+                estimatedItemSize={75}
+                keyExtractor={(item) => item.value}
+                contentContainerStyle={styles.listContainer}
+            />
+        </View>
+    );
+};
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        padding: 16,
+    },
+    listContainer: {
+        paddingBottom: 16,
+    },
+});
+
+export default StepInterests;
 ```
 
 # components\tabs\surf.tsx
@@ -7615,8 +7974,7 @@ export default function Surf() {
             moveToNextMatch();
         }
     } catch (error) {
-        console.error('Error in handleAction:', error);
-        Alert.alert("Error", "An error occurred while processing your action. Please try again.");
+        console.error("Error in handleAction:", error);
     }
 }, [session, currentMatch, recordAction, moveToNextMatch]);
 
@@ -8913,177 +9271,6 @@ const styles = StyleSheet.create({
 
 ```
 
-# components\ui\Textfields.tsx
-
-```tsx
-
-import { TextInput } from 'react-native';
-import { styled } from 'nativewind';
-
-const Textfield = styled(TextInput, 'w-full radius-4 text-lg bg-gray-100 p-2 rounded-lg h-12 border-2 border-gray-200');
-
-
-export { Textfield }
-```
-
-# components\ui\Containers.tsx
-
-```tsx
-
-import { View } from 'react-native';
-import { styled } from 'nativewind';
-
-const Pageview = styled(View, 'p-6');
-
-
-export { Pageview }
-
-
-```
-
-# components\ui\Buttons.tsx
-
-```tsx
-
-import { Text, Button } from 'react-native-ui-lib';
-import { styled } from 'nativewind';
-
-const PrimaryButton = styled(Button, 'w-full h-12 rounded-lg justify-center bg-primary-600 border-2 border-primary-400 shadow active:shadow-none');
-const PrimaryButtonText = styled(Text, 'uppercase text-center text-white font-bold');
-
-const SecondaryButton = styled(Button, 'w-full h-12 rounded-lg justify-center bg-white border-2 border-primary-200 shadow active:shadow-none');
-const SecondaryButtonText = styled(Text, 'uppercase text-center text-primary-700 font-bold');
-
-
-export { PrimaryButton, PrimaryButtonText, SecondaryButton, SecondaryButtonText }
-```
-
-# components\onboarding\StepInterests.tsx
-
-```tsx
-import React, { useCallback, useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
-import { FlashList } from '@shopify/flash-list';
-import { Checkbox } from 'react-native-ui-lib';
-import { Colors } from '@/constants/Colors';
-import { defaultStyles } from '@/constants/Styles';
-import hobbiesInterests from '@/constants/Interests';
-import Spacer from '@/components/Spacer';
-
-const StepInterests = ({ onInterestsSelected }) => {
-    const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
-    const flattenedInterests = React.useMemo(() => hobbiesInterests.flat(), []);
-
-    const handleInterestToggle = useCallback((interest: string) => {
-        setSelectedInterests(prevInterests => {
-            if (prevInterests.includes(interest)) {
-                return prevInterests.filter(i => i !== interest);
-            } else {
-                return [...prevInterests, interest];
-            }
-        });
-    }, []);
-
-    useEffect(() => {
-        onInterestsSelected(selectedInterests);
-    }, [selectedInterests, onInterestsSelected]);
-
-    const renderItem = useCallback(({ item }) => (
-        <Pressable onPress={() => handleInterestToggle(item.value)}>
-            <Checkbox
-                color={selectedInterests.includes(item.value) ? Colors.light.text : Colors.light.tertiary}
-                label={item.label}
-                value={selectedInterests.includes(item.value)}
-                containerStyle={[defaultStyles.checkboxButton, { borderColor: selectedInterests.includes(item.value) ? Colors.light.text : Colors.light.tertiary }]}
-                labelStyle={defaultStyles.checkboxButtonLabel}
-                onValueChange={() => handleInterestToggle(item.value)}
-            />
-        </Pressable>
-    ), [selectedInterests, handleInterestToggle]);
-
-    return (
-        <View style={styles.container}>
-            <Text style={defaultStyles.h2}>Interests ({selectedInterests.length})</Text>
-            <Spacer height={8} />
-            <Text style={defaultStyles.body}>
-                This helps us find people with the same hobbies and interests.
-            </Text>
-            <Spacer height={24} />
-            <FlashList
-                data={flattenedInterests}
-                renderItem={renderItem}
-                estimatedItemSize={75}
-                keyExtractor={(item) => item.value}
-                contentContainerStyle={styles.listContainer}
-            />
-        </View>
-    );
-};
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        padding: 16,
-    },
-    listContainer: {
-        paddingBottom: 16,
-    },
-});
-
-export default StepInterests;
-```
-
-# components\navigation\TabBarIcon.tsx
-
-```tsx
-// You can explore the built-in icon families and icons on the web at https://icons.expo.fyi/
-
-import Ionicons from '@expo/vector-icons/Ionicons';
-import { type IconProps } from '@expo/vector-icons/build/createIconSet';
-import { type ComponentProps } from 'react';
-
-export function TabBarIcon({ style, ...rest }: IconProps<ComponentProps<typeof Ionicons>['name']>) {
-  return <Ionicons size={28} style={[{ marginBottom: -3 }, style]} {...rest} />;
-}
-
-```
-
-# assets\sounds\notification.wav
-
-This is a binary file of the type: Binary
-
-# assets\images\splash.png
-
-This is a binary file of the type: Image
-
-# assets\images\react-logo@3x.png
-
-This is a binary file of the type: Image
-
-# assets\images\react-logo@2x.png
-
-This is a binary file of the type: Image
-
-# assets\images\react-logo.png
-
-This is a binary file of the type: Image
-
-# assets\images\partial-react-logo.png
-
-This is a binary file of the type: Image
-
-# assets\images\icon.png
-
-This is a binary file of the type: Image
-
-# assets\images\favicon.png
-
-This is a binary file of the type: Image
-
-# assets\images\adaptive-icon.png
-
-This is a binary file of the type: Image
-
 # app-example\(tabs)\_layout.tsx
 
 ```tsx
@@ -9310,110 +9497,6 @@ const styles = StyleSheet.create({
 });
 
 ```
-
-# assets\fonts\RobotoSlab-Thin.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\RobotoSlab-SemiBold.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\RobotoSlab-Regular.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\RobotoSlab-Medium.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\RobotoSlab-Light.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\RobotoSlab-ExtraLight.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\RobotoSlab-ExtraBold.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\RobotoSlab-Bold.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\RobotoSlab-Black.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-SemiBoldItalic.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-SemiBold.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-Regular.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-MediumItalic.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-Medium.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-LightItalic.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-Light.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-Italic.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-ExtraLightItalic.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-ExtraLight.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-ExtraBoldItalic.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-ExtraBold.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-BoldItalic.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-Bold.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\Copernicus-Extrabold.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\Copernicus-Book.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\Copernicus-Bold.ttf
-
-This is a binary file of the type: Binary
 
 # app\searchFilters\index.tsx
 
@@ -10558,48 +10641,6 @@ serve(async (req) => {
 })
 ```
 
-# supabase\functions\invoke-process-match-notifications\index.ts
-
-```ts
-// Follow this setup guide to integrate the Deno language server with your editor:
-// https://deno.land/manual/getting_started/setup_your_environment
-// This enables autocomplete, go to definition, etc.
-
-// Setup type definitions for built-in Supabase Runtime APIs
-import "https://esm.sh/@supabase/functions-js/src/edge-runtime.d.ts"
-
-console.log("Hello from invoke function!")
-
-Deno.serve(async (req) => {
-  const supabaseUrl = Deno.env.get('SUPABASE_URL')!
-  const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!
-
-  const response = await fetch(`${supabaseUrl}/functions/v1/process-match-notifications`, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${supabaseAnonKey}`,
-      'Content-Type': 'application/json'
-    }
-  })
-
-  const data = await response.json()
-  return new Response(JSON.stringify(data), { status: response.status })
-})
-
-/* To invoke locally:
-
-  1. Run `supabase start` (see: https://supabase.com/docs/reference/cli/supabase-start)
-  2. Make an HTTP request:
-
-  curl -i --location --request POST 'http://127.0.0.1:54321/functions/v1/invoke-process-match-notifications' \
-    --header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0' \
-    --header 'Content-Type: application/json' \
-    --data '{"name":"Functions"}'
-
-*/
-
-```
-
 # supabase\functions\process-match-notifications\index.ts
 
 ```ts
@@ -10692,6 +10733,48 @@ Deno.serve(async (req) => {
 })
 ```
 
+# supabase\functions\invoke-process-match-notifications\index.ts
+
+```ts
+// Follow this setup guide to integrate the Deno language server with your editor:
+// https://deno.land/manual/getting_started/setup_your_environment
+// This enables autocomplete, go to definition, etc.
+
+// Setup type definitions for built-in Supabase Runtime APIs
+import "https://esm.sh/@supabase/functions-js/src/edge-runtime.d.ts"
+
+console.log("Hello from invoke function!")
+
+Deno.serve(async (req) => {
+  const supabaseUrl = Deno.env.get('SUPABASE_URL')!
+  const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!
+
+  const response = await fetch(`${supabaseUrl}/functions/v1/process-match-notifications`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${supabaseAnonKey}`,
+      'Content-Type': 'application/json'
+    }
+  })
+
+  const data = await response.json()
+  return new Response(JSON.stringify(data), { status: response.status })
+})
+
+/* To invoke locally:
+
+  1. Run `supabase start` (see: https://supabase.com/docs/reference/cli/supabase-start)
+  2. Make an HTTP request:
+
+  curl -i --location --request POST 'http://127.0.0.1:54321/functions/v1/invoke-process-match-notifications' \
+    --header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0' \
+    --header 'Content-Type: application/json' \
+    --data '{"name":"Functions"}'
+
+*/
+
+```
+
 # supabase\functions\generate-stream-token\index.ts
 
 ```ts
@@ -10780,36 +10863,6 @@ serve(async (req) => {
 
 ```
 
-# components\__tests__\__snapshots__\ThemedText-test.tsx.snap
-
-```snap
-// Jest Snapshot v1, https://goo.gl/fbAQLP
-
-exports[`renders correctly 1`] = `
-<Text
-  style={
-    [
-      {
-        "color": "#11181C",
-      },
-      {
-        "fontSize": 16,
-        "lineHeight": 24,
-      },
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-    ]
-  }
->
-  Snapshot test!
-</Text>
-`;
-
-```
-
 # assets\images\onboarding\onboarding5@3x.png
 
 This is a binary file of the type: Image
@@ -10867,18 +10920,6 @@ This is a binary file of the type: Image
 This is a binary file of the type: Image
 
 # assets\images\onboarding\onboarding1.png
-
-This is a binary file of the type: Image
-
-# assets\images\logo\logo_crushy@3x.png
-
-This is a binary file of the type: Image
-
-# assets\images\logo\logo_crushy@2x.png
-
-This is a binary file of the type: Image
-
-# assets\images\logo\logo_crushy.png
 
 This is a binary file of the type: Image
 
@@ -11014,6 +11055,18 @@ This is a binary file of the type: Image
 
 This is a binary file of the type: Image
 
+# assets\images\logo\logo_crushy@3x.png
+
+This is a binary file of the type: Image
+
+# assets\images\logo\logo_crushy@2x.png
+
+This is a binary file of the type: Image
+
+# assets\images\logo\logo_crushy.png
+
+This is a binary file of the type: Image
+
 # assets\images\buttons\buttonMatchingLike@3x.png
 
 This is a binary file of the type: Image
@@ -11049,4 +11102,34 @@ This is a binary file of the type: Image
 # assets\images\buttons\buttonMatchingChat.png
 
 This is a binary file of the type: Image
+
+# components\__tests__\__snapshots__\ThemedText-test.tsx.snap
+
+```snap
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`renders correctly 1`] = `
+<Text
+  style={
+    [
+      {
+        "color": "#11181C",
+      },
+      {
+        "fontSize": 16,
+        "lineHeight": 24,
+      },
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+    ]
+  }
+>
+  Snapshot test!
+</Text>
+`;
+
+```
 
