@@ -181,67 +181,31 @@ function ChatsTab() {
   const navigation = useNavigation();
   const session = useAuth();
   const { refreshKey, refresh } = useTabFocus();
-  const conversationIdsRef = useRef<string[]>([]);
+  const { unreadMessages } = useNotifications();
 
   useEffect(() => {
     if (session?.user) {
       fetchConversations();
-      const subscription = subscribeToUserConversations();
-      return () => {
-        if (subscription) {
-          supabase.removeChannel(subscription);
-        }
-      };
     }
   }, [session, refreshKey]);
+
+  // Add this effect to refetch conversations when there are new unread messages
+  React.useEffect(() => {
+    if (unreadMessages > 0) {
+      fetchConversations();
+    }
+  }, [unreadMessages]);
 
   const fetchConversations = async () => {
     try {
       setLoading(true);
       const data = await api.getRecentConversations(session.user.id);
       setConversations(data);
-      conversationIdsRef.current = data.map((conv) => conv.conversation_id);
     } catch (error) {
       console.error("Error fetching conversations:", error);
     } finally {
       setLoading(false);
     }
-  };
-
-  const subscribeToUserConversations = () => {
-    return supabase
-      .channel("user-conversations")
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "messages",
-          filter: `conversation_id=in.(${conversationIdsRef.current.join(
-            ","
-          )})`,
-        },
-        handleNewMessage
-      )
-      .subscribe();
-  };
-
-  const handleNewMessage = async (payload) => {
-    const updatedConversation = await api.getConversation(
-      payload.new.conversation_id
-    );
-    setConversations((prevConversations) => {
-      const index = prevConversations.findIndex(
-        (conv) => conv.conversation_id === payload.new.conversation_id
-      );
-      if (index !== -1) {
-        const newConversations = [...prevConversations];
-        newConversations[index] = updatedConversation;
-        return newConversations;
-      } else {
-        return [updatedConversation, ...prevConversations];
-      }
-    });
   };
 
   const renderConversationItem = ({ item }: { item: Conversation }) => (
@@ -265,7 +229,7 @@ function ChatsTab() {
   if (loading) {
     return (
       <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color={Colors.light.primary} />
+        <Text>Loading conversations...</Text>
       </View>
     );
   }
@@ -347,9 +311,9 @@ export default function Inbox() {
             tabBarLabel: ({ color }) => (
               <View style={{ flexDirection: "row", alignItems: "center" }}>
                 <Text style={{ color, fontWeight: "bold", fontSize: 16 }}>
-                  Chats
+                  Conversations
                 </Text>
-                {unreadMessages == 0 && (
+                {unreadMessages > 0 && (
                   <View
                     style={{
                       backgroundColor: Colors.light.primary,
