@@ -2103,7 +2103,7 @@ export const usePotentialMatches = () => {
 # contexts\NotificationContext.tsx
 
 ```tsx
-// contexts/NotificationContext.ts
+// contexts/NotificationContext.tsx
 import React, {
   createContext,
   useContext,
@@ -2111,7 +2111,8 @@ import React, {
   useEffect,
   ReactNode,
 } from "react";
-import { useRealtimeSubscriptions } from "@/hooks/useRealtimeSubscriptions";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/lib/supabase";
 
 interface NotificationContextType {
   totalNotifications: number;
@@ -2127,16 +2128,73 @@ const NotificationContext = createContext<NotificationContextType | undefined>(
 export const NotificationProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
-  const { newMatches, unreadMessages } = useRealtimeSubscriptions();
+  const [newMatches, setNewMatches] = useState(0);
+  const [unreadMessages, setUnreadMessages] = useState(0);
   const [totalNotifications, setTotalNotifications] = useState(0);
+  const session = useAuth();
+
+  useEffect(() => {
+    if (session?.user) {
+      const matchSubscription = subscribeToNewMatches();
+      const messageSubscription = subscribeToNewMessages();
+
+      return () => {
+        supabase.removeChannel(matchSubscription);
+        supabase.removeChannel(messageSubscription);
+      };
+    }
+  }, [session?.user?.id]);
 
   useEffect(() => {
     setTotalNotifications(newMatches + unreadMessages);
   }, [newMatches, unreadMessages]);
 
+  const subscribeToNewMatches = () => {
+    return supabase
+      .channel("matches")
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "matches",
+          filter: `user2_id=eq.${session.user.id}`,
+        },
+        (payload) => {
+          setNewMatches((prev) => prev + 1);
+        }
+      )
+      .subscribe();
+  };
+
+  const subscribeToNewMessages = () => {
+    return supabase
+      .channel("messages")
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "messages",
+          // TODO: add filter here to avoid fetching all messages (slow)
+          // the filter blow doesn't work. seems to be to complex
+          // filter: `conversation_id=in.(select conversation_id from conversation_participants where user_id=eq.${session.user.id})`,
+        },
+        (payload) => {
+          console.log("new message", payload);
+
+          if (payload.new.sender_id !== session.user.id) {
+            setUnreadMessages((prev) => prev + 1);
+          }
+        }
+      )
+      .subscribe();
+  };
+
   const resetNotifications = () => {
+    setNewMatches(0);
+    setUnreadMessages(0);
     setTotalNotifications(0);
-    // You might want to add logic here to reset newMatches and unreadMessages as well
   };
 
   const value = {
@@ -2162,7 +2220,6 @@ export const useNotifications = (): NotificationContextType => {
   }
   return context;
 };
-
 ```
 
 # constants\ToastConfig.ts
@@ -4253,8 +4310,15 @@ const styles = StyleSheet.create({
 # components\ChannelList.tsx
 
 ```tsx
-import React, { useEffect, useState, useCallback } from "react";
-import { View, Text, FlatList, Pressable, StyleSheet } from "react-native";
+import React, { useEffect, useState, useCallback, useRef } from "react";
+import {
+  View,
+  Text,
+  FlatList,
+  Pressable,
+  StyleSheet,
+  ActivityIndicator,
+} from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
@@ -4264,7 +4328,8 @@ import { Colors } from "@/constants/Colors";
 import { defaultStyles } from "@/constants/Styles";
 import { supabase } from "@/lib/supabase";
 import { useTabFocus } from "@/hooks/useTabFocus";
-import { useNotifications } from "@/hooks/useNotifications";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { useNotifications } from "@/contexts/NotificationContext";
 
 const Tab = createMaterialTopTabNavigator();
 
@@ -4298,7 +4363,7 @@ function MatchesTab() {
   const [loading, setLoading] = useState(true);
   const navigation = useNavigation();
   const session = useAuth();
-  const { newMatches } = useNotifications();
+  const { refreshKey, refresh } = useTabFocus();
 
   const fetchMatches = useCallback(async () => {
     if (!session?.user) return;
@@ -4308,13 +4373,10 @@ function MatchesTab() {
       const { data, error } = await supabase
         .from("matches")
         .select(
-          `
-          id,
+          `id,
           user2_id,
           profiles_test!matches_user2_id_fkey(name),
-          created_at,
-          conversation_id
-        `
+          created_at`
         )
         .eq("user1_id", session.user.id)
         .not("matched_at", "is", null)
@@ -4337,7 +4399,7 @@ function MatchesTab() {
 
   useEffect(() => {
     fetchMatches();
-  }, [fetchMatches, newMatches]);
+  }, [fetchMatches, refreshKey]);
 
   const handleStartConversation = async (
     matchId: string,
@@ -4384,17 +4446,10 @@ function MatchesTab() {
       <Pressable
         style={styles.startChatButton}
         onPress={() =>
-          handleStartConversation(
-            item.id,
-            item.user2_id,
-            item.other_user_name,
-            item.conversation_id
-          )
+          handleStartConversation(item.id, item.user2_id, item.other_user_name)
         }
       >
-        <Text style={styles.startChatButtonText}>
-          {item.conversation_id ? "Continue Chat" : "Start Chat"}
-        </Text>
+        <Text style={styles.startChatButtonText}>Start Chat</Text>
       </Pressable>
     </View>
   );
@@ -4402,7 +4457,7 @@ function MatchesTab() {
   if (loading) {
     return (
       <View style={styles.centerContainer}>
-        <Text>Loading...</Text>
+        <ActivityIndicator size="large" color={Colors.light.primary} />
       </View>
     );
   }
@@ -4422,13 +4477,15 @@ function MatchesTab() {
   );
 }
 
-function ChatsTab({ refreshKey, refresh }) {
+function ChatsTab() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
   const navigation = useNavigation();
   const session = useAuth();
+  const { refreshKey, refresh } = useTabFocus();
   const { unreadMessages } = useNotifications();
 
+  // Add this effect to refetch conversations when there are new unread messages
   React.useEffect(() => {
     if (unreadMessages > 0) {
       fetchConversations();
@@ -4438,6 +4495,8 @@ function ChatsTab({ refreshKey, refresh }) {
   useEffect(() => {
     if (session?.user) {
       fetchConversations();
+    } else {
+      setLoading(false); // Set loading to false if there's no session
     }
   }, [session, refreshKey]);
 
@@ -4496,47 +4555,91 @@ function ChatsTab({ refreshKey, refresh }) {
 
 export default function Inbox() {
   const { newMatches, unreadMessages, resetNotifications } = useNotifications();
-  const { refreshKey, refresh } = useTabFocus();
 
   React.useEffect(() => {
     // Reset notifications when entering the Inbox
-    if (resetNotifications) {
-      resetNotifications();
-    }
-  }, [resetNotifications]);
+    resetNotifications();
+  }, []);
 
   return (
-    <Tab.Navigator
-      initialRouteName="Chats"
-      screenOptions={{
-        tabBarScrollEnabled: false,
-        tabBarInactiveTintColor: Colors.light.text,
-        tabBarActiveTintColor: Colors.light.text,
-        tabBarLabelStyle: { fontSize: 14, fontWeight: "bold" },
-        tabBarIndicatorStyle: {
-          backgroundColor: Colors.light.text,
-          height: 2,
-        },
-        tabBarAndroidRipple: { borderless: false },
-        // tabBarStyle: { backgroundColor: "powderblue" },
-        // swipeEnabled: true,
-      }}
-    >
-      <Tab.Screen
-        name="Inbox"
-        component={MatchesTab}
-        options={{
-          tabBarBadge: newMatches > 0 ? newMatches : undefined,
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <Tab.Navigator
+        initialRouteName="Chats"
+        screenOptions={{
+          tabBarScrollEnabled: false,
+          tabBarInactiveTintColor: Colors.light.text,
+          tabBarActiveTintColor: Colors.light.text,
+          tabBarLabelStyle: { fontSize: 14, fontWeight: "bold" },
+          tabBarIndicatorStyle: {
+            backgroundColor: Colors.light.text,
+            height: 2,
+          },
+          tabBarAndroidRipple: { borderless: false },
+          swipeEnabled: true,
         }}
-      />
-      <Tab.Screen
-        name="Chats"
-        component={ChatsTab}
-        options={{
-          tabBarBadge: unreadMessages > 0 ? unreadMessages : undefined,
-        }}
-      />
-    </Tab.Navigator>
+      >
+        <Tab.Screen
+          name="Matches"
+          component={MatchesTab}
+          options={{
+            tabBarLabel: ({ color }) => (
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
+                <Text style={{ color, fontWeight: "bold", fontSize: 16 }}>
+                  Inbox
+                </Text>
+                {newMatches > 0 && (
+                  <View
+                    style={{
+                      backgroundColor: Colors.light.primary,
+                      borderRadius: 10,
+                      width: 20,
+                      height: 20,
+                      justifyContent: "center",
+                      alignItems: "center",
+                      marginLeft: 5,
+                    }}
+                  >
+                    <Text style={{ color: "white", fontSize: 12 }}>
+                      {newMatches}
+                    </Text>
+                  </View>
+                )}
+              </View>
+            ),
+          }}
+        />
+        <Tab.Screen
+          name="Chats"
+          component={ChatsTab}
+          options={{
+            tabBarLabel: ({ color }) => (
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
+                <Text style={{ color, fontWeight: "bold", fontSize: 16 }}>
+                  Conversations
+                </Text>
+                {unreadMessages > 0 && (
+                  <View
+                    style={{
+                      backgroundColor: Colors.light.primary,
+                      borderRadius: 10,
+                      width: 20,
+                      height: 20,
+                      justifyContent: "center",
+                      alignItems: "center",
+                      marginLeft: 5,
+                    }}
+                  >
+                    <Text style={{ color: "white", fontSize: 12 }}>
+                      {unreadMessages}
+                    </Text>
+                  </View>
+                )}
+              </View>
+            ),
+          }}
+        />
+      </Tab.Navigator>
+    </GestureHandlerRootView>
   );
 }
 
@@ -7771,66 +7874,6 @@ it(`renders correctly`, () => {
 
 ```
 
-# components\ui\Textfields.tsx
-
-```tsx
-
-import { TextInput } from 'react-native';
-import { styled } from 'nativewind';
-
-const Textfield = styled(TextInput, 'w-full radius-4 text-lg bg-gray-100 p-2 rounded-lg h-12 border-2 border-gray-200');
-
-
-export { Textfield }
-```
-
-# components\ui\Containers.tsx
-
-```tsx
-
-import { View } from 'react-native';
-import { styled } from 'nativewind';
-
-const Pageview = styled(View, 'p-6');
-
-
-export { Pageview }
-
-
-```
-
-# components\ui\Buttons.tsx
-
-```tsx
-
-import { Text, Button } from 'react-native-ui-lib';
-import { styled } from 'nativewind';
-
-const PrimaryButton = styled(Button, 'w-full h-12 rounded-lg justify-center bg-primary-600 border-2 border-primary-400 shadow active:shadow-none');
-const PrimaryButtonText = styled(Text, 'uppercase text-center text-white font-bold');
-
-const SecondaryButton = styled(Button, 'w-full h-12 rounded-lg justify-center bg-white border-2 border-primary-200 shadow active:shadow-none');
-const SecondaryButtonText = styled(Text, 'uppercase text-center text-primary-700 font-bold');
-
-
-export { PrimaryButton, PrimaryButtonText, SecondaryButton, SecondaryButtonText }
-```
-
-# components\navigation\TabBarIcon.tsx
-
-```tsx
-// You can explore the built-in icon families and icons on the web at https://icons.expo.fyi/
-
-import Ionicons from '@expo/vector-icons/Ionicons';
-import { type IconProps } from '@expo/vector-icons/build/createIconSet';
-import { type ComponentProps } from 'react';
-
-export function TabBarIcon({ style, ...rest }: IconProps<ComponentProps<typeof Ionicons>['name']>) {
-  return <Ionicons size={28} style={[{ marginBottom: -3 }, style]} {...rest} />;
-}
-
-```
-
 # components\onboarding\StepInterests.tsx
 
 ```tsx
@@ -7904,6 +7947,51 @@ const styles = StyleSheet.create({
 });
 
 export default StepInterests;
+```
+
+# components\ui\Textfields.tsx
+
+```tsx
+
+import { TextInput } from 'react-native';
+import { styled } from 'nativewind';
+
+const Textfield = styled(TextInput, 'w-full radius-4 text-lg bg-gray-100 p-2 rounded-lg h-12 border-2 border-gray-200');
+
+
+export { Textfield }
+```
+
+# components\ui\Containers.tsx
+
+```tsx
+
+import { View } from 'react-native';
+import { styled } from 'nativewind';
+
+const Pageview = styled(View, 'p-6');
+
+
+export { Pageview }
+
+
+```
+
+# components\ui\Buttons.tsx
+
+```tsx
+
+import { Text, Button } from 'react-native-ui-lib';
+import { styled } from 'nativewind';
+
+const PrimaryButton = styled(Button, 'w-full h-12 rounded-lg justify-center bg-primary-600 border-2 border-primary-400 shadow active:shadow-none');
+const PrimaryButtonText = styled(Text, 'uppercase text-center text-white font-bold');
+
+const SecondaryButton = styled(Button, 'w-full h-12 rounded-lg justify-center bg-white border-2 border-primary-200 shadow active:shadow-none');
+const SecondaryButtonText = styled(Text, 'uppercase text-center text-primary-700 font-bold');
+
+
+export { PrimaryButton, PrimaryButtonText, SecondaryButton, SecondaryButtonText }
 ```
 
 # components\tabs\surf.tsx
@@ -9268,6 +9356,21 @@ const styles = StyleSheet.create({
     lineHeight: 26,
   },
 });
+
+```
+
+# components\navigation\TabBarIcon.tsx
+
+```tsx
+// You can explore the built-in icon families and icons on the web at https://icons.expo.fyi/
+
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { type IconProps } from '@expo/vector-icons/build/createIconSet';
+import { type ComponentProps } from 'react';
+
+export function TabBarIcon({ style, ...rest }: IconProps<ComponentProps<typeof Ionicons>['name']>) {
+  return <Ionicons size={28} style={[{ marginBottom: -3 }, style]} {...rest} />;
+}
 
 ```
 
@@ -10863,6 +10966,18 @@ serve(async (req) => {
 
 ```
 
+# assets\images\logo\logo_crushy@3x.png
+
+This is a binary file of the type: Image
+
+# assets\images\logo\logo_crushy@2x.png
+
+This is a binary file of the type: Image
+
+# assets\images\logo\logo_crushy.png
+
+This is a binary file of the type: Image
+
 # assets\images\onboarding\onboarding5@3x.png
 
 This is a binary file of the type: Image
@@ -11052,18 +11167,6 @@ This is a binary file of the type: Image
 This is a binary file of the type: Image
 
 # assets\images\icons\iconSharedInterest.png
-
-This is a binary file of the type: Image
-
-# assets\images\logo\logo_crushy@3x.png
-
-This is a binary file of the type: Image
-
-# assets\images\logo\logo_crushy@2x.png
-
-This is a binary file of the type: Image
-
-# assets\images\logo\logo_crushy.png
 
 This is a binary file of the type: Image
 

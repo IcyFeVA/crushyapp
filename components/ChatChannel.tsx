@@ -29,12 +29,12 @@ import { Ionicons } from "@expo/vector-icons";
 
 type Message = {
   id: string;
+  local_id?: string;
   sender_id: string;
   content: string;
   created_at: string;
   edited?: boolean;
   pending?: boolean;
-  local_id?: string;
   read_by?: string[];
 };
 
@@ -76,16 +76,16 @@ export default function ChatChannel() {
     fetchMessages();
 
     const subscription = supabase
-      .channel("messages")
+      .channel(`conversation:${conversationId}`)
       .on(
         "postgres_changes",
         {
-          event: "INSERT",
+          event: "*", // Listen for all events (INSERT, UPDATE, DELETE)
           schema: "public",
           table: "messages",
           filter: `conversation_id=eq.${conversationId}`,
         },
-        handleNewMessage
+        handleRealTimeUpdate
       )
       .subscribe();
 
@@ -94,119 +94,48 @@ export default function ChatChannel() {
     };
   }, []);
 
-  useEffect(() => {
-    const subscription = supabase
-      .channel("messages")
-      .on(
-        "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "messages",
-          filter: `conversation_id=eq.${conversationId}`,
-        },
-        (payload) => {
-          setMessages((prevMessages) =>
-            prevMessages.map((msg) =>
-              msg.id === payload.new.id ? { ...msg, ...payload.new } : msg
-            )
-          );
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(subscription);
-    };
-  }, [conversationId]);
-
-  const markMessagesAsRead = useCallback(async () => {
-    if (!session?.user?.id || !conversationId) return;
-
-    try {
-      await supabase.rpc("mark_messages_as_read", {
-        conversation_id: conversationId,
-        user_id: session.user.id,
-      });
-
-      // Update local state to reflect read status
-      setMessages((prevMessages) =>
-        prevMessages.map((msg) =>
-          msg.sender_id !== session.user.id
-            ? { ...msg, read_by: [...(msg.read_by || []), session.user.id] }
-            : msg
-        )
-      );
-    } catch (error) {
-      console.error("Error marking messages as read:", error);
+  const handleRealTimeUpdate = (payload: any) => {
+    if (payload.eventType === "INSERT") {
+      handleNewMessage(payload);
+    } else if (payload.eventType === "UPDATE") {
+      handleMessageUpdate(payload);
+    } else if (payload.eventType === "DELETE") {
+      handleMessageDelete(payload);
     }
-  }, [conversationId, session?.user?.id]);
-
-  useEffect(() => {
-    markMessagesAsRead();
-    const interval = setInterval(markMessagesAsRead, 5000); // Check every 5 seconds
-    return () => clearInterval(interval);
-  }, [markMessagesAsRead]);
-
-  const lastSentMessage = useMemo(() => {
-    const userMessages = messages.filter(
-      (msg) => msg.sender_id === session?.user?.id
-    );
-    return userMessages[0]; // Since messages are in reverse chronological order
-  }, [messages, session?.user?.id]);
-
-  const renderReadReceipt = useCallback(() => {
-    if (!lastSentMessage) return null;
-
-    if (!lastSentMessage.read_by || lastSentMessage.read_by.length === 0) {
-      return (
-        <View style={styles.readReceiptContainer}>
-          <Ionicons
-            name="checkmark"
-            size={16}
-            color={Colors.light.textSecondary}
-          />
-          <Text style={styles.readReceiptText}>Sent</Text>
-        </View>
-      );
-    } else {
-      return (
-        <View style={styles.readReceiptContainer}>
-          <Ionicons
-            name="checkmark-done"
-            size={16}
-            color={Colors.light.accent}
-          />
-          <Text style={styles.readReceiptText}>Read</Text>
-        </View>
-      );
-    }
-  }, [lastSentMessage]);
+  };
 
   const handleNewMessage = useCallback((payload: { new: Message }) => {
     const newMessage = payload.new;
     setMessages((prevMessages) => {
-      const messageIndex = prevMessages.findIndex(
-        (msg) =>
-          msg.local_id === newMessage.id ||
-          (msg.content === newMessage.content && msg.pending)
+      // Check if the message already exists in the list
+      const messageExists = prevMessages.some(
+        (msg) => msg.id === newMessage.id
       );
-
-      if (messageIndex !== -1) {
-        // Update existing message
-        const updatedMessages = [...prevMessages];
-        updatedMessages[messageIndex] = {
-          ...newMessage,
-          pending: false,
-          local_id: undefined,
-        };
-        return updatedMessages;
+      if (messageExists) {
+        // If it exists, update it
+        return prevMessages.map((msg) =>
+          msg.id === newMessage.id ? { ...newMessage, pending: false } : msg
+        );
       } else {
-        // Add new message
+        // If it doesn't exist, add it
         return [newMessage, ...prevMessages];
       }
     });
   }, []);
+
+  const handleMessageUpdate = (payload: { old: Message; new: Message }) => {
+    setMessages((prevMessages) =>
+      prevMessages.map((msg) =>
+        msg.id === payload.new.id ? { ...msg, ...payload.new } : msg
+      )
+    );
+  };
+
+  const handleMessageDelete = (payload: { old: Message }) => {
+    setMessages((prevMessages) =>
+      prevMessages.filter((msg) => msg.id !== payload.old.id)
+    );
+  };
 
   const fetchMessages = async () => {
     setIsLoading(true);
@@ -216,7 +145,7 @@ export default function ChatChannel() {
         .select("*")
         .eq("conversation_id", conversationId)
         .order("created_at", { ascending: false })
-        .limit(50);
+        .limit(100);
 
       if (error) throw error;
       setMessages(data || []);
@@ -238,7 +167,6 @@ export default function ChatChannel() {
       content: inputMessage.trim(),
       created_at: new Date().toISOString(),
       pending: true,
-      local_id: localId,
     };
 
     setMessages((prevMessages) => [newMessage, ...prevMessages]);
@@ -258,14 +186,18 @@ export default function ChatChannel() {
 
       if (data && data.length > 0) {
         const sentMessage = data[0];
-        handleNewMessage({ new: sentMessage });
+        setMessages((prevMessages) =>
+          prevMessages.map((msg) =>
+            msg.id === localId ? { ...sentMessage, pending: false } : msg
+          )
+        );
       }
     } catch (error) {
       console.error("Error sending message:", error);
       Alert.alert("Error", "Failed to send message. Please try again.");
 
       setMessages((prevMessages) =>
-        prevMessages.filter((msg) => msg.local_id !== localId)
+        prevMessages.filter((msg) => msg.id !== localId)
       );
     }
   };
@@ -325,7 +257,6 @@ export default function ChatChannel() {
           }
         );
       } else {
-        // For Android, you might want to use a custom modal or a third-party library like react-native-action-sheet
         Alert.alert("Message Options", "What would you like to do?", [
           { text: "Cancel", style: "cancel" },
           {
@@ -467,12 +398,13 @@ export default function ChatChannel() {
       >
         <FlatList
           ref={flatListRef}
-          data={getMessagesWithDateLabels(messages)}
+          data={messagesWithDateLabels}
           renderItem={renderItem}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item) =>
+            item.id || item.local_id || `${item.created_at}-${item.sender_id}`
+          }
           inverted
         />
-        {renderReadReceipt()}
         {editingMessage ? (
           <View style={styles.editContainer}>
             <TextInput
@@ -500,7 +432,6 @@ export default function ChatChannel() {
               placeholder="Type a message..."
               inputMode="text"
               multiline={true}
-              // numberOfLines={3}
             />
             <Pressable style={styles.sendButton} onPress={sendMessage}>
               <Ionicons
@@ -519,28 +450,12 @@ export default function ChatChannel() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: Colors.light.background,
   },
-  messageContainer: {
-    padding: 10,
-    marginVertical: 5,
-    marginHorizontal: 10,
-    borderRadius: 10,
-    maxWidth: "70%",
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-end",
-  },
-  sentMessage: {
-    alignSelf: "flex-end",
-    borderColor: Colors.light.tertiary,
-    borderWidth: 1,
-  },
-  receivedMessage: {
-    alignSelf: "flex-start",
-    backgroundColor: Colors.light.tertiary,
-  },
-  messageText: {
-    color: Colors.light.text,
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
   inputContainer: {
     flexDirection: "row",
@@ -559,6 +474,7 @@ const styles = StyleSheet.create({
     marginRight: 10,
     textAlignVertical: "top",
     maxHeight: 100,
+    fontSize: 16,
   },
   sendButton: {
     backgroundColor: Colors.light.primary,
@@ -570,31 +486,40 @@ const styles = StyleSheet.create({
     maxHeight: 48,
   },
   sendButtonText: {
-    color: Colors.light.textInverted,
+    color: Colors.light.white,
     fontWeight: "bold",
   },
-  pendingMessage: {
-    opacity: 0.7,
+  sentMessage: {
+    alignSelf: "flex-end",
+    backgroundColor: Colors.light.white,
+    borderColor: Colors.light.tertiary,
+    borderWidth: 1,
+    padding: 10,
+    margin: 5,
+    borderRadius: 10,
+    maxWidth: "70%",
   },
-  pendingText: {
+  receivedMessage: {
+    alignSelf: "flex-start",
+    backgroundColor: Colors.light.tertiary,
+    padding: 10,
+    margin: 5,
+    borderRadius: 10,
+    maxWidth: "70%",
+  },
+  messageStatus: {
     fontSize: 10,
     color: Colors.light.textSecondary,
     alignSelf: "flex-end",
-    marginTop: 2,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
   },
   dateContainer: {
     alignItems: "center",
     marginVertical: 10,
   },
   dateText: {
-    backgroundColor: Colors.light.tertiary,
-    color: Colors.light.text,
-    fontSize: 12,
+    backgroundColor: Colors.light.text,
+    color: Colors.light.textInverted,
+    fontSize: 14,
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 10,
