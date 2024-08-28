@@ -90,7 +90,10 @@ export default function Me() {
         </View>
       </View>
 
-      <ScrollView style={defaultStyles.innerContainer}>
+      <ScrollView
+        style={defaultStyles.innerContainer}
+        showsVerticalScrollIndicator={false}
+      >
         <Spacer height={24} />
 
         <View style={styles.section}>
