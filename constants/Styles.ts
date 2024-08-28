@@ -10,6 +10,18 @@ export const defaultStyles = StyleSheet.create({
     innerContainer: {
         flex: 1,
     },
+    pageHeader: {
+        width: "100%",
+        backgroundColor: Colors.light.white,
+        paddingHorizontal: 24,
+        paddingTop: 8,
+        paddingBottom: 32,
+    },
+    pageTitle: {
+        fontSize: 28,
+        fontFamily: 'HeadingBold',
+        color: Colors.light.text
+    },
     body: {
         fontFamily: 'BodyRegular',
         color: Colors.light.text,
