@@ -13,9 +13,8 @@ export const defaultStyles = StyleSheet.create({
     pageHeader: {
         width: "100%",
         backgroundColor: Colors.light.white,
-        paddingHorizontal: 24,
-        paddingTop: 8,
-        paddingBottom: 32,
+        paddingHorizontal: 8,
+        paddingBottom: 8,
     },
     pageTitle: {
         fontSize: 28,

@@ -18,13 +18,14 @@ import FilterSmokingFrequency from '@/app/searchFilters/filterSmoking';
 import FilterDrinkingFrequency from '@/app/searchFilters/filterDrinking';
 import FilterCannabisFrequency from '@/app/searchFilters/filterCannabis';
 import FilterDietPreference from '@/app/searchFilters/filterDietPreference';
-import { useAppContext } from '@/providers/AppProvider';
-import { clearAllStorage, getData, storeData } from '@/utils/storage';
-import { useCallback, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
-import ChannelList from '@/components/ChannelList';
-import ChatChannel from '@/components/ChatChannel';
-import { useChatContext } from 'stream-chat-expo';
+import MyProfile from "@/components/MyProfile";
+import { useAppContext } from "@/providers/AppProvider";
+import { clearAllStorage, getData, storeData } from "@/utils/storage";
+import { useCallback, useEffect } from "react";
+import { supabase } from "@/lib/supabase";
+import ChannelList from "@/components/ChannelList";
+import ChatChannel from "@/components/ChatChannel";
+import { useChatContext } from "stream-chat-expo";
 import { useNotifications } from "@/contexts/NotificationContext";
 
 const tabIcons = {
@@ -150,107 +151,147 @@ function TabNavigator() {
   );
 }
 
-
-
-
-
-
 export default function RootNavigator({ session }) {
-    const { showOnboarding, setShowOnboarding } = useAppContext();
-    
+  const { showOnboarding, setShowOnboarding } = useAppContext();
 
+  useEffect(() => {
+    //   clearAllStorage();
+    //   return;
 
-    useEffect(() => {
-      //   clearAllStorage();
-      //   return;
+    const checkIfOnboardingDone = async () => {
+      try {
+        const onboardingComplete = await getData("onboardingComplete");
 
-      const checkIfOnboardingDone = async () => {
-        try {
-          const onboardingComplete = await getData("onboardingComplete");
+        if (onboardingComplete === undefined) {
+          console.log("onboarding status undefined in storage");
 
-          if (onboardingComplete === undefined) {
-            console.log("onboarding status undefined in storage");
+          const getProfile = async () => {
+            try {
+              const { data } = await supabase
+                .from("profiles_test")
+                .select("name")
+                .eq("id", session?.user.id)
+                .single();
 
-            const getProfile = async () => {
-              try {
-                const { data } = await supabase
-                  .from("profiles_test")
-                  .select("name")
-                  .eq("id", session?.user.id)
-                  .single();
-
-                if (data) {
-                  if (data?.name != null) {
-                    console.log("onboarding done, saving it in storage");
-                    await storeData("onboardingComplete", true);
-                  } else {
-                    console.log("onboarding not done");
-                    setShowOnboarding(true);
-                  }
+              if (data) {
+                if (data?.name != null) {
+                  console.log("onboarding done, saving it in storage");
+                  await storeData("onboardingComplete", true);
+                } else {
+                  console.log("onboarding not done");
+                  setShowOnboarding(true);
                 }
-              } catch (error: any) {
-                console.log("Error getting profile:", error);
               }
-            };
+            } catch (error: any) {
+              console.log("Error getting profile:", error);
+            }
+          };
 
-            getProfile();
-          } else {
-            console.log(
-              "onboarding status found in storage",
-              onboardingComplete
-            );
-          }
-        } catch (error) {
-          console.error("Error checking onboarding status:", error);
+          getProfile();
+        } else {
+          console.log("onboarding status found in storage", onboardingComplete);
         }
-      };
-
-      if (session) {
-        checkIfOnboardingDone();
+      } catch (error) {
+        console.error("Error checking onboarding status:", error);
       }
-    }, [session?.user.id]);
+    };
 
+    if (session) {
+      checkIfOnboardingDone();
+    }
+  }, [session?.user.id]);
 
-
-
-
-
-
-
-
-    return (
-        // <NavigationContainer independent={true}>
-            <Stack.Navigator initialRouteName='Main'>
-                {session ? (
-                    showOnboarding === true ? <Stack.Screen name="Onboarding" component={Onboarding} options={{ headerShown: false }} /> : (
-                        <Stack.Group>
-                            <Stack.Group screenOptions={{ headerShown: false, ...TransitionPresets.BottomSheetAndroid }}>
-                                <Stack.Screen name="Main" component={TabNavigator} />
-                                <Stack.Screen name="Surf" component={Surf} options={{ gestureEnabled: true, gestureDirection: 'vertical', gestureResponseDistance: 400 }} />
-                                <Stack.Screen name="Dive" component={Dive} />
-                                <Stack.Screen name="Profile" component={Profile} />
-                                <Stack.Screen name="SearchFilters" component={SearchFilters} />
-                                <Stack.Screen name="ChatChannel" component={ChatChannel} options={{ headerShown: true }} />
-                            </Stack.Group>
-                            <Stack.Group screenOptions={{ headerShown: false, ...TransitionPresets.SlideFromRightIOS }}>
-                                <Stack.Screen name="filterGenderPreference" component={FilterGenderPreference} />
-                                <Stack.Screen name="filterStarsign" component={FilterStarsign} />
-                                <Stack.Screen name="filterAgeRange" component={FilterAgeRange} />
-                                <Stack.Screen name="filterBodyType" component={FilterBodyType} />
-                                <Stack.Screen name="filterExerciseFrequency" component={FilterExerciseFrequency} />
-                                <Stack.Screen name="filterSmokingFrequency" component={FilterSmokingFrequency} />
-                                <Stack.Screen name="filterDrinkingFrequency" component={FilterDrinkingFrequency} />
-                                <Stack.Screen name="filterCannabisFrequency" component={FilterCannabisFrequency} />
-                                <Stack.Screen name="filterDietPreference" component={FilterDietPreference} />
-                            </Stack.Group>
-                        </Stack.Group>
-                    )
-                ) : (
-                    <Stack.Screen name="Auth" component={Auth} options={{ headerShown: false }} />
-                )}
-            </Stack.Navigator>
-        // </NavigationContainer>
-    );
+  return (
+    // <NavigationContainer independent={true}>
+    <Stack.Navigator initialRouteName="Main">
+      {session ? (
+        showOnboarding === true ? (
+          <Stack.Screen
+            name="Onboarding"
+            component={Onboarding}
+            options={{ headerShown: false }}
+          />
+        ) : (
+          <Stack.Group>
+            <Stack.Group
+              screenOptions={{
+                headerShown: false,
+                ...TransitionPresets.BottomSheetAndroid,
+              }}
+            >
+              <Stack.Screen name="Main" component={TabNavigator} />
+              <Stack.Screen
+                name="Surf"
+                component={Surf}
+                options={{
+                  gestureEnabled: true,
+                  gestureDirection: "vertical",
+                  gestureResponseDistance: 400,
+                }}
+              />
+              <Stack.Screen name="Dive" component={Dive} />
+              <Stack.Screen name="Profile" component={Profile} />
+              <Stack.Screen name="SearchFilters" component={SearchFilters} />
+              <Stack.Screen
+                name="ChatChannel"
+                component={ChatChannel}
+                options={{ headerShown: true }}
+              />
+              <Stack.Screen
+                name="MyProfile"
+                component={MyProfile}
+                options={{
+                  headerShown: false,
+                  ...TransitionPresets.SlideFromRightIOS,
+                }}
+              />
+            </Stack.Group>
+            <Stack.Group
+              screenOptions={{
+                headerShown: false,
+                ...TransitionPresets.SlideFromRightIOS,
+              }}
+            >
+              <Stack.Screen
+                name="filterGenderPreference"
+                component={FilterGenderPreference}
+              />
+              <Stack.Screen name="filterStarsign" component={FilterStarsign} />
+              <Stack.Screen name="filterAgeRange" component={FilterAgeRange} />
+              <Stack.Screen name="filterBodyType" component={FilterBodyType} />
+              <Stack.Screen
+                name="filterExerciseFrequency"
+                component={FilterExerciseFrequency}
+              />
+              <Stack.Screen
+                name="filterSmokingFrequency"
+                component={FilterSmokingFrequency}
+              />
+              <Stack.Screen
+                name="filterDrinkingFrequency"
+                component={FilterDrinkingFrequency}
+              />
+              <Stack.Screen
+                name="filterCannabisFrequency"
+                component={FilterCannabisFrequency}
+              />
+              <Stack.Screen
+                name="filterDietPreference"
+                component={FilterDietPreference}
+              />
+            </Stack.Group>
+          </Stack.Group>
+        )
+      ) : (
+        <Stack.Screen
+          name="Auth"
+          component={Auth}
+          options={{ headerShown: false }}
+        />
+      )}
+    </Stack.Navigator>
+    // </NavigationContainer>
+  );
 }
 
 

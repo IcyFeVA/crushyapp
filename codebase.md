@@ -2283,6 +2283,18 @@ export const defaultStyles = StyleSheet.create({
     innerContainer: {
         flex: 1,
     },
+    pageHeader: {
+        width: "100%",
+        backgroundColor: Colors.light.white,
+        paddingHorizontal: 24,
+        paddingTop: 8,
+        paddingBottom: 32,
+    },
+    pageTitle: {
+        fontSize: 28,
+        fontFamily: 'HeadingBold',
+        color: Colors.light.text
+    },
     body: {
         fontFamily: 'BodyRegular',
         color: Colors.light.text,
@@ -3683,12 +3695,12 @@ import { Ionicons } from "@expo/vector-icons";
 
 type Message = {
   id: string;
+  local_id?: string;
   sender_id: string;
   content: string;
   created_at: string;
   edited?: boolean;
   pending?: boolean;
-  local_id?: string;
   read_by?: string[];
 };
 
@@ -3730,16 +3742,16 @@ export default function ChatChannel() {
     fetchMessages();
 
     const subscription = supabase
-      .channel("messages")
+      .channel(`conversation:${conversationId}`)
       .on(
         "postgres_changes",
         {
-          event: "INSERT",
+          event: "*", // Listen for all events (INSERT, UPDATE, DELETE)
           schema: "public",
           table: "messages",
           filter: `conversation_id=eq.${conversationId}`,
         },
-        handleNewMessage
+        handleRealTimeUpdate
       )
       .subscribe();
 
@@ -3748,119 +3760,48 @@ export default function ChatChannel() {
     };
   }, []);
 
-  useEffect(() => {
-    const subscription = supabase
-      .channel("messages")
-      .on(
-        "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "messages",
-          filter: `conversation_id=eq.${conversationId}`,
-        },
-        (payload) => {
-          setMessages((prevMessages) =>
-            prevMessages.map((msg) =>
-              msg.id === payload.new.id ? { ...msg, ...payload.new } : msg
-            )
-          );
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(subscription);
-    };
-  }, [conversationId]);
-
-  const markMessagesAsRead = useCallback(async () => {
-    if (!session?.user?.id || !conversationId) return;
-
-    try {
-      await supabase.rpc("mark_messages_as_read", {
-        conversation_id: conversationId,
-        user_id: session.user.id,
-      });
-
-      // Update local state to reflect read status
-      setMessages((prevMessages) =>
-        prevMessages.map((msg) =>
-          msg.sender_id !== session.user.id
-            ? { ...msg, read_by: [...(msg.read_by || []), session.user.id] }
-            : msg
-        )
-      );
-    } catch (error) {
-      console.error("Error marking messages as read:", error);
+  const handleRealTimeUpdate = (payload: any) => {
+    if (payload.eventType === "INSERT") {
+      handleNewMessage(payload);
+    } else if (payload.eventType === "UPDATE") {
+      handleMessageUpdate(payload);
+    } else if (payload.eventType === "DELETE") {
+      handleMessageDelete(payload);
     }
-  }, [conversationId, session?.user?.id]);
-
-  useEffect(() => {
-    markMessagesAsRead();
-    const interval = setInterval(markMessagesAsRead, 5000); // Check every 5 seconds
-    return () => clearInterval(interval);
-  }, [markMessagesAsRead]);
-
-  const lastSentMessage = useMemo(() => {
-    const userMessages = messages.filter(
-      (msg) => msg.sender_id === session?.user?.id
-    );
-    return userMessages[0]; // Since messages are in reverse chronological order
-  }, [messages, session?.user?.id]);
-
-  const renderReadReceipt = useCallback(() => {
-    if (!lastSentMessage) return null;
-
-    if (!lastSentMessage.read_by || lastSentMessage.read_by.length === 0) {
-      return (
-        <View style={styles.readReceiptContainer}>
-          <Ionicons
-            name="checkmark"
-            size={16}
-            color={Colors.light.textSecondary}
-          />
-          <Text style={styles.readReceiptText}>Sent</Text>
-        </View>
-      );
-    } else {
-      return (
-        <View style={styles.readReceiptContainer}>
-          <Ionicons
-            name="checkmark-done"
-            size={16}
-            color={Colors.light.accent}
-          />
-          <Text style={styles.readReceiptText}>Read</Text>
-        </View>
-      );
-    }
-  }, [lastSentMessage]);
+  };
 
   const handleNewMessage = useCallback((payload: { new: Message }) => {
     const newMessage = payload.new;
     setMessages((prevMessages) => {
-      const messageIndex = prevMessages.findIndex(
-        (msg) =>
-          msg.local_id === newMessage.id ||
-          (msg.content === newMessage.content && msg.pending)
+      // Check if the message already exists in the list
+      const messageExists = prevMessages.some(
+        (msg) => msg.id === newMessage.id
       );
-
-      if (messageIndex !== -1) {
-        // Update existing message
-        const updatedMessages = [...prevMessages];
-        updatedMessages[messageIndex] = {
-          ...newMessage,
-          pending: false,
-          local_id: undefined,
-        };
-        return updatedMessages;
+      if (messageExists) {
+        // If it exists, update it
+        return prevMessages.map((msg) =>
+          msg.id === newMessage.id ? { ...newMessage, pending: false } : msg
+        );
       } else {
-        // Add new message
+        // If it doesn't exist, add it
         return [newMessage, ...prevMessages];
       }
     });
   }, []);
+
+  const handleMessageUpdate = (payload: { old: Message; new: Message }) => {
+    setMessages((prevMessages) =>
+      prevMessages.map((msg) =>
+        msg.id === payload.new.id ? { ...msg, ...payload.new } : msg
+      )
+    );
+  };
+
+  const handleMessageDelete = (payload: { old: Message }) => {
+    setMessages((prevMessages) =>
+      prevMessages.filter((msg) => msg.id !== payload.old.id)
+    );
+  };
 
   const fetchMessages = async () => {
     setIsLoading(true);
@@ -3870,7 +3811,7 @@ export default function ChatChannel() {
         .select("*")
         .eq("conversation_id", conversationId)
         .order("created_at", { ascending: false })
-        .limit(50);
+        .limit(100);
 
       if (error) throw error;
       setMessages(data || []);
@@ -3892,7 +3833,6 @@ export default function ChatChannel() {
       content: inputMessage.trim(),
       created_at: new Date().toISOString(),
       pending: true,
-      local_id: localId,
     };
 
     setMessages((prevMessages) => [newMessage, ...prevMessages]);
@@ -3912,14 +3852,18 @@ export default function ChatChannel() {
 
       if (data && data.length > 0) {
         const sentMessage = data[0];
-        handleNewMessage({ new: sentMessage });
+        setMessages((prevMessages) =>
+          prevMessages.map((msg) =>
+            msg.id === localId ? { ...sentMessage, pending: false } : msg
+          )
+        );
       }
     } catch (error) {
       console.error("Error sending message:", error);
       Alert.alert("Error", "Failed to send message. Please try again.");
 
       setMessages((prevMessages) =>
-        prevMessages.filter((msg) => msg.local_id !== localId)
+        prevMessages.filter((msg) => msg.id !== localId)
       );
     }
   };
@@ -3979,7 +3923,6 @@ export default function ChatChannel() {
           }
         );
       } else {
-        // For Android, you might want to use a custom modal or a third-party library like react-native-action-sheet
         Alert.alert("Message Options", "What would you like to do?", [
           { text: "Cancel", style: "cancel" },
           {
@@ -4121,12 +4064,13 @@ export default function ChatChannel() {
       >
         <FlatList
           ref={flatListRef}
-          data={getMessagesWithDateLabels(messages)}
+          data={messagesWithDateLabels}
           renderItem={renderItem}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item) =>
+            item.id || item.local_id || `${item.created_at}-${item.sender_id}`
+          }
           inverted
         />
-        {renderReadReceipt()}
         {editingMessage ? (
           <View style={styles.editContainer}>
             <TextInput
@@ -4154,7 +4098,6 @@ export default function ChatChannel() {
               placeholder="Type a message..."
               inputMode="text"
               multiline={true}
-              // numberOfLines={3}
             />
             <Pressable style={styles.sendButton} onPress={sendMessage}>
               <Ionicons
@@ -4173,28 +4116,12 @@ export default function ChatChannel() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: Colors.light.background,
   },
-  messageContainer: {
-    padding: 10,
-    marginVertical: 5,
-    marginHorizontal: 10,
-    borderRadius: 10,
-    maxWidth: "70%",
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-end",
-  },
-  sentMessage: {
-    alignSelf: "flex-end",
-    borderColor: Colors.light.tertiary,
-    borderWidth: 1,
-  },
-  receivedMessage: {
-    alignSelf: "flex-start",
-    backgroundColor: Colors.light.tertiary,
-  },
-  messageText: {
-    color: Colors.light.text,
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
   inputContainer: {
     flexDirection: "row",
@@ -4213,6 +4140,7 @@ const styles = StyleSheet.create({
     marginRight: 10,
     textAlignVertical: "top",
     maxHeight: 100,
+    fontSize: 16,
   },
   sendButton: {
     backgroundColor: Colors.light.primary,
@@ -4224,31 +4152,40 @@ const styles = StyleSheet.create({
     maxHeight: 48,
   },
   sendButtonText: {
-    color: Colors.light.textInverted,
+    color: Colors.light.white,
     fontWeight: "bold",
   },
-  pendingMessage: {
-    opacity: 0.7,
+  sentMessage: {
+    alignSelf: "flex-end",
+    backgroundColor: Colors.light.white,
+    borderColor: Colors.light.tertiary,
+    borderWidth: 1,
+    padding: 10,
+    margin: 5,
+    borderRadius: 10,
+    maxWidth: "70%",
   },
-  pendingText: {
+  receivedMessage: {
+    alignSelf: "flex-start",
+    backgroundColor: Colors.light.tertiary,
+    padding: 10,
+    margin: 5,
+    borderRadius: 10,
+    maxWidth: "70%",
+  },
+  messageStatus: {
     fontSize: 10,
     color: Colors.light.textSecondary,
     alignSelf: "flex-end",
-    marginTop: 2,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
   },
   dateContainer: {
     alignItems: "center",
     marginVertical: 10,
   },
   dateText: {
-    backgroundColor: Colors.light.tertiary,
-    color: Colors.light.text,
-    fontSize: 12,
+    backgroundColor: Colors.light.text,
+    color: Colors.light.textInverted,
+    fontSize: 14,
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 10,
@@ -4449,7 +4386,7 @@ function MatchesTab() {
           handleStartConversation(item.id, item.user2_id, item.other_user_name)
         }
       >
-        <Text style={styles.startChatButtonText}>Start Chat</Text>
+        <Text style={styles.startChatButtonText}>Chat</Text>
       </Pressable>
     </View>
   );
@@ -4562,84 +4499,89 @@ export default function Inbox() {
   }, []);
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <Tab.Navigator
-        initialRouteName="Chats"
-        screenOptions={{
-          tabBarScrollEnabled: false,
-          tabBarInactiveTintColor: Colors.light.text,
-          tabBarActiveTintColor: Colors.light.text,
-          tabBarLabelStyle: { fontSize: 14, fontWeight: "bold" },
-          tabBarIndicatorStyle: {
-            backgroundColor: Colors.light.text,
-            height: 2,
-          },
-          tabBarAndroidRipple: { borderless: false },
-          swipeEnabled: true,
-        }}
-      >
-        <Tab.Screen
-          name="Matches"
-          component={MatchesTab}
-          options={{
-            tabBarLabel: ({ color }) => (
-              <View style={{ flexDirection: "row", alignItems: "center" }}>
-                <Text style={{ color, fontWeight: "bold", fontSize: 16 }}>
-                  Inbox
-                </Text>
-                {newMatches > 0 && (
-                  <View
-                    style={{
-                      backgroundColor: Colors.light.primary,
-                      borderRadius: 10,
-                      width: 20,
-                      height: 20,
-                      justifyContent: "center",
-                      alignItems: "center",
-                      marginLeft: 5,
-                    }}
-                  >
-                    <Text style={{ color: "white", fontSize: 12 }}>
-                      {newMatches}
-                    </Text>
-                  </View>
-                )}
-              </View>
-            ),
+    <View style={{ flex: 1 }}>
+      <View style={defaultStyles.pageHeader}>
+        <Text style={defaultStyles.pageTitle}>Inbox</Text>
+      </View>
+      <GestureHandlerRootView>
+        <Tab.Navigator
+          initialRouteName="Chats"
+          screenOptions={{
+            tabBarScrollEnabled: false,
+            tabBarInactiveTintColor: Colors.light.text,
+            tabBarActiveTintColor: Colors.light.text,
+            tabBarLabelStyle: { fontSize: 14, fontWeight: "bold" },
+            tabBarIndicatorStyle: {
+              backgroundColor: Colors.light.text,
+              height: 2,
+            },
+            tabBarAndroidRipple: { borderless: false },
+            swipeEnabled: true,
           }}
-        />
-        <Tab.Screen
-          name="Chats"
-          component={ChatsTab}
-          options={{
-            tabBarLabel: ({ color }) => (
-              <View style={{ flexDirection: "row", alignItems: "center" }}>
-                <Text style={{ color, fontWeight: "bold", fontSize: 16 }}>
-                  Conversations
-                </Text>
-                {unreadMessages > 0 && (
-                  <View
-                    style={{
-                      backgroundColor: Colors.light.primary,
-                      borderRadius: 10,
-                      width: 20,
-                      height: 20,
-                      justifyContent: "center",
-                      alignItems: "center",
-                      marginLeft: 5,
-                    }}
-                  >
-                    <Text style={{ color: "white", fontSize: 12 }}>
-                      {unreadMessages}
-                    </Text>
-                  </View>
-                )}
-              </View>
-            ),
-          }}
-        />
-      </Tab.Navigator>
-    </GestureHandlerRootView>
+        >
+          <Tab.Screen
+            name="Matches"
+            component={MatchesTab}
+            options={{
+              tabBarLabel: ({ color }) => (
+                <View style={{ flexDirection: "row", alignItems: "center" }}>
+                  <Text style={{ color, fontWeight: "bold", fontSize: 16 }}>
+                    Activity
+                  </Text>
+                  {newMatches > 0 && (
+                    <View
+                      style={{
+                        backgroundColor: Colors.light.primary,
+                        borderRadius: 10,
+                        width: 20,
+                        height: 20,
+                        justifyContent: "center",
+                        alignItems: "center",
+                        marginLeft: 5,
+                      }}
+                    >
+                      <Text style={{ color: "white", fontSize: 12 }}>
+                        {newMatches}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              ),
+            }}
+          />
+          <Tab.Screen
+            name="Chats"
+            component={ChatsTab}
+            options={{
+              tabBarLabel: ({ color }) => (
+                <View style={{ flexDirection: "row", alignItems: "center" }}>
+                  <Text style={{ color, fontWeight: "bold", fontSize: 16 }}>
+                    Conversations
+                  </Text>
+                  {unreadMessages > 0 && (
+                    <View
+                      style={{
+                        backgroundColor: Colors.light.primary,
+                        borderRadius: 10,
+                        width: 20,
+                        height: 20,
+                        justifyContent: "center",
+                        alignItems: "center",
+                        marginLeft: 5,
+                      }}
+                    >
+                      <Text style={{ color: "white", fontSize: 12 }}>
+                        {unreadMessages}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              ),
+            }}
+          />
+        </Tab.Navigator>
+      </GestureHandlerRootView>
+    </View>
   );
 }
 
@@ -4650,7 +4592,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   matchItem: {
-    padding: 15,
+    padding: 24,
     borderBottomWidth: 1,
     borderBottomColor: Colors.light.tertiary,
   },
@@ -5685,6 +5627,242 @@ body {
   }
 }`;
 
+```
+
+# api\supabaseApi.ts
+
+```ts
+import { supabase } from '@/lib/supabase';
+
+export const api = {
+  
+  getCurrentUserProfile: async (userId: string) => {
+    const { data, error } = await supabase
+        .from('profiles_test')
+        .select('*')
+        .eq('id', userId)
+        .single();
+    
+    if (error) {
+        console.error('Error fetching current user profile:', error);
+        throw error;
+    }
+    console.log('Current User Profile Data:', data);
+    return data;
+},
+
+
+  updateProfile: async (userId: string, updates: any) => {
+    const { data, error } = await supabase
+      .from('profiles_test')
+      .upsert({ id: userId, ...updates })
+      .select();
+    
+    if (error) throw error;
+    return data;
+  },
+
+  getPotentialMatches: async (userId: string, limit: number) => {
+    const { data, error } = await supabase.rpc('get_potential_matches', {
+      user_id: userId,
+      limit_count: limit,
+    });
+    
+    if (error) throw error;
+    return data;
+  },
+
+
+  getProfileDetails: async (userId: string) => {
+    const { data, error } = await supabase
+        .from('profile_details')
+        .select('*')
+        .eq('id', userId)
+        .single();
+    
+    if (error) {
+        console.error('Error fetching profile details:', error);
+        throw error;
+    }
+    console.log('Profile Details Data:', data);
+    return data;
+},
+
+getPotentialDiveMatches: async (userId: string, limit: number) => {
+  const { data, error } = await supabase.rpc('get_potential_dive_matches', {
+      user_id: userId,
+      limit_count: limit,
+  });
+  
+  if (error) {
+      console.error('Error fetching potential dive matches:', error);
+      throw error;
+  }
+  console.log('Potential Dive Matches Data:', data);
+  return data;
+},
+
+  recordMatchAction: async (userId: string, matchedUserId: string, action: 'like' | 'dislike') => {
+    const { data, error } = await supabase
+      .rpc('handle_match_action', { 
+        acting_user_id: userId, 
+        target_user_id: matchedUserId,
+        match_action: action === 'like' ? 1 : 0,
+      });
+      console.log(userId, matchedUserId, action);
+      
+    
+    if (error) {
+      console.error('Error in handle_match_action:', error);
+    } else {
+      console.log('Match action handled, is new match:', data);
+    }
+  },
+
+  getOrCreateConversation: async (user1Id: string, user2Id: string) => {
+    const { data, error } = await supabase.rpc('get_or_create_conversation', {
+      user1_id: user1Id,
+      user2_id: user2Id
+    });
+    if (error) throw error;
+    return data;
+  },
+
+  getRecentConversations: async (userId: string) => {
+    const { data, error } = await supabase.rpc('get_recent_conversations', {
+      user_id: userId
+    });
+    
+    if (error) throw error;
+    
+    return data || [];
+  },
+
+  sendMessage: async (conversationId: string, senderId: string, content: string) => {
+    const { data, error } = await supabase
+      .from('messages')
+      .insert({
+        conversation_id: conversationId,
+        sender_id: senderId,
+        content: content
+      })
+      .select();
+    if (error) throw error;
+    return data[0];
+  },
+
+  getMessages: async (conversationId: string) => {
+    const { data, error } = await supabase
+      .from('messages')
+      .select('*')
+      .eq('conversation_id', conversationId)
+      .order('created_at', { ascending: true });
+    if (error) throw error;
+    return data;
+  },
+
+  subscribeToMessages: (conversationId: string, callback: (payload: any) => void) => {
+    return supabase
+      .channel(`messages:${conversationId}`)
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'messages',
+        filter: `conversation_id=eq.${conversationId}`
+      }, callback)
+      .subscribe();
+  }, 
+  
+  getTableInfo: async() => {
+  // Fetch all tables in the public schema
+  const { data: tables, error: tablesError } = await supabase
+    .rpc('get_tables')
+
+  if (tablesError) {
+    console.error('Error fetching tables:', tablesError)
+    return
+  }
+
+  for (const tableObj of tables) {
+    const tableName = tableObj.table_name
+    console.log(`Table: ${tableName}`)
+
+    // Fetch columns for each table
+    const { data: columns, error: columnsError } = await supabase
+      .rpc('get_columns', { table_name: tableName })
+
+    if (columnsError) {
+      console.error(`Error fetching columns for ${tableName}:`, columnsError)
+      continue
+    }
+
+    columns.forEach(column => {
+      console.log(`  - ${column.column_name}: ${column.data_type} (${column.is_nullable ? 'nullable' : 'not nullable'})`)
+    })
+    console.log('\n')
+  }
+},
+  
+  
+
+};
+```
+
+# api\auth.ts
+
+```ts
+import { supabase } from '@/lib/supabase';
+
+export async function fetchStreamToken(userId: string): Promise<string> {
+  try {
+    console.log("Fetching Stream token for user:", userId);
+    const { data, error } = await supabase.functions.invoke('generate-stream-token', {
+      body: { user: { id: userId } },
+    });
+
+    if (error) {
+      console.error("Supabase function error:", error);
+      throw error;
+    }
+    if (!data || !data.token) {
+      console.error("No token received. Data:", data);
+      throw new Error('No token received');
+    }
+
+    console.log("Stream token fetched successfully");
+    return data.token;
+  } catch (error) {
+    console.error('Error fetching Stream token:', error);
+    if (error.response) {
+      console.error('Response status:', error.response.status);
+      console.error('Response data:', await error.response.text());
+    }
+    throw error;
+  }
+}
+
+
+/*
+usage in component:
+
+
+import { fetchStreamToken } from '@/api/auth';
+
+// In your component or hook
+useEffect(() => {
+  const getStreamToken = async () => {
+    try {
+      const token = await fetchStreamToken(userId);
+      console.log("Received token:", token);
+      // Use the token here
+    } catch (error) {
+      console.error("Error getting stream token:", error);
+    }
+  };
+
+  getStreamToken();
+}, [userId]);
+*/
 ```
 
 # app\profile.tsx
@@ -7382,242 +7560,6 @@ async function registerForPushNotificationsAsync() {
 }
 ```
 
-# api\supabaseApi.ts
-
-```ts
-import { supabase } from '@/lib/supabase';
-
-export const api = {
-  
-  getCurrentUserProfile: async (userId: string) => {
-    const { data, error } = await supabase
-        .from('profiles_test')
-        .select('*')
-        .eq('id', userId)
-        .single();
-    
-    if (error) {
-        console.error('Error fetching current user profile:', error);
-        throw error;
-    }
-    console.log('Current User Profile Data:', data);
-    return data;
-},
-
-
-  updateProfile: async (userId: string, updates: any) => {
-    const { data, error } = await supabase
-      .from('profiles_test')
-      .upsert({ id: userId, ...updates })
-      .select();
-    
-    if (error) throw error;
-    return data;
-  },
-
-  getPotentialMatches: async (userId: string, limit: number) => {
-    const { data, error } = await supabase.rpc('get_potential_matches', {
-      user_id: userId,
-      limit_count: limit,
-    });
-    
-    if (error) throw error;
-    return data;
-  },
-
-
-  getProfileDetails: async (userId: string) => {
-    const { data, error } = await supabase
-        .from('profile_details')
-        .select('*')
-        .eq('id', userId)
-        .single();
-    
-    if (error) {
-        console.error('Error fetching profile details:', error);
-        throw error;
-    }
-    console.log('Profile Details Data:', data);
-    return data;
-},
-
-getPotentialDiveMatches: async (userId: string, limit: number) => {
-  const { data, error } = await supabase.rpc('get_potential_dive_matches', {
-      user_id: userId,
-      limit_count: limit,
-  });
-  
-  if (error) {
-      console.error('Error fetching potential dive matches:', error);
-      throw error;
-  }
-  console.log('Potential Dive Matches Data:', data);
-  return data;
-},
-
-  recordMatchAction: async (userId: string, matchedUserId: string, action: 'like' | 'dislike') => {
-    const { data, error } = await supabase
-      .rpc('handle_match_action', { 
-        acting_user_id: userId, 
-        target_user_id: matchedUserId,
-        match_action: action === 'like' ? 1 : 0,
-      });
-      console.log(userId, matchedUserId, action);
-      
-    
-    if (error) {
-      console.error('Error in handle_match_action:', error);
-    } else {
-      console.log('Match action handled, is new match:', data);
-    }
-  },
-
-  getOrCreateConversation: async (user1Id: string, user2Id: string) => {
-    const { data, error } = await supabase.rpc('get_or_create_conversation', {
-      user1_id: user1Id,
-      user2_id: user2Id
-    });
-    if (error) throw error;
-    return data;
-  },
-
-  getRecentConversations: async (userId: string) => {
-    const { data, error } = await supabase.rpc('get_recent_conversations', {
-      user_id: userId
-    });
-    
-    if (error) throw error;
-    
-    return data || [];
-  },
-
-  sendMessage: async (conversationId: string, senderId: string, content: string) => {
-    const { data, error } = await supabase
-      .from('messages')
-      .insert({
-        conversation_id: conversationId,
-        sender_id: senderId,
-        content: content
-      })
-      .select();
-    if (error) throw error;
-    return data[0];
-  },
-
-  getMessages: async (conversationId: string) => {
-    const { data, error } = await supabase
-      .from('messages')
-      .select('*')
-      .eq('conversation_id', conversationId)
-      .order('created_at', { ascending: true });
-    if (error) throw error;
-    return data;
-  },
-
-  subscribeToMessages: (conversationId: string, callback: (payload: any) => void) => {
-    return supabase
-      .channel(`messages:${conversationId}`)
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'messages',
-        filter: `conversation_id=eq.${conversationId}`
-      }, callback)
-      .subscribe();
-  }, 
-  
-  getTableInfo: async() => {
-  // Fetch all tables in the public schema
-  const { data: tables, error: tablesError } = await supabase
-    .rpc('get_tables')
-
-  if (tablesError) {
-    console.error('Error fetching tables:', tablesError)
-    return
-  }
-
-  for (const tableObj of tables) {
-    const tableName = tableObj.table_name
-    console.log(`Table: ${tableName}`)
-
-    // Fetch columns for each table
-    const { data: columns, error: columnsError } = await supabase
-      .rpc('get_columns', { table_name: tableName })
-
-    if (columnsError) {
-      console.error(`Error fetching columns for ${tableName}:`, columnsError)
-      continue
-    }
-
-    columns.forEach(column => {
-      console.log(`  - ${column.column_name}: ${column.data_type} (${column.is_nullable ? 'nullable' : 'not nullable'})`)
-    })
-    console.log('\n')
-  }
-},
-  
-  
-
-};
-```
-
-# api\auth.ts
-
-```ts
-import { supabase } from '@/lib/supabase';
-
-export async function fetchStreamToken(userId: string): Promise<string> {
-  try {
-    console.log("Fetching Stream token for user:", userId);
-    const { data, error } = await supabase.functions.invoke('generate-stream-token', {
-      body: { user: { id: userId } },
-    });
-
-    if (error) {
-      console.error("Supabase function error:", error);
-      throw error;
-    }
-    if (!data || !data.token) {
-      console.error("No token received. Data:", data);
-      throw new Error('No token received');
-    }
-
-    console.log("Stream token fetched successfully");
-    return data.token;
-  } catch (error) {
-    console.error('Error fetching Stream token:', error);
-    if (error.response) {
-      console.error('Response status:', error.response.status);
-      console.error('Response data:', await error.response.text());
-    }
-    throw error;
-  }
-}
-
-
-/*
-usage in component:
-
-
-import { fetchStreamToken } from '@/api/auth';
-
-// In your component or hook
-useEffect(() => {
-  const getStreamToken = async () => {
-    try {
-      const token = await fetchStreamToken(userId);
-      console.log("Received token:", token);
-      // Use the token here
-    } catch (error) {
-      console.error("Error getting stream token:", error);
-    }
-  };
-
-  getStreamToken();
-}, [userId]);
-*/
-```
-
 # supabase\.temp\cli-latest
 
 ```
@@ -7718,146 +7660,6 @@ CREATE TABLE conversations (
 );
 ```
 
-# assets\sounds\notification.wav
-
-This is a binary file of the type: Binary
-
-# assets\images\splash.png
-
-This is a binary file of the type: Image
-
-# assets\images\react-logo@3x.png
-
-This is a binary file of the type: Image
-
-# assets\images\react-logo@2x.png
-
-This is a binary file of the type: Image
-
-# assets\images\react-logo.png
-
-This is a binary file of the type: Image
-
-# assets\images\partial-react-logo.png
-
-This is a binary file of the type: Image
-
-# assets\images\icon.png
-
-This is a binary file of the type: Image
-
-# assets\images\favicon.png
-
-This is a binary file of the type: Image
-
-# assets\images\adaptive-icon.png
-
-This is a binary file of the type: Image
-
-# assets\fonts\RobotoSlab-Thin.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\RobotoSlab-SemiBold.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\RobotoSlab-Regular.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\RobotoSlab-Medium.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\RobotoSlab-Light.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\RobotoSlab-ExtraLight.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\RobotoSlab-ExtraBold.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\RobotoSlab-Bold.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\RobotoSlab-Black.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-SemiBoldItalic.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-SemiBold.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-Regular.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-MediumItalic.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-Medium.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-LightItalic.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-Light.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-Italic.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-ExtraLightItalic.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-ExtraLight.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-ExtraBoldItalic.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-ExtraBold.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-BoldItalic.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\PlusJakartaSans-Bold.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\Copernicus-Extrabold.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\Copernicus-Book.ttf
-
-This is a binary file of the type: Binary
-
-# assets\fonts\Copernicus-Bold.ttf
-
-This is a binary file of the type: Binary
-
 # components\__tests__\ThemedText-test.tsx
 
 ```tsx
@@ -7872,81 +7674,6 @@ it(`renders correctly`, () => {
   expect(tree).toMatchSnapshot();
 });
 
-```
-
-# components\onboarding\StepInterests.tsx
-
-```tsx
-import React, { useCallback, useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
-import { FlashList } from '@shopify/flash-list';
-import { Checkbox } from 'react-native-ui-lib';
-import { Colors } from '@/constants/Colors';
-import { defaultStyles } from '@/constants/Styles';
-import hobbiesInterests from '@/constants/Interests';
-import Spacer from '@/components/Spacer';
-
-const StepInterests = ({ onInterestsSelected }) => {
-    const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
-    const flattenedInterests = React.useMemo(() => hobbiesInterests.flat(), []);
-
-    const handleInterestToggle = useCallback((interest: string) => {
-        setSelectedInterests(prevInterests => {
-            if (prevInterests.includes(interest)) {
-                return prevInterests.filter(i => i !== interest);
-            } else {
-                return [...prevInterests, interest];
-            }
-        });
-    }, []);
-
-    useEffect(() => {
-        onInterestsSelected(selectedInterests);
-    }, [selectedInterests, onInterestsSelected]);
-
-    const renderItem = useCallback(({ item }) => (
-        <Pressable onPress={() => handleInterestToggle(item.value)}>
-            <Checkbox
-                color={selectedInterests.includes(item.value) ? Colors.light.text : Colors.light.tertiary}
-                label={item.label}
-                value={selectedInterests.includes(item.value)}
-                containerStyle={[defaultStyles.checkboxButton, { borderColor: selectedInterests.includes(item.value) ? Colors.light.text : Colors.light.tertiary }]}
-                labelStyle={defaultStyles.checkboxButtonLabel}
-                onValueChange={() => handleInterestToggle(item.value)}
-            />
-        </Pressable>
-    ), [selectedInterests, handleInterestToggle]);
-
-    return (
-        <View style={styles.container}>
-            <Text style={defaultStyles.h2}>Interests ({selectedInterests.length})</Text>
-            <Spacer height={8} />
-            <Text style={defaultStyles.body}>
-                This helps us find people with the same hobbies and interests.
-            </Text>
-            <Spacer height={24} />
-            <FlashList
-                data={flattenedInterests}
-                renderItem={renderItem}
-                estimatedItemSize={75}
-                keyExtractor={(item) => item.value}
-                contentContainerStyle={styles.listContainer}
-            />
-        </View>
-    );
-};
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        padding: 16,
-    },
-    listContainer: {
-        paddingBottom: 16,
-    },
-});
-
-export default StepInterests;
 ```
 
 # components\ui\Textfields.tsx
@@ -9359,6 +9086,81 @@ const styles = StyleSheet.create({
 
 ```
 
+# components\onboarding\StepInterests.tsx
+
+```tsx
+import React, { useCallback, useState, useEffect } from 'react';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
+import { Checkbox } from 'react-native-ui-lib';
+import { Colors } from '@/constants/Colors';
+import { defaultStyles } from '@/constants/Styles';
+import hobbiesInterests from '@/constants/Interests';
+import Spacer from '@/components/Spacer';
+
+const StepInterests = ({ onInterestsSelected }) => {
+    const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
+    const flattenedInterests = React.useMemo(() => hobbiesInterests.flat(), []);
+
+    const handleInterestToggle = useCallback((interest: string) => {
+        setSelectedInterests(prevInterests => {
+            if (prevInterests.includes(interest)) {
+                return prevInterests.filter(i => i !== interest);
+            } else {
+                return [...prevInterests, interest];
+            }
+        });
+    }, []);
+
+    useEffect(() => {
+        onInterestsSelected(selectedInterests);
+    }, [selectedInterests, onInterestsSelected]);
+
+    const renderItem = useCallback(({ item }) => (
+        <Pressable onPress={() => handleInterestToggle(item.value)}>
+            <Checkbox
+                color={selectedInterests.includes(item.value) ? Colors.light.text : Colors.light.tertiary}
+                label={item.label}
+                value={selectedInterests.includes(item.value)}
+                containerStyle={[defaultStyles.checkboxButton, { borderColor: selectedInterests.includes(item.value) ? Colors.light.text : Colors.light.tertiary }]}
+                labelStyle={defaultStyles.checkboxButtonLabel}
+                onValueChange={() => handleInterestToggle(item.value)}
+            />
+        </Pressable>
+    ), [selectedInterests, handleInterestToggle]);
+
+    return (
+        <View style={styles.container}>
+            <Text style={defaultStyles.h2}>Interests ({selectedInterests.length})</Text>
+            <Spacer height={8} />
+            <Text style={defaultStyles.body}>
+                This helps us find people with the same hobbies and interests.
+            </Text>
+            <Spacer height={24} />
+            <FlashList
+                data={flattenedInterests}
+                renderItem={renderItem}
+                estimatedItemSize={75}
+                keyExtractor={(item) => item.value}
+                contentContainerStyle={styles.listContainer}
+            />
+        </View>
+    );
+};
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        padding: 16,
+    },
+    listContainer: {
+        paddingBottom: 16,
+    },
+});
+
+export default StepInterests;
+```
+
 # components\navigation\TabBarIcon.tsx
 
 ```tsx
@@ -9373,6 +9175,146 @@ export function TabBarIcon({ style, ...rest }: IconProps<ComponentProps<typeof I
 }
 
 ```
+
+# assets\sounds\notification.wav
+
+This is a binary file of the type: Binary
+
+# assets\images\splash.png
+
+This is a binary file of the type: Image
+
+# assets\images\react-logo@3x.png
+
+This is a binary file of the type: Image
+
+# assets\images\react-logo@2x.png
+
+This is a binary file of the type: Image
+
+# assets\images\react-logo.png
+
+This is a binary file of the type: Image
+
+# assets\images\partial-react-logo.png
+
+This is a binary file of the type: Image
+
+# assets\images\icon.png
+
+This is a binary file of the type: Image
+
+# assets\images\favicon.png
+
+This is a binary file of the type: Image
+
+# assets\images\adaptive-icon.png
+
+This is a binary file of the type: Image
+
+# assets\fonts\RobotoSlab-Thin.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\RobotoSlab-SemiBold.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\RobotoSlab-Regular.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\RobotoSlab-Medium.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\RobotoSlab-Light.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\RobotoSlab-ExtraLight.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\RobotoSlab-ExtraBold.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\RobotoSlab-Bold.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\RobotoSlab-Black.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-SemiBoldItalic.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-SemiBold.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-Regular.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-MediumItalic.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-Medium.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-LightItalic.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-Light.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-Italic.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-ExtraLightItalic.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-ExtraLight.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-ExtraBoldItalic.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-ExtraBold.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-BoldItalic.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\PlusJakartaSans-Bold.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\Copernicus-Extrabold.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\Copernicus-Book.ttf
+
+This is a binary file of the type: Binary
+
+# assets\fonts\Copernicus-Bold.ttf
+
+This is a binary file of the type: Binary
 
 # app-example\(tabs)\_layout.tsx
 
@@ -10744,98 +10686,6 @@ serve(async (req) => {
 })
 ```
 
-# supabase\functions\process-match-notifications\index.ts
-
-```ts
-import "https://esm.sh/@supabase/functions-js/src/edge-runtime.d.ts"
-
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-
-console.log("Hello from process-match function!")
-
-const supabaseUrl = Deno.env.get('SUPABASE_URL')!
-const supabaseServiceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-
-const supabase = createClient(supabaseUrl, supabaseServiceRoleKey)
-
-async function sendPushNotification(pushToken: string, title: string, body: string) {
-  const message = {
-    to: pushToken,
-    sound: 'default',
-    title: title,
-    body: body,
-    data: { someData: 'goes here' },
-  }
-
-  const response = await fetch('https://exp.host/--/api/v2/push/send', {
-    method: 'POST',
-    headers: {
-      Accept: 'application/json',
-      'Accept-encoding': 'gzip, deflate',
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(message),
-  })
-
-  return await response.json()
-}
-
-Deno.serve(async (req) => {
-  const authHeader = req.headers.get('Authorization')
-  if (authHeader !== `Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}`) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 })
-  }
-
-  const { data: pendingNotifications, error } = await supabase
-    .from('pending_match_notifications')
-    .select('*')
-    .eq('processed', false)
-    .limit(50)
-    
-  if (error) {
-    console.error('Error fetching pending notifications:', error)
-    return new Response(JSON.stringify({ error: 'Failed to fetch pending notifications' }), { status: 500 })
-  }
-
-  for (const notification of pendingNotifications) {
-    for (const userId of [notification.user1_id, notification.user2_id]) {
-      const { data: userData, error: userError } = await supabase
-        .from('profiles')
-        .select('push_token')
-        .eq('id', userId)
-        .single()
-
-      if (userError || !userData?.push_token) {
-        console.error(`Failed to fetch user data or push token not found for user ${userId}`)
-        continue
-      }
-
-      const notificationTitle = "New Match!"
-      const notificationBody = `You have a new match! Open the app to find out who.`
-
-      try {
-        await sendPushNotification(userData.push_token, notificationTitle, notificationBody)
-        console.log(`Notification sent to user ${userId}`)
-      } catch (error) {
-        console.error(`Failed to send notification to user ${userId}:`, error)
-      }
-    }
-
-    // Mark the notification as processed
-    const { error: updateError } = await supabase
-      .from('pending_match_notifications')
-      .update({ processed: true })
-      .eq('id', notification.id)
-
-    if (updateError) {
-      console.error(`Failed to mark notification ${notification.id} as processed:`, updateError)
-    }
-  }
-
-  return new Response(JSON.stringify({ message: 'Notifications processed' }), { status: 200 })
-})
-```
-
 # supabase\functions\invoke-process-match-notifications\index.ts
 
 ```ts
@@ -10966,6 +10816,128 @@ serve(async (req) => {
 
 ```
 
+# supabase\functions\process-match-notifications\index.ts
+
+```ts
+import "https://esm.sh/@supabase/functions-js/src/edge-runtime.d.ts"
+
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+
+console.log("Hello from process-match function!")
+
+const supabaseUrl = Deno.env.get('SUPABASE_URL')!
+const supabaseServiceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+
+const supabase = createClient(supabaseUrl, supabaseServiceRoleKey)
+
+async function sendPushNotification(pushToken: string, title: string, body: string) {
+  const message = {
+    to: pushToken,
+    sound: 'default',
+    title: title,
+    body: body,
+    data: { someData: 'goes here' },
+  }
+
+  const response = await fetch('https://exp.host/--/api/v2/push/send', {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      'Accept-encoding': 'gzip, deflate',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(message),
+  })
+
+  return await response.json()
+}
+
+Deno.serve(async (req) => {
+  const authHeader = req.headers.get('Authorization')
+  if (authHeader !== `Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}`) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 })
+  }
+
+  const { data: pendingNotifications, error } = await supabase
+    .from('pending_match_notifications')
+    .select('*')
+    .eq('processed', false)
+    .limit(50)
+    
+  if (error) {
+    console.error('Error fetching pending notifications:', error)
+    return new Response(JSON.stringify({ error: 'Failed to fetch pending notifications' }), { status: 500 })
+  }
+
+  for (const notification of pendingNotifications) {
+    for (const userId of [notification.user1_id, notification.user2_id]) {
+      const { data: userData, error: userError } = await supabase
+        .from('profiles')
+        .select('push_token')
+        .eq('id', userId)
+        .single()
+
+      if (userError || !userData?.push_token) {
+        console.error(`Failed to fetch user data or push token not found for user ${userId}`)
+        continue
+      }
+
+      const notificationTitle = "New Match!"
+      const notificationBody = `You have a new match! Open the app to find out who.`
+
+      try {
+        await sendPushNotification(userData.push_token, notificationTitle, notificationBody)
+        console.log(`Notification sent to user ${userId}`)
+      } catch (error) {
+        console.error(`Failed to send notification to user ${userId}:`, error)
+      }
+    }
+
+    // Mark the notification as processed
+    const { error: updateError } = await supabase
+      .from('pending_match_notifications')
+      .update({ processed: true })
+      .eq('id', notification.id)
+
+    if (updateError) {
+      console.error(`Failed to mark notification ${notification.id} as processed:`, updateError)
+    }
+  }
+
+  return new Response(JSON.stringify({ message: 'Notifications processed' }), { status: 200 })
+})
+```
+
+# components\__tests__\__snapshots__\ThemedText-test.tsx.snap
+
+```snap
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`renders correctly 1`] = `
+<Text
+  style={
+    [
+      {
+        "color": "#11181C",
+      },
+      {
+        "fontSize": 16,
+        "lineHeight": 24,
+      },
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+    ]
+  }
+>
+  Snapshot test!
+</Text>
+`;
+
+```
+
 # assets\images\logo\logo_crushy@3x.png
 
 This is a binary file of the type: Image
@@ -10975,66 +10947,6 @@ This is a binary file of the type: Image
 This is a binary file of the type: Image
 
 # assets\images\logo\logo_crushy.png
-
-This is a binary file of the type: Image
-
-# assets\images\onboarding\onboarding5@3x.png
-
-This is a binary file of the type: Image
-
-# assets\images\onboarding\onboarding5@2x.png
-
-This is a binary file of the type: Image
-
-# assets\images\onboarding\onboarding5.png
-
-This is a binary file of the type: Image
-
-# assets\images\onboarding\onboarding4@3x.png
-
-This is a binary file of the type: Image
-
-# assets\images\onboarding\onboarding4@2x.png
-
-This is a binary file of the type: Image
-
-# assets\images\onboarding\onboarding4.png
-
-This is a binary file of the type: Image
-
-# assets\images\onboarding\onboarding3@3x.png
-
-This is a binary file of the type: Image
-
-# assets\images\onboarding\onboarding3@2x.png
-
-This is a binary file of the type: Image
-
-# assets\images\onboarding\onboarding3.png
-
-This is a binary file of the type: Image
-
-# assets\images\onboarding\onboarding2@3x.png
-
-This is a binary file of the type: Image
-
-# assets\images\onboarding\onboarding2@2x.png
-
-This is a binary file of the type: Image
-
-# assets\images\onboarding\onboarding2.png
-
-This is a binary file of the type: Image
-
-# assets\images\onboarding\onboarding1@3x.png
-
-This is a binary file of the type: Image
-
-# assets\images\onboarding\onboarding1@2x.png
-
-This is a binary file of the type: Image
-
-# assets\images\onboarding\onboarding1.png
 
 This is a binary file of the type: Image
 
@@ -11170,6 +11082,66 @@ This is a binary file of the type: Image
 
 This is a binary file of the type: Image
 
+# assets\images\onboarding\onboarding5@3x.png
+
+This is a binary file of the type: Image
+
+# assets\images\onboarding\onboarding5@2x.png
+
+This is a binary file of the type: Image
+
+# assets\images\onboarding\onboarding5.png
+
+This is a binary file of the type: Image
+
+# assets\images\onboarding\onboarding4@3x.png
+
+This is a binary file of the type: Image
+
+# assets\images\onboarding\onboarding4@2x.png
+
+This is a binary file of the type: Image
+
+# assets\images\onboarding\onboarding4.png
+
+This is a binary file of the type: Image
+
+# assets\images\onboarding\onboarding3@3x.png
+
+This is a binary file of the type: Image
+
+# assets\images\onboarding\onboarding3@2x.png
+
+This is a binary file of the type: Image
+
+# assets\images\onboarding\onboarding3.png
+
+This is a binary file of the type: Image
+
+# assets\images\onboarding\onboarding2@3x.png
+
+This is a binary file of the type: Image
+
+# assets\images\onboarding\onboarding2@2x.png
+
+This is a binary file of the type: Image
+
+# assets\images\onboarding\onboarding2.png
+
+This is a binary file of the type: Image
+
+# assets\images\onboarding\onboarding1@3x.png
+
+This is a binary file of the type: Image
+
+# assets\images\onboarding\onboarding1@2x.png
+
+This is a binary file of the type: Image
+
+# assets\images\onboarding\onboarding1.png
+
+This is a binary file of the type: Image
+
 # assets\images\buttons\buttonMatchingLike@3x.png
 
 This is a binary file of the type: Image
@@ -11206,33 +11178,7 @@ This is a binary file of the type: Image
 
 This is a binary file of the type: Image
 
-# components\__tests__\__snapshots__\ThemedText-test.tsx.snap
+# assets\images\backgrounds\bg1.png
 
-```snap
-// Jest Snapshot v1, https://goo.gl/fbAQLP
-
-exports[`renders correctly 1`] = `
-<Text
-  style={
-    [
-      {
-        "color": "#11181C",
-      },
-      {
-        "fontSize": 16,
-        "lineHeight": 24,
-      },
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-    ]
-  }
->
-  Snapshot test!
-</Text>
-`;
-
-```
+This is a binary file of the type: Image
 
