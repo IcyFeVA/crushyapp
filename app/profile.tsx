@@ -14,55 +14,51 @@ import { useRoute } from '@react-navigation/native';
 
 export default function Profile({ route, navigation }) {
     const session = useAuth();
-    const { id, imageUrl } = route.params;
+    const { id, imageStr } = route.params;
     const [loading, setLoading] = useState<boolean>(false);
-    const [user, setUser] = useState<any[]>({ name: '', age: '0', interests: [] });
+    const [user, setUser] = useState<any[]>({
+      name: "",
+      age: "0",
+      interests: [],
+    });
     const interestsList = useMemo(() => flattenArray(hobbiesInterests), []);
-    const [hasSharedInterests, setHasSharedInterests] = useState<boolean>(false);
+    const [hasSharedInterests, setHasSharedInterests] =
+      useState<boolean>(false);
     const [myData, setMyData] = useState<any>({});
 
-
     useEffect(() => {
-        const fetchMe = async () => {
+      const fetchMe = async () => {
+        setLoading(true);
 
-            setLoading(true)
-
-            const { data } = await supabase
-                .from('profiles_test')
-                .select('*')
-                .eq('id', session?.user.id);
-            if (data) {
-                setMyData(data[0])
-                setLoading(false)
-            }
+        const { data } = await supabase
+          .from("profiles_test")
+          .select("*")
+          .eq("id", session?.user.id);
+        if (data) {
+          setMyData(data[0]);
+          setLoading(false);
         }
+      };
 
-        fetchMe();
-
+      fetchMe();
     }, [session]);
 
-
     useEffect(() => {
+      const fetchUser = async () => {
+        setLoading(true);
 
-        const fetchUser = async () => {
-
-            setLoading(true)
-
-            const { data } = await supabase
-                .from('profiles_test')
-                .select('*')
-                .eq('id', id)
-            if (data) {
-                setUser(data[0]);
-                setLoading(false)
-            }
-
+        const { data } = await supabase
+          .from("profiles_test")
+          .select("*")
+          .eq("id", id);
+        if (data) {
+          setUser(data[0]);
+          setLoading(false);
         }
+      };
 
-        fetchUser();
-
+      fetchUser();
     }, [id]);
-
 
     const bioText = `I\’m looking for a new partner, perhaps a partner for life. I never used a dating app before, but I heard good things about this one.
 
@@ -75,112 +71,164 @@ Videogames is also something that is important to me. I play mostly online, to n
 
 When it comes to music, I like most pop bands and dance music. My favorite are Christina Aguilera, Taylor Swift, and the Woodys.
 
-Let me know what  you like and let’s get connected here on this cool platform!`
+Let me know what  you like and let’s get connected here on this cool platform!`;
 
     function flattenArray(arr: any[]): any[] {
-        return arr.flat();
+      return arr.flat();
     }
 
     const sortInterests = (a: string, b: string) => {
-        const aIncluded = myData.interests?.includes(parseInt(a));
-        const bIncluded = myData.interests?.includes(parseInt(b));
-        if (aIncluded && !bIncluded) return -1;
-        if (!aIncluded && bIncluded) return 1;
-        return 0;
+      const aIncluded = myData.interests?.includes(parseInt(a));
+      const bIncluded = myData.interests?.includes(parseInt(b));
+      if (aIncluded && !bIncluded) return -1;
+      if (!aIncluded && bIncluded) return 1;
+      return 0;
     };
 
     const renderInterestChips = (type: string) => {
+      if (!user.interests || !myData.interests) return null;
 
-        if (!user.interests || !myData.interests) return null;
+      const sortedInterests = [...user.interests].sort(sortInterests);
 
-        const sortedInterests = [...user.interests].sort(sortInterests);
+      return sortedInterests.map((interest: string, index: number) => {
+        const interestObject = interestsList.find(
+          (item) => item.value === interest.toString()
+        );
 
-        return sortedInterests.map((interest: string, index: number) => {
+        if (!interestObject) {
+          console.error(`No label found for interest: ${interest}`);
+          return null;
+        }
 
-            const interestObject = interestsList.find(item => item.value === interest.toString());
-
-            if (!interestObject) {
-                console.error(`No label found for interest: ${interest}`);
-                return null;
-            }
-
-            const isActive = myData.interests.includes(parseInt(interestObject.value));
-            if (!hasSharedInterests && isActive) {
-                setHasSharedInterests(true);
-            }
-            if (type === 'shared') {
-                if (isActive) {
-                    return (
-                        <Chip
-                            key={index}
-                            label={interestObject.label}
-                            labelStyle={[styles.chipLabel, styles.sharedChipLabel]}
-                            containerStyle={[styles.chip, styles.sharedChip]}
-                            iconSource={require('@/assets/images/icons/iconSharedInterest.png')}
-                        />
-                    );
-                }
-            } else {
-                if (!isActive) {
-                    return (
-                        <Chip
-                            key={index}
-                            label={interestObject.label}
-                            labelStyle={[styles.chipLabel]}
-                            containerStyle={[styles.chip]}
-                        />
-                    );
-                }
-            }
-        });
+        const isActive = myData.interests.includes(
+          parseInt(interestObject.value)
+        );
+        if (!hasSharedInterests && isActive) {
+          setHasSharedInterests(true);
+        }
+        if (type === "shared") {
+          if (isActive) {
+            return (
+              <Chip
+                key={index}
+                label={interestObject.label}
+                labelStyle={[styles.chipLabel, styles.sharedChipLabel]}
+                containerStyle={[styles.chip, styles.sharedChip]}
+                iconSource={require("@/assets/images/icons/iconSharedInterest.png")}
+              />
+            );
+          }
+        } else {
+          if (!isActive) {
+            return (
+              <Chip
+                key={index}
+                label={interestObject.label}
+                labelStyle={[styles.chipLabel]}
+                containerStyle={[styles.chip]}
+              />
+            );
+          }
+        }
+      });
     };
 
-
     return (
+      <SafeAreaView
+        style={{ flex: 1, backgroundColor: Colors.light.background }}
+      >
+        <ScrollView style={styles.innerContainer}>
+          {loading && (
+            <ActivityIndicator
+              size="large"
+              color={Colors.light.accent}
+              style={{ position: "absolute", top: 32, left: 32, zIndex: 2 }}
+            />
+          )}
+          <View style={styles.imageContainer}>
+            <Image source={{ uri: imageStr }} style={styles.image} />
+            <Pressable
+              onPress={() => {
+                navigation.pop();
+              }}
+              style={[styles.buttonCollapse, defaultStyles.buttonShadow]}
+            >
+              <Ionicons
+                name="chevron-up"
+                size={24}
+                color={Colors.light.accent}
+              />
+            </Pressable>
+          </View>
+          <View style={{ padding: 16 }}>
+            <View style={styles.personInfo}>
+              {user.name && (
+                <Text style={styles.personName}>
+                  {user.name}
+                  <Text style={styles.personAge}>, {user.age.toString()}</Text>
+                </Text>
+              )}
+            </View>
 
-        < SafeAreaView style={{ flex: 1, backgroundColor: Colors.light.background }
-        }>
-            <ScrollView style={styles.innerContainer}>
-                {loading && <ActivityIndicator size="large" color={Colors.light.accent} style={{ position: 'absolute', top: 32, left: 32, zIndex: 2 }} />}
-                <View style={styles.imageContainer}>
-                    <Image source={{ uri: imageUrl }} style={styles.image} />
-                    <Pressable onPress={() => { navigation.pop() }} style={[styles.buttonCollapse, defaultStyles.buttonShadow]} >
-                        <Ionicons name="chevron-up" size={24} color={Colors.light.accent} />
-                    </Pressable>
+            {hasSharedInterests === true && (
+              <View>
+                <Spacer height={32} />
+
+                <Text
+                  style={{
+                    fontFamily: "HeadingBold",
+                    fontSize: 22,
+                    color: Colors.light.text,
+                    marginTop: 16,
+                  }}
+                >
+                  Shared Hobbies & Interests
+                </Text>
+                <View style={styles.chipsContainer}>
+                  {renderInterestChips("shared")}
                 </View>
-                <View style={{ padding: 16 }}>
-                    <View style={styles.personInfo}>
-                        {user.name && <Text style={styles.personName}>{user.name}<Text style={styles.personAge}>, {user.age.toString()}</Text></Text>}
-                    </View>
+              </View>
+            )}
 
+            <Spacer height={32} />
 
-                    {hasSharedInterests === true && (
-                        <View>
-                            <Spacer height={32} />
+            <Text
+              style={{
+                fontFamily: "HeadingBold",
+                fontSize: 22,
+                color: Colors.light.text,
+                marginTop: 16,
+              }}
+            >
+              Bio
+            </Text>
+            <Spacer height={8} />
+            <Text
+              style={{
+                fontFamily: "BodyRegular",
+                fontSize: 18,
+                lineHeight: 26,
+              }}
+            >
+              {bioText}
+            </Text>
 
-                            <Text style={{ fontFamily: 'HeadingBold', fontSize: 22, color: Colors.light.text, marginTop: 16 }}>Shared Hobbies & Interests</Text>
-                            <View style={styles.chipsContainer}>
-                                {renderInterestChips('shared')}
-                            </View>
-                        </View>
-                    )}
+            <Spacer height={32} />
 
-                    <Spacer height={32} />
-
-                    <Text style={{ fontFamily: 'HeadingBold', fontSize: 22, color: Colors.light.text, marginTop: 16 }}>Bio</Text>
-                    <Spacer height={8} />
-                    <Text style={{ fontFamily: 'BodyRegular', fontSize: 18, lineHeight: 26 }}>{bioText}</Text>
-
-                    <Spacer height={32} />
-
-                    <Text style={{ fontFamily: 'HeadingBold', fontSize: 22, color: Colors.light.text, marginTop: 16 }}>Other Hobbies & Interests</Text>
-                    <View style={styles.chipsContainer}>
-                        {renderInterestChips()}
-                    </View>
-                </View>
-
-            </ScrollView>
-        </SafeAreaView >
+            <Text
+              style={{
+                fontFamily: "HeadingBold",
+                fontSize: 22,
+                color: Colors.light.text,
+                marginTop: 16,
+              }}
+            >
+              Other Hobbies & Interests
+            </Text>
+            <View style={styles.chipsContainer}>{renderInterestChips()}</View>
+          </View>
+        </ScrollView>
+      </SafeAreaView>
     );
 }
 

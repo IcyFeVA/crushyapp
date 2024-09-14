@@ -121,7 +121,7 @@ function TabNavigator() {
               if (route.name === "Explore") {
                 setTimeout(() => {
                   navigation.navigate("Home");
-                  navigation.navigate("Dive");
+                  navigation.navigate("Surf");
                 }, 100);
               }
             }}

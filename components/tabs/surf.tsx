@@ -51,6 +51,7 @@ const Surf = () => {
 
   const [currentMatchIndex, setCurrentMatchIndex] = useState(0);
   const [imageUrl, setImageUrl] = useState(DEFAULT_IMAGE);
+  const [imageStr, setImageStr] = useState("");
 
   const typewriterKey = useRef(0);
 
@@ -67,6 +68,7 @@ const Surf = () => {
     const currentMatch = potentialMatches[currentMatchIndex];
     if (currentMatch?.avatar_url) {
       setImageUrl({ uri: currentMatch.avatar_url });
+      setImageStr(currentMatch.avatar_url);
     } else {
       setImageUrl(DEFAULT_IMAGE);
     }
@@ -170,7 +172,7 @@ const Surf = () => {
     if (!currentMatch) return;
     navigation.navigate("Profile", {
       id: currentMatch.id,
-      // imageUrl,
+      imageStr,
     });
   }, [navigation, currentMatch, imageUrl]);
 
