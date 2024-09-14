@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -6,34 +6,61 @@ import {
   StyleSheet,
   Pressable,
   ScrollView,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useNavigation } from "@react-navigation/native";
+
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase";
 import { Colors } from "@/constants/Colors";
 import { defaultStyles } from "@/constants/Styles";
 import Avatar from "@/components/Avatar";
 import Spacer from "@/components/Spacer";
-import { useNavigation } from "@react-navigation/native";
 
-export default function MyProfile() {
+const PROFILE_SECTIONS = [
+  { title: "Bio", navigateTo: "EditBio" },
+  { title: "Height", navigateTo: "EditHeight" },
+  { title: "Body Type", navigateTo: "EditBodyType" },
+  { title: "Exercise Frequency", navigateTo: "EditExerciseFrequency" },
+  { title: "Smoking Status", navigateTo: "EditSmokingStatus" },
+  { title: "Drinking Status", navigateTo: "EditDrinkingStatus" },
+  { title: "Cannabis Use", navigateTo: "EditCannabisUse" },
+  { title: "Diet Preference", navigateTo: "EditDietPreference" },
+  { title: "Education Level", navigateTo: "EditEducationLevel" },
+  { title: "Occupation", navigateTo: "EditOccupation" },
+  { title: "Relationship Status", navigateTo: "EditRelationshipStatus" },
+  { title: "Relationship Type", navigateTo: "EditRelationshipType" },
+  { title: "Children", navigateTo: "EditChildren" },
+  { title: "Pets", navigateTo: "EditPets" },
+  { title: "Languages", navigateTo: "EditLanguages" },
+  { title: "Religion", navigateTo: "EditReligion" },
+  { title: "Political Views", navigateTo: "EditPoliticalViews" },
+  { title: "Zodiac Sign", navigateTo: "EditZodiacSign" },
+];
+
+const MyProfile = () => {
   const session = useAuth();
   const navigation = useNavigation();
-  const [loading, setLoading] = useState(false);
-  const [profile, setProfile] = useState({
+  const [loading, setLoading] = useState<boolean>(false);
+  const [profile, setProfile] = useState<Profile>({
     name: "",
     age: "",
     avatar_url: "",
   });
 
   useEffect(() => {
-    if (session?.user) getProfile();
+    if (session?.user) {
+      fetchProfile();
+    }
   }, [session]);
 
-  async function getProfile() {
+  const fetchProfile = useCallback(async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-      if (!session?.user) throw new Error("No user on the session!");
+      if (!session?.user) {
+        throw new Error("No user in the session!");
+      }
 
       const { data, error } = await supabase
         .from("profiles_test")
@@ -41,7 +68,9 @@ export default function MyProfile() {
         .eq("id", session.user.id)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
 
       if (data) {
         setProfile({
@@ -52,39 +81,74 @@ export default function MyProfile() {
       }
     } catch (error) {
       console.error("Error fetching profile:", error);
+      // Optionally, implement user-facing error handling here
     } finally {
       setLoading(false);
     }
-  }
+  }, [session]);
 
-  async function updateProfile() {
+  const handleUpdateProfile = useCallback(async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-      if (!session?.user) throw new Error("No user on the session!");
+      if (!session?.user) {
+        throw new Error("No user in the session!");
+      }
 
-      const updates = {
+      const updates: ProfileUpdate = {
         id: session.user.id,
         name: profile.name,
-        age: parseInt(profile.age),
+        age: parseInt(profile.age, 10),
         avatar_url: profile.avatar_url,
         updated_at: new Date(),
       };
 
       const { error } = await supabase.from("profiles_test").upsert(updates);
 
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
+
+      // Optionally, provide user feedback upon successful update
     } catch (error) {
       console.error("Error updating profile:", error);
+      // Optionally, implement user-facing error handling here
     } finally {
       setLoading(false);
     }
-  }
+  }, [session, profile]);
 
-  const renderSectionButton = (title: string, onPress: () => void) => (
-    <Pressable style={styles.sectionButton} onPress={onPress}>
+  const handleAvatarUpload = useCallback(
+    (url: string) => {
+      setProfile((prev) => ({ ...prev, avatar_url: url }));
+      handleUpdateProfile();
+    },
+    [handleUpdateProfile]
+  );
+
+  const handleInputChange = useCallback(
+    (field: keyof Profile, value: string) => {
+      setProfile((prev) => ({ ...prev, [field]: value }));
+    },
+    []
+  );
+
+  const renderSectionButton = (title: string, navigateTo: string) => (
+    <Pressable
+      key={title}
+      style={styles.sectionButton}
+      onPress={() => navigation.navigate(navigateTo)}
+    >
       <Text style={styles.sectionButtonText}>{title}</Text>
     </Pressable>
   );
+
+  if (loading) {
+    return (
+      <SafeAreaView style={defaultStyles.SafeAreaView}>
+        <ActivityIndicator size="large" color={Colors.light.primary} />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={defaultStyles.SafeAreaView}>
@@ -97,10 +161,7 @@ export default function MyProfile() {
           <Avatar
             size={100}
             url={profile.avatar_url}
-            onUpload={(url) => {
-              setProfile((prev) => ({ ...prev, avatar_url: url }));
-              updateProfile();
-            }}
+            onUpload={handleAvatarUpload}
           />
         </View>
 
@@ -109,10 +170,9 @@ export default function MyProfile() {
         <TextInput
           style={styles.input}
           value={profile.name}
-          onChangeText={(text) =>
-            setProfile((prev) => ({ ...prev, name: text }))
-          }
+          onChangeText={(text) => handleInputChange("name", text)}
           placeholder="Name"
+          placeholderTextColor={Colors.light.tertiary}
         />
 
         <Spacer height={16} />
@@ -120,66 +180,18 @@ export default function MyProfile() {
         <TextInput
           style={styles.input}
           value={profile.age}
-          onChangeText={(text) =>
-            setProfile((prev) => ({ ...prev, age: text }))
-          }
+          onChangeText={(text) => handleInputChange("age", text)}
           placeholder="Age"
           keyboardType="numeric"
+          placeholderTextColor={Colors.light.tertiary}
         />
 
         <Spacer height={24} />
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Profile Details</Text>
-          {renderSectionButton("Bio", () => navigation.navigate("EditBio"))}
-          {renderSectionButton("Height", () =>
-            navigation.navigate("EditHeight")
-          )}
-          {renderSectionButton("Body Type", () =>
-            navigation.navigate("EditBodyType")
-          )}
-          {renderSectionButton("Exercise Frequency", () =>
-            navigation.navigate("EditExerciseFrequency")
-          )}
-          {renderSectionButton("Smoking Status", () =>
-            navigation.navigate("EditSmokingStatus")
-          )}
-          {renderSectionButton("Drinking Status", () =>
-            navigation.navigate("EditDrinkingStatus")
-          )}
-          {renderSectionButton("Cannabis Use", () =>
-            navigation.navigate("EditCannabisUse")
-          )}
-          {renderSectionButton("Diet Preference", () =>
-            navigation.navigate("EditDietPreference")
-          )}
-          {renderSectionButton("Education Level", () =>
-            navigation.navigate("EditEducationLevel")
-          )}
-          {renderSectionButton("Occupation", () =>
-            navigation.navigate("EditOccupation")
-          )}
-          {renderSectionButton("Relationship Status", () =>
-            navigation.navigate("EditRelationshipStatus")
-          )}
-          {renderSectionButton("Relationship Type", () =>
-            navigation.navigate("EditRelationshipType")
-          )}
-          {renderSectionButton("Children", () =>
-            navigation.navigate("EditChildren")
-          )}
-          {renderSectionButton("Pets", () => navigation.navigate("EditPets"))}
-          {renderSectionButton("Languages", () =>
-            navigation.navigate("EditLanguages")
-          )}
-          {renderSectionButton("Religion", () =>
-            navigation.navigate("EditReligion")
-          )}
-          {renderSectionButton("Political Views", () =>
-            navigation.navigate("EditPoliticalViews")
-          )}
-          {renderSectionButton("Zodiac Sign", () =>
-            navigation.navigate("EditZodiacSign")
+          {PROFILE_SECTIONS.map(({ title, navigateTo }) =>
+            renderSectionButton(title, navigateTo)
           )}
         </View>
 
@@ -187,15 +199,33 @@ export default function MyProfile() {
 
         <Pressable
           style={[defaultStyles.button, defaultStyles.buttonShadow]}
-          onPress={updateProfile}
+          onPress={handleUpdateProfile}
         >
           <Text style={defaultStyles.buttonLabel}>Save Changes</Text>
         </Pressable>
       </ScrollView>
     </SafeAreaView>
   );
+};
+
+export default MyProfile;
+
+// Type Definitions
+interface Profile {
+  name: string;
+  age: string;
+  avatar_url: string;
 }
 
+interface ProfileUpdate {
+  id: string;
+  name: string;
+  age: number;
+  avatar_url: string;
+  updated_at: Date;
+}
+
+// Styles
 const styles = StyleSheet.create({
   avatarContainer: {
     alignItems: "center",
@@ -207,6 +237,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
+    color: Colors.light.text,
   },
   section: {
     backgroundColor: Colors.light.white,
