@@ -97,7 +97,7 @@ const MyProfile = () => {
       const updates: ProfileUpdate = {
         id: session.user.id,
         name: profile.name,
-        age: parseInt(profile.age, 10),
+        age: parseInt(profile.age),
         avatar_url: profile.avatar_url,
         updated_at: new Date(),
       };
@@ -159,7 +159,7 @@ const MyProfile = () => {
 
         <View style={styles.avatarContainer}>
           <Avatar
-            size={100}
+            size={40}
             url={profile.avatar_url}
             onUpload={handleAvatarUpload}
           />
