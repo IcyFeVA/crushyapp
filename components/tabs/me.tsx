@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   StyleSheet,
   View,
@@ -6,6 +6,7 @@ import {
   ScrollView,
   Pressable,
   Image,
+  RefreshControl,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
@@ -20,6 +21,7 @@ export default function Me() {
   const session = useAuth();
   const navigation = useNavigation();
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [profile, setProfile] = useState({
     name: "",
     age: "",
@@ -31,15 +33,18 @@ export default function Me() {
     if (session?.user) getProfile();
   }, [session]);
 
-  async function getProfile() {
+  const getProfile = useCallback(async () => {
     try {
       setLoading(true);
-      if (!session?.user) throw new Error("No user on the session!");
+      if (!session?.user) {
+        console.log("No user on the session, skipping profile fetch");
+        return; // Exit early if there's no user
+      }
 
       const { data, error, status } = await supabase
         .from("profiles_test")
         .select("*")
-        .eq("id", session?.user.id)
+        .eq("id", session.user.id)
         .single();
 
       if (error && status !== 406) throw error;
@@ -57,7 +62,12 @@ export default function Me() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [session, profile]); // Add dependencies
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    getProfile().finally(() => setRefreshing(false));
+  }, [getProfile]);
 
   const renderSectionButton = (title: string, onPress: () => void) => (
     <Pressable style={styles.sectionButton} onPress={onPress}>
@@ -67,33 +77,36 @@ export default function Me() {
 
   return (
     <SafeAreaView style={defaultStyles.SafeAreaView}>
-      <View style={defaultStyles.pageHeader}>
-        <Text style={defaultStyles.pageTitle}>My Crushy</Text>
-      </View>
-
-      <Spacer height={8} />
-
-      <View style={styles.profileSection}>
-        <Image
-          source={{
-            uri: profile.avatar_url || "https://via.placeholder.com/100",
-          }}
-          style={styles.avatar}
-        />
-        <View style={styles.profileInfo}>
-          <Text style={styles.profileName}>
-            {profile.name}, {profile.age}
-          </Text>
-          <Text style={styles.membershipType}>
-            {profile.membership} Membership
-          </Text>
-        </View>
-      </View>
-
       <ScrollView
         style={defaultStyles.innerContainer}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
       >
+        <View style={defaultStyles.pageHeader}>
+          <Text style={defaultStyles.pageTitle}>My Crushy</Text>
+        </View>
+
+        <Spacer height={8} />
+
+        <View style={styles.profileSection}>
+          <Image
+            source={{
+              uri: profile.avatar_url || "https://via.placeholder.com/100",
+            }}
+            style={styles.avatar}
+          />
+          <View style={styles.profileInfo}>
+            <Text style={styles.profileName}>
+              {profile.name}, {profile.age}
+            </Text>
+            <Text style={styles.membershipType}>
+              {profile.membership} Membership
+            </Text>
+          </View>
+        </View>
+
         <Spacer height={24} />
 
         <View style={styles.section}>
