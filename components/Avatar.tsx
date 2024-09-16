@@ -8,6 +8,7 @@ import { defaultStyles } from '@/constants/Styles'
 import { Colors } from '@/constants/Colors'
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as FileSystem from 'expo-file-system';
+import { Ionicons } from "@expo/vector-icons";
 
 type Props = {
   url: string | null;
@@ -249,21 +250,7 @@ export default function Avatar({ url, size = 70, onUpload }: Props) {
   }
 
   return (
-    <View>
-      <Spacer height={24} />
-
-      <SecondaryButton
-        onPress={uploadAvatar}
-        style={defaultStyles.buttonShadow}
-        disabled={uploading}
-      >
-        <SecondaryButtonText>
-          {uploading ? "Uploading ..." : "Upload"}
-        </SecondaryButtonText>
-      </SecondaryButton>
-
-      <Spacer height={24} />
-
+    <View style={{ width: "100%" }}>
       {avatarUrl ? (
         <Image
           source={{ uri: avatarUrl }}
@@ -275,27 +262,42 @@ export default function Avatar({ url, size = 70, onUpload }: Props) {
       ) : (
         <Spacer height={0} />
       )}
+
+      <Spacer height={24} />
+
+      <SecondaryButton
+        onPress={uploadAvatar}
+        style={[{ width: "100%" }, defaultStyles.buttonShadow]}
+        disabled={uploading}
+      >
+        <Ionicons name="image" size={24} color={Colors.light.primary} />
+
+        <Spacer width={8} />
+
+        <SecondaryButtonText>
+          {uploading ? "Uploading ..." : "Replace"}
+        </SecondaryButtonText>
+      </SecondaryButton>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-    avatar: {
-        borderRadius: 16,
-        overflow: 'hidden',
-        maxWidth: '100%',
-        aspectRatio: 2 / 3,
-    },
-    image: {
-        objectFit: 'cover',
-        paddingTop: 0,
-        marginHorizontal: 'auto'
-    },
-    noImage: {
-        backgroundColor: Colors.light.backgroundSecondary,
-        borderWidth: 1,
-        borderStyle: 'solid',
-        borderColor: 'rgb(200, 200, 200)',
-        borderRadius: 16,
-    },
-})
+  avatar: {
+    borderRadius: 16,
+    overflow: "hidden",
+    aspectRatio: 2 / 3,
+  },
+  image: {
+    objectFit: "cover",
+    paddingTop: 0,
+    marginHorizontal: "auto",
+  },
+  noImage: {
+    backgroundColor: Colors.light.backgroundSecondary,
+    borderWidth: 1,
+    borderStyle: "solid",
+    borderColor: "rgb(200, 200, 200)",
+    borderRadius: 16,
+  },
+});

@@ -1102,71 +1102,70 @@ const StepFinal = () => {
 
 
 const styles = StyleSheet.create({
-    safeArea: {
-        flex: 1,
-        backgroundColor: Colors.light.background,
-    },
-    container: {
-        flex: 1,
-        width: SCREEN_WIDTH,
-        paddingHorizontal: 16,
-    },
-    listContentContainer: {
-        paddingBottom: 16,
-    },
-    sectionHeader: {
-        backgroundColor: Colors.light.background,
-        padding: 8,
-        borderBottomWidth: 1,
-        borderBottomColor: Colors.light.tertiary,
-        width: '100%',
-    },
-    sectionHeaderText: {
-        fontFamily: 'HeadingBold',
-        fontSize: 18,
-        color: Colors.light.accent,
-    },
-    checkboxContainer: {
-        width: '100%',
-        paddingVertical: 8,
-    },
-    checkbox: {
-        borderWidth: 1,
-        borderRadius: 8,
-        padding: 12,
-        backgroundColor: Colors.light.background,
-    },
-    checkboxLabel: {
-        fontFamily: 'BodyRegular',
-        fontSize: 16,
-        color: Colors.light.text,
-    },
-    buttonContainer: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        paddingHorizontal: 16,
-        paddingBottom: 16,
-        gap: 8,
-    },
-    avatarContainer: {
-        alignItems: 'center',
-    },
-    avatar: {
-        width: 200,
-        height: 300,
-        borderRadius: 16,
-        resizeMode: 'cover',
-    },
-    placeholderAvatar: {
-        width: 200,
-        height: 300,
-        borderRadius: 16,
-        backgroundColor: Colors.light.backgroundSecondary,
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderWidth: 1,
-        borderColor: Colors.light.tertiary,
-    },
+  safeArea: {
+    flex: 1,
+    backgroundColor: Colors.light.background,
+  },
+  container: {
+    flex: 1,
+    width: SCREEN_WIDTH,
+    paddingHorizontal: 16,
+  },
+  listContentContainer: {
+    paddingBottom: 16,
+  },
+  sectionHeader: {
+    backgroundColor: Colors.light.background,
+    padding: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.light.tertiary,
+    width: "100%",
+  },
+  sectionHeaderText: {
+    fontFamily: "HeadingBold",
+    fontSize: 18,
+    color: Colors.light.accent,
+  },
+  checkboxContainer: {
+    width: "100%",
+    paddingVertical: 8,
+  },
+  checkbox: {
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 12,
+    backgroundColor: Colors.light.background,
+  },
+  checkboxLabel: {
+    fontFamily: "BodyRegular",
+    fontSize: 16,
+    color: Colors.light.text,
+  },
+  buttonContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+    gap: 8,
+  },
+  avatarContainer: {
+    alignItems: "center",
+  },
+  avatar: {
+    width: 200,
+    borderRadius: 16,
+    resizeMode: "cover",
+  },
+  placeholderAvatar: {
+    width: 200,
+    height: 300,
+    borderRadius: 16,
+    backgroundColor: Colors.light.backgroundSecondary,
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: Colors.light.tertiary,
+  },
 });
 
 

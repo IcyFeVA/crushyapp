@@ -173,51 +173,59 @@ const MyProfile = () => {
     <SafeAreaView style={defaultStyles.SafeAreaView}>
       <ScrollView style={defaultStyles.innerContainer}>
         <View style={defaultStyles.pageHeader}>
-          <Text style={defaultStyles.pageTitle}>Edit Profile</Text>
+          <Text style={defaultStyles.pageTitle}>My Profile</Text>
         </View>
 
-        <View style={styles.avatarContainer}>
-          <Avatar
-            size={40}
-            url={profile.avatar_url}
-            onUpload={handleAvatarUpload}
+        <View style={styles.section}>
+          <View style={styles.avatarContainer}>
+            <Avatar
+              size={40}
+              url={profile.avatar_url}
+              onUpload={handleAvatarUpload}
+            />
+          </View>
+
+          <Spacer height={24} />
+
+          <Text style={defaultStyles.inputLabel}>Firstname or Nickname</Text>
+          <Spacer height={8} />
+          <TextInput
+            style={styles.input}
+            value={profile.name}
+            onChangeText={(text) => handleInputChange("name", text)}
+            placeholder="Name"
+            placeholderTextColor={Colors.light.tertiary}
           />
+
+          <Spacer height={16} />
+
+          <Text style={defaultStyles.inputLabel}>My age</Text>
+          <Spacer height={8} />
+          <TextInput
+            style={styles.input}
+            value={profile.age}
+            onChangeText={(text) => handleInputChange("age", text)}
+            placeholder="Age"
+            keyboardType="numeric"
+            className="w-28 text-center"
+            maxLength={3}
+            placeholderTextColor={Colors.light.tertiary}
+          />
+
+          <Spacer height={24} />
+
+          <Button
+            onPress={handleUpdateProfile}
+            style={[defaultStyles.button, defaultStyles.buttonShadow]}
+            disabled={loading}
+          >
+            <Text style={defaultStyles.buttonLabel}>
+              {loading ? "Updating ..." : "Update Profile"}
+            </Text>
+          </Button>
         </View>
 
-        <Spacer height={24} />
-
-        <TextInput
-          style={styles.input}
-          value={profile.name}
-          onChangeText={(text) => handleInputChange("name", text)}
-          placeholder="Name"
-          placeholderTextColor={Colors.light.tertiary}
-        />
-
-        <Spacer height={16} />
-
-        <TextInput
-          style={styles.input}
-          value={profile.age}
-          onChangeText={(text) => handleInputChange("age", text)}
-          placeholder="Age"
-          keyboardType="numeric"
-          placeholderTextColor={Colors.light.tertiary}
-        />
-
-        <Spacer height={24} />
-
-        <Button
-          onPress={handleUpdateProfile}
-          style={[defaultStyles.button, defaultStyles.buttonShadow]}
-          disabled={loading}
-        >
-          <Text style={defaultStyles.buttonLabel}>
-            {loading ? "Updating ..." : "Update Profile"}
-          </Text>
-        </Button>
-
-        <Spacer height={24} />
+        <Spacer height={32} />
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Profile Details</Text>
@@ -255,6 +263,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   input: {
+    backgroundColor: Colors.light.secondary,
     borderWidth: 1,
     borderColor: Colors.light.tertiary,
     borderRadius: 8,
@@ -268,10 +277,10 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   sectionTitle: {
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: "BodyBold",
-    color: Colors.light.text,
-    marginBottom: 8,
+    color: Colors.light.textSecondary,
+    textTransform: "uppercase",
   },
   sectionButton: {
     paddingVertical: 12,
@@ -280,7 +289,7 @@ const styles = StyleSheet.create({
   },
   sectionButtonText: {
     fontSize: 16,
-    fontFamily: "BodyRegular",
+    fontFamily: "BodyBold",
     color: Colors.light.text,
   },
 });
