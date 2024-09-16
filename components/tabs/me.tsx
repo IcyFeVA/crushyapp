@@ -17,6 +17,7 @@ import { defaultStyles } from "@/constants/Styles";
 import Spacer from "@/components/Spacer";
 import { Button } from "react-native-ui-lib";
 import { Alert } from "react-native";
+import { clearAllStorage } from "@/utils/storage";
 
 export default function Me() {
   const session = useAuth();
@@ -83,19 +84,12 @@ export default function Me() {
   const handleLogout = async () => {
     try {
       setLoading(true);
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
 
       // Clear any stored session data
-      // This might vary based on how you're managing auth state
-      // For example, if you're using a context:
-      // await clearSession();
+      clearAllStorage();
 
-      // Navigate to the welcome screen
-      navigation.reset({
-        index: 0,
-        routes: [{ name: "Welcome" }],
-      });
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
     } catch (error) {
       console.error("Error signing out:", error);
       Alert.alert(
