@@ -16,6 +16,7 @@ import { Colors } from "@/constants/Colors";
 import { defaultStyles } from "@/constants/Styles";
 import Spacer from "@/components/Spacer";
 import { Button } from "react-native-ui-lib";
+import { Alert } from "react-native";
 
 export default function Me() {
   const session = useAuth();
@@ -54,7 +55,11 @@ export default function Me() {
           ...profile,
           name: data.name || "",
           age: data.age ? data.age.toString() : "",
-          avatar_url: data.avatar_url || "",
+          avatar_url: data.avatar_url
+            ? data.avatar_url.includes("supabase")
+              ? data.avatar_url
+              : `https://mmarjzhissgpyfwxudqd.supabase.co/storage/v1/object/public/avatars/${data.avatar_url}`
+            : "",
         });
       }
     } catch (error) {
@@ -74,6 +79,33 @@ export default function Me() {
       <Text style={styles.sectionButtonText}>{title}</Text>
     </Pressable>
   );
+
+  const handleLogout = async () => {
+    try {
+      setLoading(true);
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+
+      // Clear any stored session data
+      // This might vary based on how you're managing auth state
+      // For example, if you're using a context:
+      // await clearSession();
+
+      // Navigate to the welcome screen
+      navigation.reset({
+        index: 0,
+        routes: [{ name: "Welcome" }],
+      });
+    } catch (error) {
+      console.error("Error signing out:", error);
+      Alert.alert(
+        "Error",
+        "An error occurred while signing out. Please try again."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <SafeAreaView style={defaultStyles.SafeAreaView}>
@@ -132,10 +164,13 @@ export default function Me() {
         <Spacer height={24} />
 
         <Button
-          onPress={() => supabase.auth.signOut()}
+          onPress={handleLogout}
           style={[defaultStyles.button, defaultStyles.buttonShadow]}
+          disabled={loading}
         >
-          <Text style={defaultStyles.buttonLabel}>Log out</Text>
+          <Text style={defaultStyles.buttonLabel}>
+            {loading ? "Logging out..." : "Log out"}
+          </Text>
         </Button>
 
         <Spacer height={24} />

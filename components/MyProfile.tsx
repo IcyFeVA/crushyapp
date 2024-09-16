@@ -7,9 +7,11 @@ import {
   Pressable,
   ScrollView,
   ActivityIndicator,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
+import { Button } from "react-native-ui-lib";
 
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase";
@@ -51,11 +53,11 @@ const MyProfile = () => {
 
   useEffect(() => {
     if (session?.user) {
-      fetchProfile();
+      getProfile();
     }
   }, [session]);
 
-  const fetchProfile = useCallback(async () => {
+  const getProfile = useCallback(async () => {
     setLoading(true);
     try {
       if (!session?.user) {
@@ -87,40 +89,57 @@ const MyProfile = () => {
     }
   }, [session]);
 
-  const handleUpdateProfile = useCallback(async () => {
-    setLoading(true);
-    try {
-      if (!session?.user) {
-        throw new Error("No user in the session!");
+  const handleUpdateProfile = useCallback(
+    async (updatedProfile?: Partial<Profile>) => {
+      try {
+        setLoading(true);
+        if (!session?.user) throw new Error("No user on the session!");
+
+        const updates = {
+          id: session.user.id,
+          name: profile.name,
+          age: parseInt(profile.age) || null,
+          avatar_url: updatedProfile?.avatar_url || profile.avatar_url,
+          avatar_pixelated_url:
+            updatedProfile?.avatar_pixelated_url ||
+            profile.avatar_pixelated_url,
+          updated_at: new Date(),
+        };
+
+        console.log("Updating profile with:", updates);
+
+        const { data, error } = await supabase
+          .from("profiles_test")
+          .upsert(updates);
+
+        if (error) throw error;
+
+        console.log("Profile updated successfully:", data);
+
+        // Refresh the profile data
+        getProfile();
+      } catch (error) {
+        console.error("Error updating profile:", error);
+        Alert.alert("Error", "Failed to update profile");
+      } finally {
+        setLoading(false);
       }
-
-      const updates: ProfileUpdate = {
-        id: session.user.id,
-        name: profile.name,
-        age: parseInt(profile.age),
-        avatar_url: profile.avatar_url,
-        updated_at: new Date(),
-      };
-
-      const { error } = await supabase.from("profiles_test").upsert(updates);
-
-      if (error) {
-        throw error;
-      }
-
-      // Optionally, provide user feedback upon successful update
-    } catch (error) {
-      console.error("Error updating profile:", error);
-      // Optionally, implement user-facing error handling here
-    } finally {
-      setLoading(false);
-    }
-  }, [session, profile]);
+    },
+    [session, getProfile, profile]
+  );
 
   const handleAvatarUpload = useCallback(
-    (url: string) => {
-      setProfile((prev) => ({ ...prev, avatar_url: url }));
-      handleUpdateProfile();
+    (originalUrl: string, pixelatedUrl: string) => {
+      setProfile((prev) => ({
+        ...prev,
+        avatar_url: originalUrl,
+        avatar_pixelated_url: pixelatedUrl,
+      }));
+      // Automatically save the profile when the avatar is updated
+      handleUpdateProfile({
+        avatar_url: originalUrl,
+        avatar_pixelated_url: pixelatedUrl,
+      });
     },
     [handleUpdateProfile]
   );
@@ -188,21 +207,24 @@ const MyProfile = () => {
 
         <Spacer height={24} />
 
+        <Button
+          onPress={handleUpdateProfile}
+          style={[defaultStyles.button, defaultStyles.buttonShadow]}
+          disabled={loading}
+        >
+          <Text style={defaultStyles.buttonLabel}>
+            {loading ? "Updating ..." : "Update Profile"}
+          </Text>
+        </Button>
+
+        <Spacer height={24} />
+
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Profile Details</Text>
           {PROFILE_SECTIONS.map(({ title, navigateTo }) =>
             renderSectionButton(title, navigateTo)
           )}
         </View>
-
-        <Spacer height={24} />
-
-        <Pressable
-          style={[defaultStyles.button, defaultStyles.buttonShadow]}
-          onPress={handleUpdateProfile}
-        >
-          <Text style={defaultStyles.buttonLabel}>Save Changes</Text>
-        </Pressable>
       </ScrollView>
     </SafeAreaView>
   );
@@ -215,6 +237,7 @@ interface Profile {
   name: string;
   age: string;
   avatar_url: string;
+  avatar_pixelated_url?: string;
 }
 
 interface ProfileUpdate {
