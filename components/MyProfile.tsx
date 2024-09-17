@@ -20,8 +20,15 @@ import { defaultStyles } from "@/constants/Styles";
 import Avatar from "@/components/Avatar";
 import Spacer from "@/components/Spacer";
 
-const PROFILE_SECTIONS = [
-  { title: "Bio", navigateTo: "EditBio" },
+const PROFILE_SECTIONS_PRIMARY = [
+  { title: "My Bio", navigateTo: "EditBio" },
+  { title: "My Gender", navigateTo: "EditGender" },
+  { title: "My Pronouns", navigateTo: "EditPronouns" },
+  { title: "My Interests", navigateTo: "EditInterests" },
+  { title: "I'm looking for", navigateTo: "EditRelationshipType" },
+];
+
+const PROFILE_SECTIONS_SECONDARY = [
   { title: "Height", navigateTo: "EditHeight" },
   { title: "Body Type", navigateTo: "EditBodyType" },
   { title: "Exercise Frequency", navigateTo: "EditExerciseFrequency" },
@@ -32,7 +39,6 @@ const PROFILE_SECTIONS = [
   { title: "Education Level", navigateTo: "EditEducationLevel" },
   { title: "Occupation", navigateTo: "EditOccupation" },
   { title: "Relationship Status", navigateTo: "EditRelationshipStatus" },
-  { title: "Relationship Type", navigateTo: "EditRelationshipType" },
   { title: "Children", navigateTo: "EditChildren" },
   { title: "Pets", navigateTo: "EditPets" },
   { title: "Languages", navigateTo: "EditLanguages" },
@@ -228,8 +234,17 @@ const MyProfile = () => {
         <Spacer height={32} />
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Profile Details</Text>
-          {PROFILE_SECTIONS.map(({ title, navigateTo }) =>
+          <Text style={styles.sectionTitle}>My Essentials (Required)</Text>
+          {PROFILE_SECTIONS_PRIMARY.map(({ title, navigateTo }) =>
+            renderSectionButton(title, navigateTo)
+          )}
+        </View>
+
+        <Spacer height={24} />
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>More Details (Optional)</Text>
+          {PROFILE_SECTIONS_SECONDARY.map(({ title, navigateTo }) =>
             renderSectionButton(title, navigateTo)
           )}
         </View>
