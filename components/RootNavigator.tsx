@@ -246,9 +246,6 @@ export default function RootNavigator({ session }) {
                   ...TransitionPresets.SlideFromRightIOS,
                 }}
               />
-              /************************************************************** */
-              PROFILE EDIT PAGES
-              *****************************************************************/
               <Stack.Screen
                 name="EditNameAge"
                 component={EditNameAge}
