@@ -27,6 +27,7 @@ import ChannelList from "@/components/ChannelList";
 import ChatChannel from "@/components/ChatChannel";
 import { useChatContext } from "stream-chat-expo";
 import { useNotifications } from "@/contexts/NotificationContext";
+import EditNameAge from "./pages/editprofile/EditNameAge";
 
 const tabIcons = {
   homeActive: require("@/assets/images/icons/tab-home-active.png"),
@@ -240,6 +241,17 @@ export default function RootNavigator({ session }) {
               <Stack.Screen
                 name="MyProfile"
                 component={MyProfile}
+                options={{
+                  headerShown: false,
+                  ...TransitionPresets.SlideFromRightIOS,
+                }}
+              />
+              /************************************************************** */
+              PROFILE EDIT PAGES
+              *****************************************************************/
+              <Stack.Screen
+                name="EditNameAge"
+                component={EditNameAge}
                 options={{
                   headerShown: false,
                   ...TransitionPresets.SlideFromRightIOS,

@@ -22,6 +22,7 @@ import Spacer from "@/components/Spacer";
 
 const PROFILE_SECTIONS_PRIMARY = [
   { title: "My Bio", navigateTo: "EditBio" },
+  { title: "My Name & Age", navigateTo: "EditNameAge" },
   { title: "My Gender", navigateTo: "EditGender" },
   { title: "My Pronouns", navigateTo: "EditPronouns" },
   { title: "My Interests", navigateTo: "EditInterests" },
@@ -190,48 +191,9 @@ const MyProfile = () => {
               onUpload={handleAvatarUpload}
             />
           </View>
-
-          <Spacer height={24} />
-
-          <Text style={defaultStyles.inputLabel}>Firstname or Nickname</Text>
-          <Spacer height={8} />
-          <TextInput
-            style={styles.input}
-            value={profile.name}
-            onChangeText={(text) => handleInputChange("name", text)}
-            placeholder="Name"
-            placeholderTextColor={Colors.light.tertiary}
-          />
-
-          <Spacer height={16} />
-
-          <Text style={defaultStyles.inputLabel}>My age</Text>
-          <Spacer height={8} />
-          <TextInput
-            style={styles.input}
-            value={profile.age}
-            onChangeText={(text) => handleInputChange("age", text)}
-            placeholder="Age"
-            keyboardType="numeric"
-            className="w-28 text-center"
-            maxLength={3}
-            placeholderTextColor={Colors.light.tertiary}
-          />
-
-          <Spacer height={24} />
-
-          <Button
-            onPress={handleUpdateProfile}
-            style={[defaultStyles.button, defaultStyles.buttonShadow]}
-            disabled={loading}
-          >
-            <Text style={defaultStyles.buttonLabel}>
-              {loading ? "Updating ..." : "Update Profile"}
-            </Text>
-          </Button>
         </View>
 
-        <Spacer height={32} />
+        <Spacer height={24} />
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>My Essentials (Required)</Text>
