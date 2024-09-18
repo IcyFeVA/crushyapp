@@ -33,8 +33,10 @@ const GenderSelector: React.FC<GenderSelectorProps> = ({ onSelectGender }) => {
   const session = useAuth();
 
   useEffect(() => {
-    fetchGender();
-  }, [session?.user]);
+    if (session?.user) {
+      fetchGender();
+    }
+  }, [session]);
 
   const fetchGender = async () => {
     if (!session?.user) return;
@@ -48,7 +50,6 @@ const GenderSelector: React.FC<GenderSelectorProps> = ({ onSelectGender }) => {
       if (error) throw error;
       if (data && data.gender) {
         setSelectedGender(data.gender);
-        // onSelectGender(data.gender);
       }
     } catch (error) {
       console.error("Error fetching gender:", error);
@@ -96,6 +97,7 @@ const GenderSelector: React.FC<GenderSelectorProps> = ({ onSelectGender }) => {
           labelStyle={defaultStyles.radioButtonLabel}
           selected={selectedGender === option.value}
           onPress={() => handleSelectGender(option.value)}
+          key={option.value}
         />
       ))}
     </ScrollView>
