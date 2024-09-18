@@ -119,6 +119,7 @@ export const defaultStyles = StyleSheet.create({
         borderRadius: 8,
         marginBottom: 16,
         height: 64,
+        minHeight: 64,
     },
     radioButtonLabel: {
         fontSize: 16,

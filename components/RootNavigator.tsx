@@ -29,6 +29,7 @@ import { useChatContext } from "stream-chat-expo";
 import { useNotifications } from "@/contexts/NotificationContext";
 import EditNameAge from "./pages/editprofile/EditNameAge";
 import EditBio from "./pages/editprofile/EditBio";
+import EditGender from "./pages/editprofile/EditGender";
 
 const tabIcons = {
   homeActive: require("@/assets/images/icons/tab-home-active.png"),
@@ -258,6 +259,14 @@ export default function RootNavigator({ session }) {
               <Stack.Screen
                 name="EditBio"
                 component={EditBio}
+                options={{
+                  headerShown: false,
+                  ...TransitionPresets.SlideFromRightIOS,
+                }}
+              />
+              <Stack.Screen
+                name="EditGender"
+                component={EditGender}
                 options={{
                   headerShown: false,
                   ...TransitionPresets.SlideFromRightIOS,
