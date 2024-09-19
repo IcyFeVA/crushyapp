@@ -38,6 +38,7 @@ import EditBio from "./pages/editprofile/EditBio";
 import EditGender from "./pages/editprofile/EditGender";
 import EditInterests from "./pages/editprofile/EditInterests";
 import EditLookingFor from "./pages/editprofile/EditLookingFor";
+import EditPronouns from "./pages/editprofile/EditPronouns";
 
 const tabIcons = {
   homeActive: require("@/assets/images/icons/tab-home-active.png"),
@@ -307,6 +308,14 @@ export default function RootNavigator({ session }) {
               <Stack.Screen
                 name="EditLookingFor"
                 component={EditLookingFor}
+                options={{
+                  headerShown: false,
+                  ...TransitionPresets.SlideFromRightIOS,
+                }}
+              />
+              <Stack.Screen
+                name="EditPronouns"
+                component={EditPronouns}
                 options={{
                   headerShown: false,
                   ...TransitionPresets.SlideFromRightIOS,
