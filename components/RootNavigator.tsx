@@ -37,6 +37,7 @@ import EditNameAge from "./pages/editprofile/EditNameAge";
 import EditBio from "./pages/editprofile/EditBio";
 import EditGender from "./pages/editprofile/EditGender";
 import EditInterests from "./pages/editprofile/EditInterests";
+import EditLookingFor from "./pages/editprofile/EditLookingFor";
 
 const tabIcons = {
   homeActive: require("@/assets/images/icons/tab-home-active.png"),
@@ -101,12 +102,23 @@ function TabNavigator() {
             {...props}
             onPress={() => {
               props.onPress();
-              if (route.name === "Explore") {
-                setTimeout(() => {
-                  navigation.navigate("Home");
-                  navigation.navigate("Surf");
-                }, 100);
-              }
+
+              const getLookingFor = async () => {
+                const lookingFor: number | null = await getData("lookingFor");
+
+                if (route.name === "Explore") {
+                  setTimeout(() => {
+                    navigation.navigate("Home");
+                    if (lookingFor == 3) {
+                      // 3 is hookup
+                      navigation.navigate("Surf");
+                    } else {
+                      navigation.navigate("Dive");
+                    }
+                  }, 100);
+                }
+              };
+              getLookingFor();
             }}
           />
         ),
@@ -184,6 +196,38 @@ export default function RootNavigator({ session }) {
     }
   }, [session?.user.id]);
 
+  useEffect(() => {
+    const checkIfLookingForSet = async () => {
+      const lookingFor = await getData("lookingFor");
+
+      if (lookingFor === undefined) {
+        console.log("looking for status undefined in storage, setting default");
+
+        const { data } = await supabase
+          .from("profiles_test")
+          .select("looking_for")
+          .eq("id", session?.user.id)
+          .single();
+
+        if (data) {
+          if (data?.looking_for != null) {
+            console.log("looking for found", data?.looking_for);
+            await storeData("lookingFor", data?.looking_for);
+          } else {
+            console.log("looking for not found, setting default");
+            await storeData("lookingFor", 1);
+          }
+        }
+      } else {
+        console.log("looking for status found in storage", lookingFor);
+      }
+    };
+
+    if (session) {
+      checkIfLookingForSet();
+    }
+  }, [session?.user.id]);
+
   return (
     // <NavigationContainer independent={true}>
     <Stack.Navigator initialRouteName="Main">
@@ -255,6 +299,14 @@ export default function RootNavigator({ session }) {
               <Stack.Screen
                 name="EditInterests"
                 component={EditInterests}
+                options={{
+                  headerShown: false,
+                  ...TransitionPresets.SlideFromRightIOS,
+                }}
+              />
+              <Stack.Screen
+                name="EditLookingFor"
+                component={EditLookingFor}
                 options={{
                   headerShown: false,
                   ...TransitionPresets.SlideFromRightIOS,

@@ -26,7 +26,7 @@ const PROFILE_SECTIONS_PRIMARY = [
   { title: "My Gender", navigateTo: "EditGender" },
   { title: "My Pronouns", navigateTo: "EditPronouns" },
   { title: "My Interests", navigateTo: "EditInterests" },
-  { title: "I'm looking for", navigateTo: "EditRelationshipType" },
+  { title: "I'm looking for", navigateTo: "EditLookingFor" },
 ];
 
 const PROFILE_SECTIONS_SECONDARY = [
