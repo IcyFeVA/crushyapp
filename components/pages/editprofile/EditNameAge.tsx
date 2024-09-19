@@ -165,7 +165,7 @@ const styles = StyleSheet.create({
   section: {
     backgroundColor: Colors.light.white,
     borderRadius: 8,
-    padding: 16,
+    padding: 8,
   },
   input: {
     backgroundColor: Colors.light.secondary,

@@ -8,6 +8,7 @@ import { FlashList } from "@shopify/flash-list";
 import { Checkbox, Button } from "react-native-ui-lib";
 import Spacer from "@/components/Spacer";
 import hobbiesInterests from "@/constants/Interests";
+import { useNavigation } from "@react-navigation/native";
 
 const categories = [
   "Outdoor Activities",
@@ -26,6 +27,7 @@ const InterestSelector = () => {
   const session = useAuth();
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const navigation = useNavigation();
 
   useEffect(() => {
     if (session?.user) {
@@ -114,7 +116,10 @@ const InterestSelector = () => {
         .eq("id", session.user.id);
 
       if (error) throw error;
+
       console.log("Interests saved successfully");
+
+      navigation.goBack();
     } catch (error) {
       console.error("Error saving interests:", error);
     } finally {
