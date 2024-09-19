@@ -12,6 +12,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { RadioButton } from "react-native-ui-lib";
 import { defaultStyles } from "@/constants/Styles";
 import { storeData } from "@/utils/storage";
+import Spacer from "@/components/Spacer";
 
 interface LookingForSelectorProps {
   onSelectLookingFor: (relationshipType: number) => void;
@@ -100,6 +101,22 @@ const LookingForSelector: React.FC<LookingForSelectorProps> = ({
           key={option.value}
         />
       ))}
+      <Spacer height={24} />
+
+      <View style={{ paddingHorizontal: 8 }}>
+        <Text style={defaultStyles.bodyBold}>Your selection matters: </Text>
+        <Text style={defaultStyles.body}>
+          If you're looking for a hookup, your discovery experience is more
+          focused on images. We call this 'Surf' mode.
+        </Text>
+        <Spacer height={8} />
+        <Text style={defaultStyles.body}>
+          Otherwise, if you're looking for a relationship or a friend, 'Dive'
+          mode prioritizes personality, focusing on bios and interests while
+          initially pixelating photos. As you continue chatting, the photos will
+          gradually become clearer.
+        </Text>
+      </View>
     </ScrollView>
   );
 };
