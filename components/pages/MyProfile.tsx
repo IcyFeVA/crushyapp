@@ -168,14 +168,6 @@ const MyProfile = () => {
     </Pressable>
   );
 
-  if (loading) {
-    return (
-      <SafeAreaView style={defaultStyles.SafeAreaView}>
-        <ActivityIndicator size="large" color={Colors.light.primary} />
-      </SafeAreaView>
-    );
-  }
-
   return (
     <SafeAreaView style={defaultStyles.SafeAreaView}>
       <ScrollView style={defaultStyles.innerContainer}>
@@ -185,6 +177,9 @@ const MyProfile = () => {
 
         <View style={styles.section}>
           <View style={styles.avatarContainer}>
+            {loading && (
+              <ActivityIndicator size="large" color={Colors.light.primary} />
+            )}
             <Avatar
               size={40}
               url={profile.avatar_url}

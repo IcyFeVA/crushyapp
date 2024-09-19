@@ -1,35 +1,42 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator, TransitionPresets } from '@react-navigation/stack';
-import Auth from '@/components/Auth';
-import { View, Text, Image, Pressable, Platform } from 'react-native';
-import { NavigationContainer, useFocusEffect, useNavigation } from '@react-navigation/native'
-import Me from '@/components/tabs/me';
-import Surf from '@/components/tabs/surf';
-import Dive from '@/components/tabs/dive';
-import Profile from '@/app/profile';
-import Onboarding from '@/app/onboarding';
-import SearchFilters from '@/app/searchFilters';
-import FilterGenderPreference from '@/app/searchFilters/filterGenderPreference';
-import FilterStarsign from '@/app/searchFilters/filterStarsign';
-import FilterAgeRange from '@/app/searchFilters/filterAgeRange';
-import FilterBodyType from '@/app/searchFilters/filterBodyType';
-import FilterExerciseFrequency from '@/app/searchFilters/filterExerciseFrequency';
-import FilterSmokingFrequency from '@/app/searchFilters/filterSmoking';
-import FilterDrinkingFrequency from '@/app/searchFilters/filterDrinking';
-import FilterCannabisFrequency from '@/app/searchFilters/filterCannabis';
-import FilterDietPreference from '@/app/searchFilters/filterDietPreference';
-import MyProfile from "@/components/MyProfile";
+import Auth from "@/components/pages/Auth";
+import { View, Text, Image, Pressable, Platform } from "react-native";
+import {
+  NavigationContainer,
+  useFocusEffect,
+  useNavigation,
+} from "@react-navigation/native";
+import Home from "@/components/tabs/home";
+import History from "@/components/tabs/history";
+import Me from "@/components/tabs/me";
+import Surf from "@/components/tabs/surf";
+import Dive from "@/components/tabs/dive";
+import Profile from "@/app/profile";
+import Onboarding from "@/components/pages/Onboarding";
+import SearchFilters from "@/app/searchFilters";
+import FilterGenderPreference from "@/app/searchFilters/filterGenderPreference";
+import FilterStarsign from "@/app/searchFilters/filterStarsign";
+import FilterAgeRange from "@/app/searchFilters/filterAgeRange";
+import FilterBodyType from "@/app/searchFilters/filterBodyType";
+import FilterExerciseFrequency from "@/app/searchFilters/filterExerciseFrequency";
+import FilterSmokingFrequency from "@/app/searchFilters/filterSmoking";
+import FilterDrinkingFrequency from "@/app/searchFilters/filterDrinking";
+import FilterCannabisFrequency from "@/app/searchFilters/filterCannabis";
+import FilterDietPreference from "@/app/searchFilters/filterDietPreference";
+import MyProfile from "@/components/pages/MyProfile";
 import { useAppContext } from "@/providers/AppProvider";
 import { clearAllStorage, getData, storeData } from "@/utils/storage";
 import { useCallback, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
-import ChannelList from "@/components/ChannelList";
-import ChatChannel from "@/components/ChatChannel";
+import ChannelList from "@/components/pages/inbox/Inbox";
+import ChatChannel from "@/components/pages/inbox/ChatChannel";
 import { useChatContext } from "stream-chat-expo";
 import { useNotifications } from "@/contexts/NotificationContext";
 import EditNameAge from "./pages/editprofile/EditNameAge";
 import EditBio from "./pages/editprofile/EditBio";
 import EditGender from "./pages/editprofile/EditGender";
+import EditInterests from "./pages/editprofile/EditInterests";
 
 const tabIcons = {
   homeActive: require("@/assets/images/icons/tab-home-active.png"),
@@ -43,38 +50,11 @@ const tabIcons = {
   exploreInactive: require("@/assets/images/icons/tab-explore.png"),
 };
 
-function HomeScreen() {
-  return (
-    <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-      <Text>Home!</Text>
-    </View>
-  );
-}
-
 function DummySurf() {
   return (
     <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
       <Text>Explore</Text>
     </View>
-  );
-}
-
-function SettingsScreen() {
-  return (
-    <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-      <Text>Settings!</Text>
-    </View>
-  );
-}
-
-const SettingsStack = createStackNavigator();
-
-function SettingsStackScreen() {
-  return (
-    <SettingsStack.Navigator>
-      <SettingsStack.Screen name="Settings" component={SettingsScreen} />
-      <SettingsStack.Screen name="Details" component={SettingsScreen} />
-    </SettingsStack.Navigator>
   );
 }
 
@@ -138,8 +118,8 @@ function TabNavigator() {
         //   ),
       })}
     >
-      <Tab.Screen name="Home" component={HomeScreen} />
-      <Tab.Screen name="History" component={SettingsScreen} />
+      <Tab.Screen name="Home" component={Home} />
+      <Tab.Screen name="History" component={History} />
       <Tab.Screen name="Explore" component={DummySurf} />
       <Tab.Screen
         name="Inbox"
@@ -267,6 +247,14 @@ export default function RootNavigator({ session }) {
               <Stack.Screen
                 name="EditGender"
                 component={EditGender}
+                options={{
+                  headerShown: false,
+                  ...TransitionPresets.SlideFromRightIOS,
+                }}
+              />
+              <Stack.Screen
+                name="EditInterests"
+                component={EditInterests}
                 options={{
                   headerShown: false,
                   ...TransitionPresets.SlideFromRightIOS,

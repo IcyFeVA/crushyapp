@@ -74,7 +74,7 @@ const GenderSelector: React.FC<GenderSelectorProps> = ({ onSelectGender }) => {
   };
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       {genderOptions.map((option) => (
         <RadioButton
           label={option.label}
