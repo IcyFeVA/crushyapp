@@ -103,10 +103,10 @@ const EditBio = () => {
             ]}
             iconMap={{
               [actions.heading2]: ({ tintColor }) => (
-                <Text style={[styles.tib, { color: tintColor }]}>H2</Text>
+                <Text style={[styles.tib, { color: tintColor }]}>XL</Text>
               ),
               [actions.heading3]: ({ tintColor }) => (
-                <Text style={[styles.tib, { color: tintColor }]}>H3</Text>
+                <Text style={[styles.tib, { color: tintColor }]}>L</Text>
               ),
             }}
           />
