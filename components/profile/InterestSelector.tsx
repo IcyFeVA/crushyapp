@@ -10,6 +10,7 @@ import Spacer from "@/components/Spacer";
 import hobbiesInterests from "@/constants/Interests";
 import { useNavigation } from "@react-navigation/native";
 
+
 const categories = [
   "Outdoor Activities",
   "Sports & Fitness",
@@ -23,7 +24,7 @@ const categories = [
   "Miscellaneous",
 ];
 
-const InterestSelector = () => {
+const InterestSelector = ({ onSelectInterests }) => {
   const session = useAuth();
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -108,6 +109,13 @@ const InterestSelector = () => {
 
   const saveInterests = async () => {
     if (!session?.user) return;
+
+    if (selectedInterests.length === 0) {
+      console.log("No interests selected");
+      onSelectInterests(selectedInterests);
+      return;
+    }
+
     setIsLoading(true);
     try {
       const { error } = await supabase
@@ -118,8 +126,7 @@ const InterestSelector = () => {
       if (error) throw error;
 
       console.log("Interests saved successfully");
-
-      navigation.goBack();
+      onSelectInterests(selectedInterests);
     } catch (error) {
       console.error("Error saving interests:", error);
     } finally {
@@ -163,6 +170,8 @@ const InterestSelector = () => {
     </View>
   );
 };
+
+
 
 const styles = StyleSheet.create({
   container: {
