@@ -20,12 +20,14 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase";
 import { Colors } from "@/constants/Colors";
 import { defaultStyles } from "@/constants/Styles";
+import { Ionicons } from "@expo/vector-icons";
 
 const EditBio = () => {
   const session = useAuth();
   const navigation = useNavigation();
   const [bio, setBio] = useState("");
   const [loading, setLoading] = useState(false);
+  const [editorHeight, setEditorHeight] = useState(200);
   const richText = useRef();
   const scrollRef = useRef();
 
@@ -83,11 +85,13 @@ const EditBio = () => {
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.container}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 100 : 50}
       >
         <ScrollView
           ref={scrollRef}
           contentContainerStyle={styles.scrollContainer}
           keyboardShouldPersistTaps="handled"
+          nestedScrollEnabled={true}
         >
           <View style={styles.pageHeader}>
             <Text style={defaultStyles.pageTitle}>Edit Bio</Text>
@@ -100,6 +104,7 @@ const EditBio = () => {
               actions.setItalic,
               actions.heading2,
               actions.heading3,
+              actions.setParagraph,
             ]}
             iconMap={{
               [actions.heading2]: ({ tintColor }) => (
@@ -108,19 +113,20 @@ const EditBio = () => {
               [actions.heading3]: ({ tintColor }) => (
                 <Text style={[styles.tib, { color: tintColor }]}>L</Text>
               ),
+              [actions.setParagraph]: ({ tintColor }) => (
+                <Ionicons name="refresh" size={24} color={tintColor} />
+              ),
             }}
           />
 
           <RichEditor
             ref={richText}
+            initialContentHTML={bio}
             onChange={setBio}
-            placeholder="Write your bio here..."
-            style={styles.richEditor}
+            placeholder="Write your bio here. Tip: Write about your hobbies, interests, and what you're looking for in a relationship."
+            style={[styles.richEditor, { height: editorHeight }]}
             initialHeight={200}
-            scrollEnabled={false}
-            onCursorPosition={(scrollY) => {
-              scrollRef.current?.scrollTo({ y: scrollY - 30, animated: true });
-            }}
+            onHeightChange={setEditorHeight}
           />
 
           <Button
@@ -148,28 +154,23 @@ const styles = StyleSheet.create({
   },
   scrollContainer: {
     flexGrow: 1,
-    padding: 20,
+    padding: 16,
   },
   pageHeader: {
-    marginBottom: 20,
+    marginBottom: 24,
   },
   richEditor: {
     minHeight: 200,
     flex: 1,
     backgroundColor: Colors.light.secondary,
     borderRadius: 8,
-    padding: 10,
-    marginBottom: 20,
+    padding: 8,
   },
   tib: {
     textAlign: "center",
     color: Colors.light.text,
-    fontSize: 16,
+    fontSize: 18,
     fontFamily: "BodyBold",
-  },
-  saveButton: {
-    marginTop: 20,
-    backgroundColor: Colors.light.primary,
   },
 });
 

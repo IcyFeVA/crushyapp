@@ -14,6 +14,8 @@ import {
   ScrollView,
   ActivityIndicator,
   Alert,
+  Dimensions,
+  useWindowDimensions,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -28,6 +30,7 @@ import Spacer from "@/components/Spacer";
 
 import { usePotentialMatches, useProfile } from "@/hooks/useApi";
 import { useAuth } from "@/hooks/useAuth";
+import RenderHtml from "react-native-render-html";
 
 // Constants for actions
 const ACTION_LIKE = "like";
@@ -107,6 +110,7 @@ const NoMatchesView = ({ onSearchFiltersPress, onBackHomePress }) => (
 const Dive = () => {
   const session = useAuth();
   const navigation = useNavigation();
+  const { width } = useWindowDimensions();
 
   const {
     matches: potentialMatches,
@@ -128,6 +132,7 @@ const Dive = () => {
   const [imageUrl, setImageUrl] = useState(DEFAULT_IMAGE);
   const scrollViewRef = useRef(null);
   const [currentMatchProfile, setCurrentMatchProfile] = useState(null);
+  const [webViewHeight, setWebViewHeight] = useState(1);
 
   const currentMatch = potentialMatches[currentMatchIndex];
 
@@ -275,6 +280,59 @@ const Dive = () => {
     [sortedInterests, currentUserProfile]
   );
 
+  const renderBioHtml = (bio) => {
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <style>
+            body {
+              font-family: 'HeadingBold', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
+              font-size: 18px;
+              line-height: 1.5;
+              color: #333;
+              padding: 0;
+              margin: 0;
+            }
+            h2 { font-size: 24px; margin-bottom: 8px; }
+            h3 { font-size: 20px; margin-bottom: 16px; }
+          </style>
+        </head>
+        <body>${bio}</body>
+      </html>
+    `;
+
+    return (
+      <RenderHtml
+        contentWidth={width - 32}
+        source={{ html: bio }}
+        tagsStyles={{
+          html: {
+            fontFamily: "BodyRegular",
+            fontSize: 18,
+            lineHeight: 26,
+            marginBottom: 16,
+          },
+          h2: {
+            fontFamily: "HeadingBold",
+            fontSize: 20,
+            marginBottom: 16,
+          },
+          "h3 span": {
+            fontSize: "20%",
+          },
+          body: {
+            fontFamily: "BodyRegular",
+            fontSize: 16,
+            lineHeight: 26,
+            marginBottom: 16,
+          },
+        }}
+      />
+    );
+  };
+
   // Combined loading state
   const isLoading = matchesLoading || profileLoading;
 
@@ -347,7 +405,7 @@ const Dive = () => {
               <View style={styles.sectionInnerContainer}>
                 <Text style={styles.sectionTitle}>Bio</Text>
                 <Spacer height={8} />
-                <Text style={styles.bioText}>{currentMatchProfile.bio}</Text>
+                {renderBioHtml(currentMatchProfile.bio)}
               </View>
               <Spacer height={32} />
             </View>
