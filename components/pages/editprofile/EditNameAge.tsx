@@ -26,11 +26,10 @@ const EditNameAge = () => {
     age: "",
   });
 
-  const isNameEmpty = profile.name.trim() === "";
-  const isAgeEmpty = profile.age.trim() === "";
-  const isNameToShort = profile.name.trim().length < 2;
-  const isAgeToHigh = parseInt(profile.age) > 100;
-  const isAgeToLow = parseInt(profile.age) < 17;
+  const isNameValid = /^[^\s][^\s]{1,}(?!\s{2,})[^\s]+$/.test(
+    profile.name.trim()
+  );
+  const isAgeValid = /^(1[7-9]|[2-9]\d|100)$/.test(profile.age.trim());
 
   useEffect(() => {
     if (session?.user) {
@@ -148,20 +147,17 @@ const EditNameAge = () => {
             style={[
               defaultStyles.button,
               defaultStyles.buttonShadow,
-              {
-                backgroundColor:
-                  isNameEmpty ||
-                  isAgeEmpty ||
-                  isNameToShort ||
-                  isAgeToHigh ||
-                  isAgeToLow
-                    ? Colors.light.tertiary
-                    : Colors.light.primary,
-              },
+              (!isNameValid || !isAgeValid) && defaultStyles.disabledButton,
             ]}
-            disabled={loading || isNameEmpty}
+            disabled={loading || !isNameValid || !isAgeValid}
           >
-            <Text style={defaultStyles.buttonLabel}>
+            <Text
+              style={[
+                defaultStyles.buttonLabel,
+                (!isNameValid || !isAgeValid) &&
+                  defaultStyles.disabledButtonText,
+              ]}
+            >
               {loading ? "Updating ..." : "Update Name & Age"}
             </Text>
           </Button>

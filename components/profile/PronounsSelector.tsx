@@ -147,17 +147,16 @@ const PronounsSelector: React.FC<PronounsSelectorProps> = ({
         style={[
           defaultStyles.button,
           defaultStyles.buttonShadow,
-          {
-            backgroundColor:
-              selectedValues.length === 0
-                ? Colors.light.tertiary
-                : Colors.light.primary,
-          },
+          selectedValues.length === 0 && defaultStyles.disabledButton,
         ]}
         disabled={selectedValues.length === 0 || isLoading}
-        disabledBackgroundColor={Colors.light.tertiary}
       >
-        <Text style={defaultStyles.buttonLabel}>
+        <Text
+          style={[
+            defaultStyles.buttonLabel,
+            selectedValues.length === 0 && defaultStyles.disabledButtonText,
+          ]}
+        >
           {isLoading ? "Updating..." : "Update Pronouns"}
         </Text>
       </Button>

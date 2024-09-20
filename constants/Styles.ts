@@ -92,6 +92,13 @@ export const defaultStyles = StyleSheet.create({
         color: Colors.light.primary,
         textTransform: 'uppercase'
     },
+    disabledButtonText: {
+        color: Colors.light.textInverted
+    },
+    disabledButton: {
+        backgroundColor: Colors.light.tertiary,
+        borderColor: Colors.light.tertiary
+    },
     settingListButton: {
         display: 'flex',
         backgroundColor: Colors.light.background,
