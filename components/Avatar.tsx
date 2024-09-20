@@ -1,13 +1,21 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
-import { StyleSheet, View, Alert, Image, ActivityIndicator } from 'react-native'
-import * as ImagePicker from 'expo-image-picker'
-import { SecondaryButton, SecondaryButtonText } from './ui/Buttons'
-import Spacer from './Spacer'
-import { defaultStyles } from '@/constants/Styles'
-import { Colors } from '@/constants/Colors'
-import * as ImageManipulator from 'expo-image-manipulator';
-import * as FileSystem from 'expo-file-system';
+import {
+  StyleSheet,
+  View,
+  Alert,
+  Image,
+  ActivityIndicator,
+  Modal,
+  TouchableOpacity,
+} from "react-native";
+import * as ImagePicker from "expo-image-picker";
+import { SecondaryButton, SecondaryButtonText } from "./ui/Buttons";
+import Spacer from "./Spacer";
+import { defaultStyles } from "@/constants/Styles";
+import { Colors } from "@/constants/Colors";
+import * as ImageManipulator from "expo-image-manipulator";
+import * as FileSystem from "expo-file-system";
 import { Ionicons } from "@expo/vector-icons";
 
 type Props = {
@@ -30,7 +38,8 @@ function extractFullFilename(url) {
 export default function Avatar({ url, size = 70, onUpload }: Props) {
   const [uploading, setUploading] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-  const avatarSize = { width: size + "%" };
+  const [modalVisible, setModalVisible] = useState(false);
+  const avatarSize = { width: size };
 
   useEffect(() => {
     if (url) {
@@ -252,16 +261,37 @@ export default function Avatar({ url, size = 70, onUpload }: Props) {
   return (
     <View style={{ width: "100%" }}>
       {avatarUrl ? (
-        <Image
-          source={{ uri: avatarUrl }}
-          accessibilityLabel="Avatar"
-          style={[avatarSize, styles.avatar, styles.image]}
-        />
+        <TouchableOpacity onPress={() => setModalVisible(true)}>
+          <Image
+            source={{ uri: avatarUrl }}
+            accessibilityLabel="Avatar"
+            style={[avatarSize, styles.avatar, styles.image]}
+          />
+        </TouchableOpacity>
       ) : uploading ? (
         <ActivityIndicator size="large" color={Colors.light.accent} />
       ) : (
         <Spacer height={0} />
       )}
+
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalBackground}
+          activeOpacity={1}
+          onPress={() => setModalVisible(false)}
+        >
+          <Image
+            source={{ uri: avatarUrl }}
+            style={styles.fullScreenImage}
+            resizeMode="contain"
+          />
+        </TouchableOpacity>
+      </Modal>
 
       <Spacer height={24} />
 
@@ -286,7 +316,7 @@ const styles = StyleSheet.create({
   avatar: {
     borderRadius: 16,
     overflow: "hidden",
-    aspectRatio: 2 / 3,
+    aspectRatio: 1,
   },
   image: {
     objectFit: "cover",
@@ -299,5 +329,15 @@ const styles = StyleSheet.create({
     borderStyle: "solid",
     borderColor: "rgb(200, 200, 200)",
     borderRadius: 16,
+  },
+  modalBackground: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.9)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  fullScreenImage: {
+    width: "100%",
+    height: "100%",
   },
 });

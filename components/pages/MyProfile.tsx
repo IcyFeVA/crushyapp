@@ -181,7 +181,7 @@ const MyProfile = () => {
               <ActivityIndicator size="large" color={Colors.light.primary} />
             )}
             <Avatar
-              size={40}
+              size={200}
               url={profile.avatar_url}
               onUpload={handleAvatarUpload}
             />
@@ -231,7 +231,6 @@ interface ProfileUpdate {
 // Styles
 const styles = StyleSheet.create({
   avatarContainer: {
-    alignItems: "center",
     marginTop: 20,
   },
   input: {
