@@ -26,6 +26,12 @@ const EditNameAge = () => {
     age: "",
   });
 
+  const isNameEmpty = profile.name.trim() === "";
+  const isAgeEmpty = profile.age.trim() === "";
+  const isNameToShort = profile.name.trim().length < 2;
+  const isAgeToHigh = parseInt(profile.age) > 100;
+  const isAgeToLow = parseInt(profile.age) < 17;
+
   useEffect(() => {
     if (session?.user) {
       getProfile();
@@ -139,8 +145,21 @@ const EditNameAge = () => {
 
           <Button
             onPress={handleUpdateProfile}
-            style={[defaultStyles.button, defaultStyles.buttonShadow]}
-            disabled={loading}
+            style={[
+              defaultStyles.button,
+              defaultStyles.buttonShadow,
+              {
+                backgroundColor:
+                  isNameEmpty ||
+                  isAgeEmpty ||
+                  isNameToShort ||
+                  isAgeToHigh ||
+                  isAgeToLow
+                    ? Colors.light.tertiary
+                    : Colors.light.primary,
+              },
+            ]}
+            disabled={loading || isNameEmpty}
           >
             <Text style={defaultStyles.buttonLabel}>
               {loading ? "Updating ..." : "Update Name & Age"}
