@@ -108,13 +108,13 @@ const EditBio = () => {
             ]}
             iconMap={{
               [actions.heading2]: ({ tintColor }) => (
-                <Text style={[styles.tib, { color: tintColor }]}>XL</Text>
+                <Text style={[styles.tib1, { color: tintColor }]}>A</Text>
               ),
               [actions.heading3]: ({ tintColor }) => (
-                <Text style={[styles.tib, { color: tintColor }]}>L</Text>
+                <Text style={[styles.tib2, { color: tintColor }]}>A</Text>
               ),
               [actions.setParagraph]: ({ tintColor }) => (
-                <Ionicons name="refresh" size={24} color={tintColor} />
+                <Text style={[styles.tib3, { color: tintColor }]}>A</Text>
               ),
             }}
           />
@@ -166,10 +166,22 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 8,
   },
-  tib: {
+  tib1: {
     textAlign: "center",
     color: Colors.light.text,
-    fontSize: 18,
+    fontSize: 20,
+    fontFamily: "BodyBold",
+  },
+  tib2: {
+    textAlign: "center",
+    color: Colors.light.text,
+    fontSize: 16,
+    fontFamily: "BodyBold",
+  },
+  tib3: {
+    textAlign: "center",
+    color: Colors.light.text,
+    fontSize: 14,
     fontFamily: "BodyBold",
   },
 });
