@@ -325,6 +325,7 @@ export default function ChatChannel() {
 
   const renderItem = useCallback(
     ({ item, index }) => {
+      console.log("item:", item);
       if (item.type === "date") {
         return (
           <View style={styles.dateContainer}>
@@ -393,17 +394,16 @@ export default function ChatChannel() {
     <SafeAreaView style={defaultStyles.SafeAreaView}>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={styles.container}
+        style={{ flex: 1 }}
         keyboardVerticalOffset={100}
       >
         <FlatList
           ref={flatListRef}
           data={messagesWithDateLabels}
           renderItem={renderItem}
-          keyExtractor={(item) =>
-            item.id || item.local_id || `${item.created_at}-${item.sender_id}`
-          }
+          keyExtractor={(item) => item.id}
           inverted
+          style={{ flex: 1 }}
         />
         {editingMessage ? (
           <View style={styles.editContainer}>
