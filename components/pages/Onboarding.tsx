@@ -14,27 +14,17 @@ import { Session } from "@supabase/supabase-js";
 import { Pageview } from "@/components/ui/Containers";
 import Spacer from "@/components/Spacer";
 import { FlatList } from "react-native";
-import {
-  View,
-  Card,
-  CardProps,
-  Text,
-  RadioButton,
-  Checkbox,
-  Button,
-} from "react-native-ui-lib";
+import { View, Text, RadioButton, Checkbox, Button } from "react-native-ui-lib";
 import { Textfield } from "@/components/ui/Textfields";
 import { Colors } from "@/constants/Colors";
 import { defaultStyles } from "@/constants/Styles";
 import Toast, { ToastRef } from "react-native-toast-message";
 import hobbiesInterests from "@/constants/Interests";
-import BigList from "react-native-big-list";
 import { create } from "zustand";
 import { useShallow } from "zustand/react/shallow";
 import { supabase } from "@/lib/supabase";
 import { NavigationContainer } from "@react-navigation/native";
 import { useAuth } from "@/hooks/useAuth";
-import Avatar from "@/components/Avatar";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { FlashList } from "@shopify/flash-list";
 import * as ImageManipulator from "expo-image-manipulator";
@@ -43,8 +33,8 @@ import * as FileSystem from "expo-file-system";
 import { useNavigation } from "@react-navigation/native";
 import { useAppContext } from "@/providers/AppProvider";
 import { storeData } from "@/utils/storage";
-import { isLoading } from "expo-font";
-import { connectUser } from "@/lib/streamChat";
+import { SecondaryButton, SecondaryButtonText } from "../ui/Buttons";
+import { Ionicons } from "@expo/vector-icons";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
@@ -260,7 +250,7 @@ export default function Onboarding() {
         });
         return;
       } else {
-        saveData();
+        saveEverything();
         return;
       }
     }
@@ -282,7 +272,7 @@ export default function Onboarding() {
     }
   };
 
-  const saveData = async () => {
+  const saveEverything = async () => {
     console.log("name:", name);
     console.log("age:", age);
     console.log("gender:", gender);
@@ -292,7 +282,16 @@ export default function Onboarding() {
     console.log("interests:", interests);
 
     try {
+      await storeData("lookingFor", relationship);
+      await storeData("genderPreference", genderPreferences);
+      console.log("stored locally:", relationship, genderPreferences);
+    } catch (error) {
+      console.error("Error storing locally:", error);
+    }
+
+    try {
       const { data, error } = await supabase
+
         .from("profiles_test")
         .update({
           name: name,
@@ -306,9 +305,6 @@ export default function Onboarding() {
         .eq("id", session?.user.id)
         .select();
 
-      // Create user in Stream Chat
-      await createStreamChatUser(session.user);
-
       if (error) {
         console.error(error);
       } else {
@@ -319,19 +315,6 @@ export default function Onboarding() {
       console.error(error);
     }
   };
-
-  async function createStreamChatUser(user) {
-    try {
-      await connectUser({ id: user.id, name: name });
-      console.log("User created in Stream Chat");
-    } catch (error) {
-      console.error("Error creating user in Stream Chat:", error);
-      // TODO: Handle user creation error
-      // Optionally, you might want to delete the Supabase user if Stream Chat user creation fails
-      // await supabase.auth.api.deleteUser(user.id);
-      throw new Error("Failed to create user in chat system");
-    }
-  }
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -418,6 +401,7 @@ const StepName = () => {
       <Spacer height={4} />
       <Textfield
         onChangeText={(text) => useOnboardingStore.setState({ name: text })}
+        maxLength={20}
       />
     </View>
   );
@@ -625,7 +609,8 @@ const StepRelationship = () => {
   const handlePress = (value: string) => {
     setSelectedValue(value);
     useOnboardingStore.setState({ relationship: value });
-    console.log("Relationship:", value, typeof value);
+
+    console.log("Relationship:", value);
   };
 
   return (
@@ -933,9 +918,10 @@ const StepPhoto = () => {
 
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsMultipleSelection: false,
         allowsEditing: true,
-        aspect: [1, 1],
-        quality: 1,
+        quality: 0.5,
+        exif: false,
       });
 
       if (result.canceled || !result.assets || result.assets.length === 0) {
@@ -996,6 +982,10 @@ const StepPhoto = () => {
         .from("avatars")
         .getPublicUrl(pixelatedData.path).data.publicUrl;
 
+      // Update this part
+      console.log("Original URL:", originalUrl);
+      console.log("Pixelated URL:", pixelatedUrl);
+
       // Update profile
       await updateProfile({
         avatar_url: originalUrl,
@@ -1005,6 +995,7 @@ const StepPhoto = () => {
       setAvatarUrl(originalUrl);
       useOnboardingStore.setState({ photoUploaded: true });
       console.log("Profile updated successfully");
+      console.log("Avatar URL set to:", originalUrl);
     } catch (error) {
       if (error instanceof Error) {
         Alert.alert("Upload Error", error.message);
@@ -1055,20 +1046,37 @@ const StepPhoto = () => {
       <Spacer height={8} />
       <View>
         <Text style={defaultStyles.body}>
-          You can only add one. So, make it count :)
+          You can only add one photo (for now). So, make it count :)
         </Text>
       </View>
       <Spacer height={24} />
       <View style={styles.avatarContainer}>
-        {avatarUrl ? (
-          <Image source={{ uri: avatarUrl }} style={styles.avatar} />
-        ) : (
-          <TouchableOpacity onPress={handleUpload} disabled={isLoading}>
-            <View style={styles.placeholderAvatar}>
-              <Text>{isLoading ? "Uploading..." : "Tap to upload"}</Text>
-            </View>
-          </TouchableOpacity>
+        {avatarUrl && (
+          <Image
+            source={{ uri: avatarUrl }}
+            style={styles.avatar}
+            resizeMode="contain"
+            onError={(e) =>
+              console.log("Image load error:", e.nativeEvent.error)
+            }
+          />
         )}
+
+        <Spacer height={24} />
+
+        <SecondaryButton
+          onPress={handleUpload}
+          style={[{ width: "100%" }, defaultStyles.buttonShadow]}
+          disabled={isLoading}
+        >
+          <Ionicons name="image" size={24} color={Colors.light.primary} />
+
+          <Spacer width={8} />
+
+          <SecondaryButtonText>
+            {isLoading ? "Uploading ..." : "Pick a Photo"}
+          </SecondaryButtonText>
+        </SecondaryButton>
       </View>
     </View>
   );
@@ -1248,20 +1256,12 @@ const styles = StyleSheet.create({
   },
   avatarContainer: {
     alignItems: "center",
+    width: "100%",
+    height: "100%",
   },
   avatar: {
     width: 200,
+    height: 200,
     borderRadius: 16,
-    resizeMode: "cover",
-  },
-  placeholderAvatar: {
-    width: 200,
-    height: 300,
-    borderRadius: 16,
-    backgroundColor: Colors.light.backgroundSecondary,
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: Colors.light.tertiary,
   },
 });

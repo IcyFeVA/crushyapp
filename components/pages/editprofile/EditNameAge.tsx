@@ -124,6 +124,7 @@ const EditNameAge = () => {
             onChangeText={(text) => handleInputChange("name", text)}
             placeholder="Name"
             placeholderTextColor={Colors.light.tertiary}
+            maxLength={20}
           />
 
           <Spacer height={16} />

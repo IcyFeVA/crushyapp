@@ -127,7 +127,7 @@ export default function Avatar({ url, size = 70, onUpload }: Props) {
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsMultipleSelection: false,
         allowsEditing: true,
-        quality: 1,
+        quality: 0.5,
         exif: false,
       });
 
