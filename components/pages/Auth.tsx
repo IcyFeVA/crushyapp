@@ -205,7 +205,6 @@ export default function Auth({ onboarding }: any) {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: Colors.light.background }}>
-      <StatusBar backgroundColor="white" barStyle="dark-content" />
       {mode === "signin" && (
         <Pageview className="flex justify-space-between h-full">
           <View className="flex-1">

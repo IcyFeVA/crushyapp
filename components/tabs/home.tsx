@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, Button, StatusBar, ScrollView } from "react-native";
+import { View, Text, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { defaultStyles } from "@/constants/Styles";
 

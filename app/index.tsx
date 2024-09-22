@@ -10,24 +10,30 @@ import { useEffect, useState } from 'react';
 import { useFonts } from 'expo-font';
 import * as NavigationBar from 'expo-navigation-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { Platform } from 'react-native';
+import { Platform, StatusBar } from "react-native";
 // import { MMKV } from 'react-native-mmkv'
-import hobbiesInterests from '@/constants/Interests'
-import { useNotifications } from '@/hooks/useNotifications';
-import { clearAllStorage, getData, storeData, resetUserSearchFilters } from '@/utils/storage';
-import { AppProvider, useAppContext } from '@/providers/AppProvider';
-import { supabase } from '@/lib/supabase';
-import { get } from 'react-native/Libraries/TurboModule/TurboModuleRegistry';
-import ErrorBoundary from '@/components/ErrorBoundary';
-import { NavigationContainer } from '@react-navigation/native';
-import { StreamChat } from 'stream-chat';
-import { Chat, OverlayProvider } from 'stream-chat-expo';
+import hobbiesInterests from "@/constants/Interests";
+import { useNotifications } from "@/hooks/useNotifications";
+import {
+  clearAllStorage,
+  getData,
+  storeData,
+  resetUserSearchFilters,
+} from "@/utils/storage";
+import { AppProvider, useAppContext } from "@/providers/AppProvider";
+import { supabase } from "@/lib/supabase";
+import { get } from "react-native/Libraries/TurboModule/TurboModuleRegistry";
+import ErrorBoundary from "@/components/ErrorBoundary";
+import { NavigationContainer } from "@react-navigation/native";
+import { StreamChat } from "stream-chat";
+import { Chat, OverlayProvider } from "stream-chat-expo";
 import { NotificationProvider } from "@/contexts/NotificationContext";
 import { messaging, app } from "../firebase";
 import * as Notifications from "expo-notifications";
 import * as Device from "expo-device";
 import { LogBox } from "react-native";
 import { api } from "@/api/supabaseApi";
+import { Colors } from "@/constants/Colors";
 
 // LogBox.ignoreLogs(["Possible Unhandled Promise Rejection"]);
 LogBox.ignoreAllLogs();
@@ -182,6 +188,12 @@ export default function RootLayout() {
         <AppProvider>
           <NotificationProvider>
             <RootNavigator session={session} />
+            <StatusBar
+              animated={true}
+              backgroundColor={Colors.light.background}
+              barStyle="dark-content"
+              showHideTransition="fade"
+            />
           </NotificationProvider>
         </AppProvider>
       </GestureHandlerRootView>
