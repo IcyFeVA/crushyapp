@@ -10,7 +10,7 @@ const EditPronouns = () => {
   const navigation = useNavigation();
 
   const handleSelectPronouns = (pronouns: string) => {
-    //navigation.goBack();
+    navigation.goBack();
   };
 
   return (

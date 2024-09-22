@@ -551,9 +551,9 @@ const StepPronouns = () => {
       <Spacer height={8} />
       <View>
         <Text style={defaultStyles.body}>
-          Choose <Text style={defaultStyles.bodyBold}>up to two</Text>{" "}
-          pronouns.You will be able to add your own in a future update, if you
-          don't see yours.
+          Choose <Text style={defaultStyles.bodyBold}>up to two</Text> pronouns.
+          If you don't find your pronouns listed, you'll have the option to add
+          them in a future update.
         </Text>
       </View>
 

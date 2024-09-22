@@ -64,11 +64,6 @@ const PronounsSelector: React.FC<PronounsSelectorProps> = ({
       setSelectedValues(selectedValues.filter((item) => item !== value));
     } else {
       if (selectedValues.length >= 2) {
-        Toast.show({
-          type: "default",
-          text1: "👋 Hey",
-          text2: "You can only select two pronouns",
-        });
         return;
       }
       setSelectedValues([...selectedValues, value]);
@@ -86,18 +81,8 @@ const PronounsSelector: React.FC<PronounsSelectorProps> = ({
 
       if (error) throw error;
       onSelectPronouns(selectedValues);
-      Toast.show({
-        type: "success",
-        text1: "Success",
-        text2: "Pronouns updated successfully",
-      });
     } catch (error) {
       console.error("Error updating pronouns:", error);
-      Toast.show({
-        type: "error",
-        text1: "Error",
-        text2: "Failed to update pronouns",
-      });
     } finally {
       setIsLoading(false);
     }
@@ -107,8 +92,8 @@ const PronounsSelector: React.FC<PronounsSelectorProps> = ({
     <View style={styles.container}>
       <Text style={defaultStyles.body}>
         Choose <Text style={defaultStyles.bodyBold}>up to two</Text> pronouns.
-        You will be able to add your own in a future update, if you don't see
-        yours.
+        If you don't find your pronouns listed, you'll have the option to add
+        them in a future update.
       </Text>
       <Spacer height={48} />
       <FlatList
@@ -136,7 +121,7 @@ const PronounsSelector: React.FC<PronounsSelectorProps> = ({
             />
           </Pressable>
         )}
-        keyExtractor={(item) => item.key}
+        keyExtractor={(item) => item.key.toString()}
         showsVerticalScrollIndicator={false}
         bounces={false}
       />
