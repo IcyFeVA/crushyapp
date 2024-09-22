@@ -232,6 +232,7 @@ interface ProfileUpdate {
 const styles = StyleSheet.create({
   avatarContainer: {
     marginTop: 20,
+    minHeight: 250,
   },
   input: {
     backgroundColor: Colors.light.secondary,
