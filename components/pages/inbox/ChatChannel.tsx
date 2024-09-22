@@ -325,7 +325,6 @@ export default function ChatChannel() {
 
   const renderItem = useCallback(
     ({ item, index }) => {
-      console.log("item:", item);
       if (item.type === "date") {
         return (
           <View style={styles.dateContainer}>
@@ -401,7 +400,9 @@ export default function ChatChannel() {
           ref={flatListRef}
           data={messagesWithDateLabels}
           renderItem={renderItem}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item) =>
+            `${item.id}-${item.created_at}-${item.sender_id}`
+          }
           inverted
           style={{ flex: 1 }}
         />

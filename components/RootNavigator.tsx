@@ -1,20 +1,36 @@
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { createStackNavigator, TransitionPresets } from '@react-navigation/stack';
-import Auth from "@/components/pages/Auth";
-import { View, Text, Image, Pressable, Platform } from "react-native";
+import React, { useEffect, lazy, Suspense } from "react";
 import {
-  NavigationContainer,
-  useFocusEffect,
-  useNavigation,
-} from "@react-navigation/native";
+  View,
+  Text,
+  Image,
+  Pressable,
+  Platform,
+  ActivityIndicator,
+} from "react-native";
+import { NavigationContainer, useNavigation } from "@react-navigation/native";
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import {
+  createStackNavigator,
+  TransitionPresets,
+} from "@react-navigation/stack";
+
+import { useAppContext } from "@/providers/AppProvider";
+import { useNotifications } from "@/contexts/NotificationContext";
+import { clearAllStorage, getData, storeData } from "@/utils/storage";
+import { supabase } from "@/lib/supabase";
+
 import Home from "@/components/tabs/home";
 import History from "@/components/tabs/history";
 import Me from "@/components/tabs/me";
 import Surf from "@/components/tabs/surf";
 import Dive from "@/components/tabs/dive";
-import Profile from "@/app/profile";
-import Onboarding from "@/components/pages/Onboarding";
+import MyProfile from "@/components/pages/MyProfile";
+import ChannelList from "@/components/pages/inbox/Inbox";
+import ChatChannel from "@/components/pages/inbox/ChatChannel";
 import SearchFilters from "@/app/searchFilters";
+import Auth from "@/components/pages/Auth";
+import Onboarding from "@/components/pages/Onboarding";
+import Profile from "@/app/profile";
 import FilterGenderPreference from "@/app/searchFilters/filterGenderPreference";
 import FilterStarsign from "@/app/searchFilters/filterStarsign";
 import FilterAgeRange from "@/app/searchFilters/filterAgeRange";
@@ -24,15 +40,6 @@ import FilterSmokingFrequency from "@/app/searchFilters/filterSmoking";
 import FilterDrinkingFrequency from "@/app/searchFilters/filterDrinking";
 import FilterCannabisFrequency from "@/app/searchFilters/filterCannabis";
 import FilterDietPreference from "@/app/searchFilters/filterDietPreference";
-import MyProfile from "@/components/pages/MyProfile";
-import { useAppContext } from "@/providers/AppProvider";
-import { clearAllStorage, getData, storeData } from "@/utils/storage";
-import { useCallback, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
-import ChannelList from "@/components/pages/inbox/Inbox";
-import ChatChannel from "@/components/pages/inbox/ChatChannel";
-import { useChatContext } from "stream-chat-expo";
-import { useNotifications } from "@/contexts/NotificationContext";
 import EditNameAge from "./pages/editprofile/EditNameAge";
 import EditBio from "./pages/editprofile/EditBio";
 import EditGender from "./pages/editprofile/EditGender";
@@ -40,7 +47,8 @@ import EditInterests from "./pages/editprofile/EditInterests";
 import EditLookingFor from "./pages/editprofile/EditLookingFor";
 import EditPronouns from "./pages/editprofile/EditPronouns";
 
-const tabIcons = {
+// Constants
+const TAB_ICONS = {
   homeActive: require("@/assets/images/icons/tab-home-active.png"),
   homeInactive: require("@/assets/images/icons/tab-home.png"),
   historyActive: require("@/assets/images/icons/tab-history-active.png"),
@@ -52,7 +60,12 @@ const tabIcons = {
   exploreInactive: require("@/assets/images/icons/tab-explore.png"),
 };
 
-function DummySurf() {
+const PLATFORM_TAB_HEIGHT = Platform.OS === "ios" ? 80 : 48;
+
+const Tab = createBottomTabNavigator();
+const Stack = createStackNavigator();
+
+function Explore() {
   return (
     <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
       <Text>Explore</Text>
@@ -60,12 +73,16 @@ function DummySurf() {
   );
 }
 
-const Tab = createBottomTabNavigator();
-const Stack = createStackNavigator();
-
 function TabNavigator() {
   const navigation = useNavigation();
   const { totalNotifications } = useNotifications();
+
+  const handleExploreTabPress = async (routeName) => {
+    const lookingFor = await getData("lookingFor");
+    setTimeout(() => {
+      navigation.navigate(lookingFor === 3 ? "Surf" : "Dive");
+    }, 100);
+  };
 
   return (
     <Tab.Navigator
@@ -74,19 +91,21 @@ function TabNavigator() {
           let iconSource;
 
           if (route.name === "Home") {
-            iconSource = focused ? tabIcons.homeActive : tabIcons.homeInactive;
+            iconSource = focused
+              ? TAB_ICONS.homeActive
+              : TAB_ICONS.homeInactive;
           } else if (route.name === "History") {
             iconSource = focused
-              ? tabIcons.historyActive
-              : tabIcons.historyInactive;
+              ? TAB_ICONS.historyActive
+              : TAB_ICONS.historyInactive;
           } else if (route.name === "Inbox") {
             iconSource = focused
-              ? tabIcons.inboxActive
-              : tabIcons.inboxInactive;
+              ? TAB_ICONS.inboxActive
+              : TAB_ICONS.inboxInactive;
           } else if (route.name === "Me") {
-            iconSource = focused ? tabIcons.meActive : tabIcons.meInactive;
+            iconSource = focused ? TAB_ICONS.meActive : TAB_ICONS.meInactive;
           } else if (route.name === "Explore") {
-            iconSource = focused ? tabIcons.meActive : tabIcons.meInactive;
+            iconSource = focused ? TAB_ICONS.meActive : TAB_ICONS.meInactive;
             return (
               <Image
                 style={{ marginTop: Platform.OS === "ios" ? 0 : -4 }}
@@ -102,38 +121,22 @@ function TabNavigator() {
           <Pressable
             {...props}
             onPress={() => {
-              props.onPress();
-
-              const getLookingFor = async () => {
-                const lookingFor: number | null = await getData("lookingFor");
-
-                if (route.name === "Explore") {
-                  setTimeout(() => {
-                    navigation.navigate("Home");
-                    if (lookingFor == 3) {
-                      // 3 is hookup
-                      navigation.navigate("Surf");
-                    } else {
-                      navigation.navigate("Dive");
-                    }
-                  }, 100);
-                }
-              };
-              getLookingFor();
+              if (route.name === "Explore") {
+                handleExploreTabPress(route.name);
+              } else {
+                props.onPress();
+              }
             }}
           />
         ),
         headerShown: false,
         tabBarShowLabel: false,
-        tabBarStyle: { height: Platform.OS === "ios" ? 80 : 48 },
-        // tabBarBackground: () => (
-        //     <BlurView tint="light" intensity={100} style={StyleSheet.absoluteFill} />
-        //   ),
+        tabBarStyle: { height: PLATFORM_TAB_HEIGHT },
       })}
     >
       <Tab.Screen name="Home" component={Home} />
       <Tab.Screen name="History" component={History} />
-      <Tab.Screen name="Explore" component={DummySurf} />
+      <Tab.Screen name="Explore" component={Explore} />
       <Tab.Screen
         name="Inbox"
         component={ChannelList}
@@ -151,89 +154,80 @@ export default function RootNavigator({ session }) {
   const { showOnboarding, setShowOnboarding } = useAppContext();
 
   useEffect(() => {
-    //   clearAllStorage();
-    //   return;
+    if (session) {
+      checkOnboardingStatus();
+      checkLookingForStatus();
+    }
+  }, [session, session?.user.id]);
 
-    const checkIfOnboardingDone = async () => {
-      try {
-        const onboardingComplete = await getData("onboardingComplete");
+  const checkOnboardingStatus = async () => {
+    try {
+      const onboardingComplete = await getData("onboardingComplete");
 
-        if (onboardingComplete === undefined) {
-          console.log("onboarding status undefined in storage");
+      if (onboardingComplete === undefined) {
+        console.log("onboarding status undefined in storage");
 
-          const getProfile = async () => {
-            try {
-              const { data } = await supabase
-                .from("profiles_test")
-                .select("name")
-                .eq("id", session?.user.id)
-                .single();
+        const getProfile = async () => {
+          try {
+            const { data } = await supabase
+              .from("profiles_test")
+              .select("name")
+              .eq("id", session?.user.id)
+              .single();
 
-              if (data) {
-                if (data?.name != null) {
-                  console.log("onboarding done, saving it in storage");
-                  await storeData("onboardingComplete", true);
-                } else {
-                  console.log("onboarding not done");
-                  setShowOnboarding(true);
-                }
+            if (data) {
+              if (data?.name != null) {
+                console.log("onboarding done, saving it in storage");
+                await storeData("onboardingComplete", true);
+              } else {
+                console.log("onboarding not done");
+                setShowOnboarding(true);
               }
-            } catch (error: any) {
-              console.log("Error getting profile:", error);
             }
-          };
-
-          getProfile();
-        } else {
-          console.log("onboarding status found in storage", onboardingComplete);
-        }
-      } catch (error) {
-        console.error("Error checking onboarding status:", error);
-      }
-    };
-
-    if (session) {
-      checkIfOnboardingDone();
-    }
-  }, [session?.user.id]);
-
-  useEffect(() => {
-    const checkIfLookingForSet = async () => {
-      const lookingFor = await getData("lookingFor");
-
-      if (lookingFor === undefined) {
-        console.log("looking for status undefined in storage, setting default");
-
-        const { data } = await supabase
-          .from("profiles_test")
-          .select("looking_for")
-          .eq("id", session?.user.id)
-          .single();
-
-        if (data) {
-          if (data?.looking_for != null) {
-            console.log("looking for found", data?.looking_for);
-            await storeData("lookingFor", data?.looking_for);
-          } else {
-            console.log("looking for not found, setting default");
-            await storeData("lookingFor", 1);
+          } catch (error: any) {
+            console.log("Error getting profile:", error);
           }
-        }
-      } else {
-        console.log("looking for status found in storage", lookingFor);
-      }
-    };
+        };
 
-    if (session) {
-      checkIfLookingForSet();
+        getProfile();
+      } else {
+        console.log("onboarding status found in storage", onboardingComplete);
+      }
+    } catch (error) {
+      console.error("Error checking onboarding status:", error);
     }
-  }, [session?.user.id]);
+  };
+
+  const checkLookingForStatus = async () => {
+    const lookingFor = await getData("lookingFor");
+
+    if (lookingFor === undefined) {
+      console.log("looking for status undefined in storage, setting default");
+
+      const { data } = await supabase
+        .from("profiles_test")
+        .select("looking_for")
+        .eq("id", session?.user.id)
+        .single();
+
+      if (data) {
+        if (data?.looking_for != null) {
+          console.log("looking for found", data?.looking_for);
+          await storeData("lookingFor", data?.looking_for);
+        } else {
+          console.log("looking for not found, setting default");
+          await storeData("lookingFor", 1);
+        }
+      }
+    } else {
+      console.log("looking for status found in storage", lookingFor);
+    }
+  };
 
   return (
-    // <NavigationContainer independent={true}>
     <Stack.Navigator initialRouteName="Main">
       {session ? (
-        showOnboarding === true ? (
+        showOnboarding ? (
           <Stack.Screen
             name="Onboarding"
             component={Onboarding}
@@ -265,62 +259,20 @@ export default function RootNavigator({ session }) {
                 component={ChatChannel}
                 options={{ headerShown: true }}
               />
-              <Stack.Screen
-                name="MyProfile"
-                component={MyProfile}
-                options={{
-                  headerShown: false,
-                  ...TransitionPresets.SlideFromRightIOS,
-                }}
-              />
-              <Stack.Screen
-                name="EditNameAge"
-                component={EditNameAge}
-                options={{
-                  headerShown: false,
-                  ...TransitionPresets.SlideFromRightIOS,
-                }}
-              />
-              <Stack.Screen
-                name="EditBio"
-                component={EditBio}
-                options={{
-                  headerShown: false,
-                  ...TransitionPresets.SlideFromRightIOS,
-                }}
-              />
-              <Stack.Screen
-                name="EditGender"
-                component={EditGender}
-                options={{
-                  headerShown: false,
-                  ...TransitionPresets.SlideFromRightIOS,
-                }}
-              />
-              <Stack.Screen
-                name="EditInterests"
-                component={EditInterests}
-                options={{
-                  headerShown: false,
-                  ...TransitionPresets.SlideFromRightIOS,
-                }}
-              />
-              <Stack.Screen
-                name="EditLookingFor"
-                component={EditLookingFor}
-                options={{
-                  headerShown: false,
-                  ...TransitionPresets.SlideFromRightIOS,
-                }}
-              />
-              <Stack.Screen
-                name="EditPronouns"
-                component={EditPronouns}
-                options={{
-                  headerShown: false,
-                  ...TransitionPresets.SlideFromRightIOS,
-                }}
-              />
+            </Stack.Group>
+            <Stack.Group
+              screenOptions={{
+                headerShown: false,
+                ...TransitionPresets.SlideFromRightIOS,
+              }}
+            >
+              <Stack.Screen name="MyProfile" component={MyProfile} />
+              <Stack.Screen name="EditNameAge" component={EditNameAge} />
+              <Stack.Screen name="EditBio" component={EditBio} />
+              <Stack.Screen name="EditGender" component={EditGender} />
+              <Stack.Screen name="EditInterests" component={EditInterests} />
+              <Stack.Screen name="EditLookingFor" component={EditLookingFor} />
+              <Stack.Screen name="EditPronouns" component={EditPronouns} />
             </Stack.Group>
             <Stack.Group
               screenOptions={{
@@ -366,11 +318,5 @@ export default function RootNavigator({ session }) {
         />
       )}
     </Stack.Navigator>
-    // </NavigationContainer>
   );
 }
-
-
-
-
-
