@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { api } from '@/api/supabaseApi';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase';
+import { useAppContext } from '@/providers/AppProvider';
 
 export const useProfile = () => {
   const session = useAuth();
@@ -57,6 +58,7 @@ export const usePotentialMatches = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [filtersObject, setFiltersObject] = useState({});
+  const { searchFilters } = useAppContext();
 
   const fetchMatches = useCallback(async (limit = 10) => {
     if (!session?.user?.id) return;
@@ -96,6 +98,7 @@ export const usePotentialMatches = () => {
     if (!session?.user?.id) return;
     setLoading(true);
     try {
+      console.log("searchFilters >>>>>>>>>>>>>>>>>>", searchFilters)
       const { data, error } = await supabase.rpc('get_filtered_matches', filtersObject);
       if (error) {
         if (error.code === 'PGRST202') {
@@ -105,7 +108,7 @@ export const usePotentialMatches = () => {
         } 
         throw error;
       }
-        else console.log(data)
+        // else console.log(data)
       setMatches(data || []);
     } catch (err) {
       setError(err);

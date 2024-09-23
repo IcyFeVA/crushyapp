@@ -5,6 +5,10 @@ interface FilterPreference {
   value: string | string[];
 }
 
+interface AllSearchFilters {
+  filters: Object;
+}
+
 interface SearchFilters {
   genderPreference: FilterPreference;
   ageRange: {
@@ -19,13 +23,14 @@ interface SearchFilters {
   drinkingFrequency: FilterPreference;
   cannabisFrequency: FilterPreference;
   dietPreference: FilterPreference;
+  allSearchFilters: AllSearchFilters;
 }
-
-
 
 interface AppContextType {
   searchFilters: SearchFilters;
   setSearchFilters: React.Dispatch<React.SetStateAction<SearchFilters>>;
+  allSearchFilters: AllSearchFilters;
+  setAllSearchFilters: React.Dispatch<React.SetStateAction<AllSearchFilters>>;
   resetFilters: () => void;
 
   showOnboarding: boolean;
@@ -36,40 +41,50 @@ interface AppContextType {
 }
 
 const defaultSearchFilters: SearchFilters = {
-  genderPreference: { key: '', value: [] },
+  genderPreference: { key: "", value: [] },
   ageRange: { min: 18, max: 35 },
-  distance: { key: '', value: '' },
-  starSignPreference: { key: '', value: '' },
-  bodyTypePreference: { key: '', value: '' },
-  exerciseFrequency: { key: '', value: '' },
-  smokingFrequency: { key: '', value: '' },
-  drinkingFrequency: { key: '', value: '' },
-  cannabisFrequency: { key: '', value: '' },
-  dietPreference: { key: '', value: '' },
+  distance: { key: "", value: "" },
+  starSignPreference: { key: "", value: "" },
+  bodyTypePreference: { key: "", value: "" },
+  exerciseFrequency: { key: "", value: "" },
+  smokingFrequency: { key: "", value: "" },
+  drinkingFrequency: { key: "", value: "" },
+  cannabisFrequency: { key: "", value: "" },
+  dietPreference: { key: "", value: "" },
 };
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [searchFilters, setSearchFilters] = useState<SearchFilters>(defaultSearchFilters);
+export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
+  const [searchFilters, setSearchFilters] =
+    useState<SearchFilters>(defaultSearchFilters);
+  const [allSearchFilters, setAllSearchFilters] = useState<AllSearchFilters>(
+    {}
+  );
   const [showOnboarding, setShowOnboarding] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const resetFilters = () => {
-    console.log('Resetting filters');
+    console.log("Resetting filters");
     setSearchFilters(defaultSearchFilters);
   };
 
   return (
-    <AppContext.Provider value={{
-      searchFilters,
-      setSearchFilters,
-      resetFilters,
-      showOnboarding,
-      setShowOnboarding,
-      isLoading,
-      setIsLoading,
-    }}>
+    <AppContext.Provider
+      value={{
+        searchFilters,
+        setSearchFilters,
+        allSearchFilters,
+        setAllSearchFilters,
+        resetFilters,
+        showOnboarding,
+        setShowOnboarding,
+        isLoading,
+        setIsLoading,
+      }}
+    >
       {children}
     </AppContext.Provider>
   );
