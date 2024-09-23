@@ -80,7 +80,7 @@ function TabNavigator() {
   const handleExploreTabPress = async (routeName) => {
     const lookingFor = await getData("lookingFor");
     setTimeout(() => {
-      navigation.navigate(lookingFor === 3 ? "Surf" : "Dive");
+      navigation.navigate(lookingFor === 3 ? "Surf" : "Dive", { lookingFor });
     }, 100);
   };
 

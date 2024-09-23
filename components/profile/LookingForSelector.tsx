@@ -20,8 +20,8 @@ interface LookingForSelectorProps {
 
 const lookingForOptions = [
   { label: "Relationship", value: 1 },
-  { label: "Friend", value: 2 },
-  { label: "Hookup", value: 3 },
+  { label: "Friendship", value: 2 },
+  { label: "Casual (Image Focused)", value: 3 },
 ];
 const LookingForSelector: React.FC<LookingForSelectorProps> = ({
   onSelectLookingFor,
@@ -106,8 +106,8 @@ const LookingForSelector: React.FC<LookingForSelectorProps> = ({
       <View style={{ paddingHorizontal: 8 }}>
         <Text style={defaultStyles.bodyBold}>Your selection matters: </Text>
         <Text style={defaultStyles.body}>
-          If you're looking for a hookup, your discovery experience is more
-          focused on images. We call this 'Surf' mode.
+          If you're looking for a casual connection, your discovery experience
+          is more focused on images. We call this 'Surf' mode.
         </Text>
         <Spacer height={8} />
         <Text style={defaultStyles.body}>

@@ -15,7 +15,7 @@ export const useProfile = () => {
     setLoading(true);
     try {
         const data = await api.getCurrentUserProfile(session.user.id);
-        console.log('Fetched Current User Profile:', data);
+        //console.log('Fetched Current User Profile:', data);
         setCurrentUserProfile(data);
     } catch (err) {
         console.error('Error fetching current user profile:', err);
@@ -56,6 +56,7 @@ export const usePotentialMatches = () => {
   const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [filtersObject, setFiltersObject] = useState({});
 
   const fetchMatches = useCallback(async (limit = 10) => {
     if (!session?.user?.id) return;
@@ -74,7 +75,7 @@ export const usePotentialMatches = () => {
     }
   }, [session]);
 
-  const fetchDiveMatches = useCallback(async (limit = 10) => {
+  const fetchDiveMatchesOld = useCallback(async (limit = 10) => {
     if (!session?.user?.id) return;
     setLoading(true);
     try {
@@ -90,6 +91,29 @@ export const usePotentialMatches = () => {
       setLoading(false);
     }
   }, [session]);
+
+  const fetchFilteredMatches = useCallback(async (filtersObject: any) => {
+    if (!session?.user?.id) return;
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.rpc('get_filtered_matches', filtersObject);
+      if (error) {
+        if (error.code === 'PGRST202') {
+          console.log(`No potential matches found`);
+          setMatches([]);
+          return null;
+        } 
+        throw error;
+      }
+        else console.log(data)
+      setMatches(data || []);
+    } catch (err) {
+      setError(err);
+    } finally {
+      setLoading(false);
+    }
+  }, [session, filtersObject]);
+  
 
   const recordAction = useCallback(async (matchedUserId: string, action: 'like' | 'dislike') => {
     if (!session?.user?.id) return;
@@ -107,5 +131,5 @@ export const usePotentialMatches = () => {
     }
   }, [session]);
 
-  return { matches, loading, error, fetchMatches, fetchDiveMatches, recordAction };
+  return { matches, loading, error, fetchMatches, fetchFilteredMatches, recordAction };
 };

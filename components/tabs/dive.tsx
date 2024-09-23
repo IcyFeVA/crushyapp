@@ -19,7 +19,11 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { useNavigation, StackActions } from "@react-navigation/native";
+import {
+  useNavigation,
+  StackActions,
+  useRoute,
+} from "@react-navigation/native";
 import { Chip } from "react-native-ui-lib";
 
 import { Colors } from "@/constants/Colors";
@@ -112,11 +116,14 @@ const Dive = () => {
   const navigation = useNavigation();
   const { width } = useWindowDimensions();
 
+  const route = useRoute();
+  const { lookingFor } = route.params;
+
   const {
     matches: potentialMatches,
     loading: matchesLoading,
     error: matchesError,
-    fetchDiveMatches,
+    fetchFilteredMatches,
     recordAction,
   } = usePotentialMatches();
 
@@ -136,13 +143,16 @@ const Dive = () => {
 
   const currentMatch = potentialMatches[currentMatchIndex];
 
-  // Fetch matches and user profile on session change
   useEffect(() => {
     if (session?.user?.id) {
-      fetchDiveMatches();
+      fetchFilteredMatches({
+        user_id: session.user.id,
+        looking_for: lookingFor, // argument from RootNavigator / 1 = Relationship, 2 = Friendship, 3 = Hookup
+        limit_count: 10,
+      });
       fetchCurrentUserProfile();
     }
-  }, [session, fetchDiveMatches, fetchCurrentUserProfile]);
+  }, [session, fetchFilteredMatches, fetchCurrentUserProfile]);
 
   // Fetch profile details for the current match
   useEffect(() => {
@@ -181,11 +191,11 @@ const Dive = () => {
       if (nextIndex < potentialMatches.length) {
         return nextIndex;
       } else {
-        fetchDiveMatches();
+        fetchFilteredMatches();
         return 0;
       }
     });
-  }, [potentialMatches.length, fetchDiveMatches]);
+  }, [potentialMatches.length, fetchFilteredMatches]);
 
   const scrollToTop = useCallback(() => {
     scrollViewRef.current?.scrollTo({ x: 0, y: 0, animated: true });
@@ -280,58 +290,45 @@ const Dive = () => {
     [sortedInterests, currentUserProfile]
   );
 
-  const renderBioHtml = (bio) => {
-    const htmlContent = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <style>
-            body {
-              font-family: 'HeadingBold', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
-              font-size: 18px;
-              line-height: 1.5;
-              color: #333;
-              padding: 0;
-              margin: 0;
-            }
-            h2 { font-size: 24px; margin-bottom: 8px; }
-            h3 { font-size: 20px; margin-bottom: 16px; }
-          </style>
-        </head>
-        <body>${bio}</body>
-      </html>
-    `;
+  // Memoize the htmlStyles object
+  const htmlStyles = useMemo(
+    () => ({
+      html: {
+        fontFamily: "BodyRegular",
+        fontSize: 18,
+        lineHeight: 26,
+        marginBottom: 16,
+      },
+      h2: {
+        fontFamily: "HeadingBold",
+        fontSize: 20,
+        marginBottom: 16,
+      },
+      "h3 span": {
+        fontSize: "20%",
+      },
+      body: {
+        fontFamily: "BodyRegular",
+        fontSize: 16,
+        lineHeight: 26,
+        marginBottom: 16,
+      },
+    }),
+    []
+  );
 
-    return (
-      <RenderHtml
-        contentWidth={width - 32}
-        source={{ html: bio }}
-        tagsStyles={{
-          html: {
-            fontFamily: "BodyRegular",
-            fontSize: 18,
-            lineHeight: 26,
-            marginBottom: 16,
-          },
-          h2: {
-            fontFamily: "HeadingBold",
-            fontSize: 20,
-            marginBottom: 16,
-          },
-          "h3 span": {
-            fontSize: "20%",
-          },
-          body: {
-            fontFamily: "BodyRegular",
-            fontSize: 16,
-            lineHeight: 26,
-            marginBottom: 16,
-          },
-        }}
-      />
-    );
-  };
+  // Memoize the renderBioHtml function
+  const renderBioHtml = useMemo(
+    () => (bio: string) =>
+      (
+        <RenderHtml
+          contentWidth={width - 32}
+          source={{ html: bio }}
+          tagsStyles={htmlStyles}
+        />
+      ),
+    [width, htmlStyles]
+  );
 
   // Combined loading state
   const isLoading = matchesLoading || profileLoading;
