@@ -57,7 +57,6 @@ export const usePotentialMatches = () => {
   const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [filtersObject, setFiltersObject] = useState({});
   const { searchFilters } = useAppContext();
 
   const fetchMatches = useCallback(async (limit = 10) => {
@@ -77,29 +76,12 @@ export const usePotentialMatches = () => {
     }
   }, [session]);
 
-  const fetchDiveMatchesOld = useCallback(async (limit = 10) => {
+  const fetchFilteredMatches = useCallback(async () => {
     if (!session?.user?.id) return;
     setLoading(true);
     try {
-      const { data, error } = await supabase.rpc('get_potential_dive_matches', {
-        user_id: session.user.id,
-        limit_count: limit,
-      });
-      if (error) throw error;
-      setMatches(data || []);
-    } catch (err) {
-      setError(err);
-    } finally {
-      setLoading(false);
-    }
-  }, [session]);
-
-  const fetchFilteredMatches = useCallback(async (filtersObject: any) => {
-    if (!session?.user?.id) return;
-    setLoading(true);
-    try {
-      console.log("searchFilters >>>>>>>>>>>>>>>>>>", searchFilters)
-      const { data, error } = await supabase.rpc('get_filtered_matches', filtersObject);
+      console.log("searchFilters >>>>>>>>>>>>>>>>>>", searchFilters);
+      const { data, error } = await supabase.rpc('get_filtered_matches', searchFilters);
       if (error) {
         if (error.code === 'PGRST202') {
           console.log(`No potential matches found`);
@@ -108,15 +90,13 @@ export const usePotentialMatches = () => {
         } 
         throw error;
       }
-        // else console.log(data)
       setMatches(data || []);
     } catch (err) {
       setError(err);
     } finally {
       setLoading(false);
     }
-  }, [session, filtersObject]);
-  
+  }, [session, searchFilters]);
 
   const recordAction = useCallback(async (matchedUserId: string, action: 'like' | 'dislike') => {
     if (!session?.user?.id) return;

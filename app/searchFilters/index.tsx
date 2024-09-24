@@ -6,76 +6,22 @@ import { Button, Card, ListItem } from 'react-native-ui-lib'
 import Spacer from '@/components/Spacer'
 import { useFocusEffect } from 'expo-router'
 import { defaultStyles } from '@/constants/Styles'
-import { getData, resetUserSearchFilters } from '@/utils/storage'
-import AsyncStorage from '@react-native-async-storage/async-storage'
-import { useAppContext } from '@/providers/AppProvider'
-import { useNavigation } from '@react-navigation/native'
-
-    // Start of Selection
-    const convertFilters = (filters: Record<string, any>): Record<string, any> => {
-      const convertedFilters: Record<string, any> = {};
-      const keyMappings: Record<string, string> = {
-        starSignPreference: "zodiac_sign",
-        bodyTypePreference: "body_type",
-        ageRange: "age_range",
-        distance: "distance",
-        genderPreference: "gender",
-        exerciseFrequency: "exercise_frequency",
-        smokingFrequency: "smoking_frequency",
-        drinkingFrequency: "drinking_frequency",
-        cannabisFrequency: "cannabis_frequency",
-        dietPreference: "diet_preference",
-      };
-    
-      for (const [key, value] of Object.entries(filters)) {
-        const newKey = keyMappings[key] || key;
-        if (value.key && value.key !== "") {
-          const intValue = parseInt(value.key, 10);
-          convertedFilters[newKey] = isNaN(intValue) ? value.key : intValue;
-        } else if (value.value && value.value !== "-") {
-          if (key === "ageRange") {
-            const [min, max] = value.value.split("-").map((num: string) => parseInt(num, 10));
-            convertedFilters[newKey] = {
-              min: isNaN(min) ? null : min,
-              max: isNaN(max) ? null : max,
-            };
-          } else {
-            const intValue = parseInt(value.value, 10);
-            convertedFilters[newKey] = isNaN(intValue) ? value.value : intValue;
-          }
-        } else {
-          convertedFilters[newKey] = null;
-        }
-      }
-    
-      return convertedFilters;
-    };
+import {
+  getData,
+  getUserSearchFilters,
+  resetUserSearchFilters,
+} from "@/utils/storage";
+import { useAppContext } from "@/providers/AppProvider";
+import { useNavigation } from "@react-navigation/native";
 
 export default function SearchFilters() {
-  const { searchFilters, setSearchFilters, resetFilters, setAllSearchFilters } = useAppContext();
+  const { searchFilters, setSearchFilters, resetFilters } = useAppContext();
   const navigation = useNavigation();
 
-  const getMultiple = async () => {
+  const getUserFilters = async () => {
     try {
-      const values = await AsyncStorage.multiGet([
-        "genderPreference",
-        "ageRange",
-        "distance",
-        "starSignPreference",
-        "bodyTypePreference",
-        "cannabisFrequency",
-        "dietPreference",
-      ]);
-
-      const newFilters = { ...searchFilters };
-      values.forEach(([key, value]) => {
-        if (value) {
-          newFilters[key] = JSON.parse(value);
-        }
-      });
-    //   console.log("convertedFilters", convertedFilters);
-        setAllSearchFilters({zodiac_sign: newFilters.starSignPreference.key, body_type: newFilters.bodyTypePreference.key});
-        setSearchFilters(newFilters);
+      const values = await getUserSearchFilters();
+      setSearchFilters(values);
     } catch (e) {
       console.error("Error reading values", e);
     }
@@ -84,12 +30,12 @@ export default function SearchFilters() {
   const resetSettings = async () => {
     await resetUserSearchFilters();
     resetFilters();
-    getMultiple();
+    getUserFilters();
   };
 
   useFocusEffect(
     useCallback(() => {
-      getMultiple();
+      getUserFilters();
     }, [])
   );
 
@@ -122,13 +68,7 @@ export default function SearchFilters() {
           >
             <Text style={defaultStyles.settingListButtonLabel}>Gender</Text>
             <Text style={[defaultStyles.settingListButtonLabel, styles.active]}>
-              {searchFilters.genderPreference.value.length === 0
-                ? "-"
-                : searchFilters.genderPreference.value.length === 1
-                ? searchFilters.genderPreference.value[0]
-                : searchFilters.genderPreference.value[0] +
-                  " +" +
-                  (searchFilters.genderPreference.value.length - 1)}
+              {searchFilters.gender || "-"}
             </Text>
           </Button>
           <Button
@@ -137,7 +77,7 @@ export default function SearchFilters() {
           >
             <Text style={defaultStyles.settingListButtonLabel}>Age Range</Text>
             <Text style={[defaultStyles.settingListButtonLabel, styles.active]}>
-              {searchFilters.ageRange.min}-{searchFilters.ageRange.max}
+              {searchFilters.min_age}-{searchFilters.max_age}
             </Text>
           </Button>
           <Button
@@ -150,7 +90,7 @@ export default function SearchFilters() {
           >
             <Text style={defaultStyles.settingListButtonLabel}>Distance</Text>
             <Text style={[defaultStyles.settingListButtonLabel, styles.active]}>
-              {searchFilters.distance.value} km
+              {searchFilters.distance} km
             </Text>
           </Button>
           <Spacer height={32} />
@@ -186,7 +126,7 @@ export default function SearchFilters() {
           >
             <Text style={defaultStyles.settingListButtonLabel}>Body Type</Text>
             <Text style={[defaultStyles.settingListButtonLabel, styles.active]}>
-              {searchFilters.bodyTypePreference.value}
+              {searchFilters.body_type || "-"}
             </Text>
           </Button>
           <Button
@@ -195,7 +135,7 @@ export default function SearchFilters() {
           >
             <Text style={defaultStyles.settingListButtonLabel}>Star Sign</Text>
             <Text style={[defaultStyles.settingListButtonLabel, styles.active]}>
-              {searchFilters.starSignPreference.value}
+              {searchFilters.zodiac_sign || "-"}
             </Text>
           </Button>
           <Button
@@ -206,7 +146,7 @@ export default function SearchFilters() {
               Working out
             </Text>
             <Text style={[defaultStyles.settingListButtonLabel, styles.active]}>
-              {searchFilters.exerciseFrequency.value}
+              {searchFilters.exercise_frequency || "-"}
             </Text>
           </Button>
           <Button
@@ -215,7 +155,7 @@ export default function SearchFilters() {
           >
             <Text style={defaultStyles.settingListButtonLabel}>Smoking</Text>
             <Text style={[defaultStyles.settingListButtonLabel, styles.active]}>
-              {searchFilters.smokingFrequency.value}
+              {searchFilters.smoking_frequency || "-"}
             </Text>
           </Button>
           <Button
@@ -224,7 +164,7 @@ export default function SearchFilters() {
           >
             <Text style={defaultStyles.settingListButtonLabel}>Drinking</Text>
             <Text style={[defaultStyles.settingListButtonLabel, styles.active]}>
-              {searchFilters.drinkingFrequency.value}
+              {searchFilters.drinking_frequency || "-"}
             </Text>
           </Button>
           <Button
@@ -233,7 +173,7 @@ export default function SearchFilters() {
           >
             <Text style={defaultStyles.settingListButtonLabel}>Cannabis</Text>
             <Text style={[defaultStyles.settingListButtonLabel, styles.active]}>
-              {searchFilters.cannabisFrequency.value}
+              {searchFilters.cannabis_frequency || "-"}
             </Text>
           </Button>
           <Button
@@ -242,7 +182,7 @@ export default function SearchFilters() {
           >
             <Text style={defaultStyles.settingListButtonLabel}>Diet</Text>
             <Text style={[defaultStyles.settingListButtonLabel, styles.active]}>
-              {searchFilters.dietPreference.value}
+              {searchFilters.diet_preference || "-"}
             </Text>
           </Button>
         </ScrollView>

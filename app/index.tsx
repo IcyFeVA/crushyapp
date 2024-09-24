@@ -34,6 +34,7 @@ import * as Device from "expo-device";
 import { LogBox } from "react-native";
 import { api } from "@/api/supabaseApi";
 import { Colors } from "@/constants/Colors";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // LogBox.ignoreLogs(["Possible Unhandled Promise Rejection"]);
 LogBox.ignoreAllLogs();
@@ -85,7 +86,14 @@ export default function RootLayout() {
     if (loaded) {
       SplashScreen.hideAsync();
 
-      // clearAllStorage()
+      // clearAllStorage();
+      // AsyncStorage.multiSet([
+      //   ["body_type", "2"],
+      //   ["smoking_frequency", "3"],
+      //   ["drinking_frequency", "2"],
+      //   ["cannabis_frequency", "1"],
+      //   ["zodiac_sign", "9"],
+      // ]);
       // return;
 
       const getTables = async () => {
