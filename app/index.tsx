@@ -87,13 +87,32 @@ export default function RootLayout() {
       SplashScreen.hideAsync();
 
       // clearAllStorage();
-      // AsyncStorage.multiSet([
-      //   ["body_type", "2"],
-      //   ["smoking_frequency", "3"],
-      //   ["drinking_frequency", "2"],
-      //   ["cannabis_frequency", "1"],
-      //   ["zodiac_sign", "9"],
+
+      // AsyncStorage.multiRemove([
+      //   "zodiac_sign",
+      //   "body_type",
+      //   "min_age",
+      //   "max_age",
+      //   "distance",
+      //   "gender",
+      //   "exercise_frequency",
+      //   "smoking_frequency",
+      //   "drinking_frequency",
+      //   "cannabis_frequency",
+      //   "diet_preference",
       // ]);
+
+      // setTimeout(() => {
+      //   AsyncStorage.multiSet([
+      //     ["looking_for", "2"],
+      //     ["body_type_filter", "2"],
+      //     ["zodiac_sign_filter", "2"],
+      //     ["smoking_status_filter", "2"],
+      //     ["drinking_status_filter", "2"],
+      //     ["interest_filter", "[3, 71, 8, 10, 11]"],
+      //   ]);
+      // }, 4000);
+
       // return;
 
       const getTables = async () => {

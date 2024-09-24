@@ -6,17 +6,12 @@ import {
 } from "@/utils/storage";
 
 interface SearchFilters {
-  gender: string[];
-  age_min: number | null;
-  age_max: number | null;
-  distance: number | null;
-  zodiac_sign: number | null;
-  body_type: number | null;
-  exercise_frequency: number | null;
-  smoking_frequency: number | null;
-  drinking_frequency: number | null;
-  cannabis_frequency: number | null;
-  diet: number | null;
+  looking_for: number | null;
+  body_type_filter: number | null;
+  zodiac_sign_filter: number | null;
+  smoking_status_filter: number | null;
+  drinking_status_filter: number | null;
+  interest_filter: number[] | null;
 }
 
 interface AppContextType {
@@ -32,17 +27,12 @@ interface AppContextType {
 }
 
 const defaultSearchFilters: SearchFilters = {
-  gender: [],
-  age_min: null,
-  age_max: null,
-  distance: null,
-  zodiac_sign: null,
-  body_type: null,
-  exercise_frequency: null,
-  smoking_frequency: null,
-  drinking_frequency: null,
-  cannabis_frequency: null,
-  diet: null,
+  looking_for: null,
+  body_type_filter: null,
+  zodiac_sign_filter: null,
+  smoking_status_filter: null,
+  drinking_status_filter: null,
+  interest_filter: null,
 };
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -65,10 +55,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
     try {
       const filters = await getUserSearchFilters();
 
-      console.log("filters >>>>>>>>>>>>>>>>>>", filters);
-
-      // currently filters looks like this: [["zodiac_sign", "9"], ["body_type", "2"], ["min_age", null], ["max_age", null], ["distance", "{\"key\":\"40\",\"value\":\"40\"}"], ["gender", null], ["exercise_frequency", null], ["smoking_frequency", "3"], ["drinking_frequency", "2"], ["cannabis_frequency", "1"], ["diet_preference", null]]
-      // we need to convert it to the following: {zodiac_sign: 9, body_type: 2, min_age: null, max_age: null, distance: 40, gender: null, exercise_frequency: null, smoking_frequency: 3, drinking_frequency: 2, cannabis_frequency: 1, diet_preference: null}
       const filtersObj = filters.reduce((acc, filter) => {
         // convert numbers as strings to integers
         if (filter[1] !== null) {
@@ -79,7 +65,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
         return acc;
       }, {});
 
-      console.log("filtersObj >>>>>>>>>>>>>>>>>>", filtersObj);
+      // console.log("AppProvider >>>>>>>>>>>>>>>>>>", filtersObj);
 
       setSearchFilters(filtersObj);
     } catch (error) {

@@ -80,8 +80,18 @@ export const usePotentialMatches = () => {
     if (!session?.user?.id) return;
     setLoading(true);
     try {
-      console.log("searchFilters >>>>>>>>>>>>>>>>>>", searchFilters);
-      const { data, error } = await supabase.rpc('get_filtered_matches', searchFilters);
+      // console.log("searchFilters >>>>>>>>>>>>>>>>>>", searchFilters);
+      
+      // go through the searchFilters and if they are null, remove them
+      const removeNullFilters = Object.fromEntries(Object.entries(searchFilters).filter(([key, value]) => value !== null && value !== undefined && value !== '' && value !== [] && value == NaN));
+
+      console.log("updatedSearchFilters >>>>>>>>>>>>>>>>>>", removeNullFilters);
+      const { data, error } = await supabase.rpc('get_filtered_matches', {
+        user_id: session.user.id,
+        limit_count: 10,
+        looking_for: 1,
+        zodiac_sign_filter: 2,
+      });
       if (error) {
         if (error.code === 'PGRST202') {
           console.log(`No potential matches found`);
@@ -90,6 +100,7 @@ export const usePotentialMatches = () => {
         } 
         throw error;
       }
+      // console.log("data >>>>>>>>>>>>>>>>>>", data);
       setMatches(data || []);
     } catch (err) {
       setError(err);
