@@ -80,17 +80,15 @@ export const usePotentialMatches = () => {
     if (!session?.user?.id) return;
     setLoading(true);
     try {
-      // console.log("searchFilters >>>>>>>>>>>>>>>>>>", searchFilters);
-      
       // go through the searchFilters and if they are null, remove them
-      const removeNullFilters = Object.fromEntries(Object.entries(searchFilters).filter(([key, value]) => value !== null && value !== undefined && value !== '' && value !== [] && value == NaN));
+      // const removeNullFilters = Object.fromEntries(Object.entries(searchFilters).filter(([key, value]) => value !== null && value !== undefined && value !== '' && value !== [] && value == NaN));
 
-      console.log("updatedSearchFilters >>>>>>>>>>>>>>>>>>", removeNullFilters);
       const { data, error } = await supabase.rpc('get_filtered_matches', {
         user_id: session.user.id,
         limit_count: 10,
         looking_for: 1,
-        zodiac_sign_filter: 2,
+        smoking_status_filter : 2,
+        // drinking_status_filter : 2,
       });
       if (error) {
         if (error.code === 'PGRST202') {
@@ -100,14 +98,19 @@ export const usePotentialMatches = () => {
         } 
         throw error;
       }
-      // console.log("data >>>>>>>>>>>>>>>>>>", data);
-      setMatches(data || []);
+      console.log("Filtered matches data:", data);
+      if (Array.isArray(data) && data.length > 0) {
+        setMatches(data);
+      } else {
+        console.log("No matches found or invalid data format");
+        setMatches([]);
+      }
     } catch (err) {
       setError(err);
     } finally {
       setLoading(false);
     }
-  }, [session, searchFilters]);
+  }, [session]);
 
   const recordAction = useCallback(async (matchedUserId: string, action: 'like' | 'dislike') => {
     if (!session?.user?.id) return;

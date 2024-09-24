@@ -145,11 +145,7 @@ const Dive = () => {
 
   useEffect(() => {
     if (session?.user?.id) {
-      fetchFilteredMatches({
-        user_id: session.user.id,
-        looking_for: lookingFor, // argument from RootNavigator / 1 = Relationship, 2 = Friendship, 3 = Hookup
-        limit_count: 10,
-      });
+      fetchFilteredMatches();
       fetchCurrentUserProfile();
     }
   }, [session, fetchFilteredMatches, fetchCurrentUserProfile]);
