@@ -23,7 +23,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { StreamChat } from 'stream-chat';
 import { Chat, OverlayProvider } from 'stream-chat-expo';
 import { NotificationProvider } from "@/contexts/NotificationContext";
-import { messaging, app } from "../firebase";
+import { messaging, app } from "@/firebase";
 import * as Notifications from "expo-notifications";
 import * as Device from "expo-device";
 import { LogBox } from "react-native";
